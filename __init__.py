@@ -26,11 +26,11 @@ class Electrophoresis(object):
         self.set_dz()
         self.ions = ions
         self.set_ion_properties()
-        # self.set_derivative_matrices()
+        self.set_derivative_matrices()
         self.concentrations = np.array(concentrations)
         self.t = 0
 
-    def first_derivative(self, x_input, method='dissipative'):
+    def first_derivative(self, x_input, method='6th-Order'):
         if method is None:
             derivative = x_input
 
@@ -45,7 +45,9 @@ class Electrophoresis(object):
                 np.tile(self.dz, (len(self.ions), 1))
 
         elif method == '6th-Order':
-            pass
+            derivative = np.linalg.solve(self.A, np.dot(self.B, np.atleast_2d(x_input).T)).T
+            # derivative = np.ravel(derivative)
+
 
         return derivative
 
@@ -53,7 +55,7 @@ class Electrophoresis(object):
         if method is None:
             derivative = input
         elif method == 'dissipative':
-            derivative = self.first_derivative(self.first_derivative(x_input))
+            derivative = self.first_derivative(self.first_derivative(x_input, 'dissipative'), 'dissipative')
         elif method == '6th-Order':
             pass
         return derivative
@@ -99,13 +101,15 @@ class Electrophoresis(object):
 
         total_flux = diffusion + advection
 
+        print total_flux.shape
+
         return total_flux
 
     def reshaped_flux(self, concentrations, t):
         if not t == self.t:
             self.calc_equilibrium()
         concentrations = concentrations.reshape(self.concentrations.shape)
-        flux = self.flux(concentrations).flatten()
+        flux = np.ravel(self.flux(concentrations))
         return flux
 
     def solve(self, t):
@@ -123,61 +127,55 @@ class Electrophoresis(object):
     def set_derivative_matrices(self):
         h = self.dz[0]
         N = len(self.z)
-        # A = sparse(N, N)
-        # B = sparse(N, N)
+        aI = 1./3.
 
-        # # Forward derivative for first(/last) grid point - 5th order
-        # A_First = [1, 4]
-        # B_First = (1./h) * [-37/12    2/3    3   -2/3    1/12]
-        #
-        # # Skewed derivative for second/(N-1) grid point - 5th order
-        # A_Second = [1/6 1 1/2]
-        # B_Second = (1/h)*[-10/18   -1/2    1    1/18]
-        #
-        # # Central derivative for internal grid points
-        # alphaI = 1/3
-        # A_Internal = [alphaI 1 alphaI]
-        # B_Internal = [-1/3*(4*alphaI-1)*(1/(4*h))  -2/3*(alphaI+2)*(1/(2*h))
-        #  0  2/3*(alphaI+2)*(1/(2*h))  1/3*(4*alphaI-1)*(1/(4*h))]
-        #
-        # A(1,1:length(A_First)) = A_First
-        # B(1,1:length(B_First)) = B_First
-        # A(2,1:length(A_Second)) = A_Second
-        # B(2,1:length(B_Second)) = B_Second;
-        #
-        # A(end,end:-1:end-length(A_First)+1) = A_First
-        # B(end,end:-1:end-length(B_First)+1) = B_First
-        # A(end-1,end:-1:end-length(A_Second)+1) = A_Second
-        # B(end-1,end:-1:end-length(B_Second)+1) = - B_Second
-        #
-        # for ij=3:N-2  # run on all rows
-        #     A(ij,ij-1:ij+1)=A_Internal
-        #     B(ij,ij-2:ij+2)=B_Internal
+        A_vector = ([1./6.]*1+[1./3.]*(N-3)+[4.]*1)
+        B_vectors = []
+        B_vectors.append([0]*(N-5) + [1./12.])  # diag -4
+        B_vectors.append([0]*(N-4) + [-2./3.])  # diag -3
+        B_vectors.append([(aI*4.-1.)/12.] *(N-4) + [1./18.] + [3.])  # diag -2
+        B_vectors.append([-10./18.] + [3.*aI+6. ]*(N-4) + [1.]+[2./3.])  # diag -1
+        B_vectors.append([-35./12.]+[-1./2.]+[0]*(N-4)+[-1./2.]+[-35./12.])  # diag 0
 
-        A_vector = 0
-
-        A_constructor = [A_vector, np.ones(self.z.size), np.fliplr(A_vector)]
-        B_constructor = 1/h*np.array(0)
-        self.A = sparse.spdiags(A_constructor, range(-1, 1+1), N, N)
-        self.B = sparse.spdiags(B_constructor, range(-4, 4+1), N, N)
+        A_constructor = [A_vector+[0], np.ones(self.z.size), [0]+A_vector[::-1]]
+        B_constructor = 1/h*np.array([B_vectors[0]+[0]*4,
+                                      B_vectors[1]+[0]*3,
+                                      B_vectors[2]+[0]*2,
+                                      B_vectors[3]+[0]*1,
+                                      B_vectors[4]+[0]*0,
+                                      [0]*1+B_vectors[3][::-1],
+                                      [0]*2+B_vectors[2][::-1],
+                                      [0]*3+B_vectors[1][::-1],
+                                      [0]*4+B_vectors[0][::-1],
+                                      ])
+        self.A = sparse.spdiags(A_constructor, range(-1, 1+1), N, N).todense()
+        self.B = sparse.spdiags(B_constructor, range(-4, 4+1), N, N).todense()
+        self.B = self.B / np.max(self.B*-39./12.)
 
 if __name__ == '__main__':
     from scipy.special import erf
     from matplotlib import pyplot as plot
     my_ions = ionize.Solution(['tris', 'hydrochloric acid', 'caproic acid'],
                               [0, 0, 0]
-                              ).ions
+                              ).ions[0:1]
 
     domain_length = 0.1
     interface_length = 0.01
-    nodes = 100
+    nodes = 50
     my_domain = np.linspace(-domain_length/2., domain_length/2., nodes)
     my_concentrations = np.array([np.ones(my_domain.shape)*.1,
                                  0.05-0.05*erf(my_domain/interface_length),
                                  0.05*erf(my_domain/interface_length)+0.05])
+    # my_concentrations = np.array(0.05-0.05*erf(my_domain/interface_length), order=3)
     my_elec = Electrophoresis(my_domain, my_ions, my_concentrations)
-    my_elec.solve(np.array(np.linspace(0, 1.5e2, 10)))
+    # print my_elec.A
+    # print my_elec.B
+    # print my_elec.concentrations.shape
+    # print np.linalg.solve(my_elec.A, np.dot(my_elec.B, np.atleast_2d(my_elec.concentrations).T))
+    # print my_elec.first_derivative(my_elec.concentrations)
+    my_elec.solve(np.array(np.linspace(0, 2e2, 10)))
     for my_sol in my_elec.solution:
         for sub_sol in my_sol:
+            # sub_sol = my_sol
             plot.plot(my_elec.z, sub_sol)
     plot.show()
