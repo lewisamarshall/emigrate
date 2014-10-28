@@ -129,8 +129,8 @@ class Electrophoresis(object):
         B_vectors = []
         B_vectors.append([0]*(N-5) + [1./12.])  # diag -4
         B_vectors.append([0]*(N-4) + [-2./3.])  # diag -3
-        B_vectors.append([(aI*4.-1.)/12.] *(N-4) + [1./18.] + [3.])  # diag -2
-        B_vectors.append([-10./18.] + [1./3.*aI+2./3. ]*(N-4) + [1.]+[2./3.])  # diag -1
+        B_vectors.append([(aI*4.-1.)/12.] * (N-4) + [1./18.] + [3.])  # diag -2
+        B_vectors.append([-10./18.] + [1./3.*aI+2./3.]*(N-4) + [1.]+[2./3.])  # diag -1
         B_vectors.append([-35./12.]+[-1./2.]+[0]*(N-4)+[-1./2.]+[-35./12.])  # diag 0
 
         A_constructor = [A_vector+[0], np.ones(self.z.size), [0]+A_vector[::-1]]
@@ -153,7 +153,7 @@ if __name__ == '__main__':
     from matplotlib import pyplot as plot
     my_ions = ionize.Solution(['tris', 'hydrochloric acid', 'caproic acid'],
                               [0, 0, 0]
-                              ).ions[0:1]
+                              ).ions
 
     domain_length = 0.1
     interface_length = 0.01
@@ -169,7 +169,7 @@ if __name__ == '__main__':
     # print my_elec.concentrations.shape
     # print np.linalg.solve(my_elec.A, np.dot(my_elec.B, np.atleast_2d(my_elec.concentrations).T))
     # print my_elec.first_derivative(my_elec.concentrations)
-    my_elec.solve(np.array(np.linspace(0, 5e4, 10)))
+    my_elec.solve(np.array(np.linspace(0, 5e3, 10)))
     for my_sol in my_elec.solution:
         for sub_sol in my_sol:
             # sub_sol = my_sol
