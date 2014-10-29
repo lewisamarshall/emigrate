@@ -32,10 +32,10 @@ class Electrophoresis(object):
         self.t = 0
         self.differ = self.differentiator(self.N, self.dz[0], method='6th-Order')
 
-    def first_derivative(self, x_input, method='dissipative'):
+    def first_derivative(self, x_input):
         return self.differ.first_derivative(x_input.T).T
 
-    def second_derivative(self, x_input, method='dissipative'):
+    def second_derivative(self, x_input):
         return self.differ.second_derivative(x_input.T).T
 
     def set_ion_properties(self):
@@ -121,7 +121,7 @@ if __name__ == '__main__':
     # print my_elec.concentrations.shape
     # print np.linalg.solve(my_elec.A, np.dot(my_elec.B, np.atleast_2d(my_elec.concentrations).T))
     # print my_elec.first_derivative(my_elec.concentrations, method ='dissipative')
-    deriv =  my_elec.first_derivative(my_elec.concentrations, '6th-Order')[:,1]
+    deriv =  my_elec.first_derivative(my_elec.concentrations)[:,1]
     deriv = np.ravel(deriv)
     print deriv.shape, my_elec.z.shape
     # plot.plot(my_elec.z, deriv)
