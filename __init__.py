@@ -55,7 +55,7 @@ class Electrophoresis(object):
 
     def conductivity(self, concentrations):
         conductivity = np.sum(np.tile(self.molar_conductivity,
-                                      (1, len(self.z)))
+                                      (1, self.N))
                               * concentrations, 0)
         return conductivity
 
@@ -79,6 +79,9 @@ class Electrophoresis(object):
 
         total_flux = diffusion + advection
         return total_flux
+
+    def node_flux(self):
+        pass
 
     def reshaped_flux(self, concentrations, t):
         if not t == self.t:
