@@ -30,7 +30,7 @@ class Electrophoresis(object):
         self.set_ion_properties()
         self.concentrations = np.array(concentrations)
         self.t = 0
-        self.differ = self.differentiator(self.N, self.dz[0], method='6th-Order')
+        self.differ = self.differentiator(self.N, self.dz, method='6th-Order')
 
     def first_derivative(self, x_input):
         return self.differ.first_derivative(x_input.T).T
@@ -48,14 +48,14 @@ class Electrophoresis(object):
                                             for ion in self.ions])
 
     def set_dz(self):
-        self.dz = np.pad(np.diff(self.z), (0, 1), 'reflect')
+        self.dz = self.z[1]-self.z[0]
 
     def set_current(self, concentrations):
         self.j = self.V/sum(self.dz/self.conductivity(concentrations))
 
     def conductivity(self, concentrations):
         conductivity = np.sum(np.tile(self.molar_conductivity,
-                                      (1, len(self.dz)))
+                                      (1, len(self.z)))
                               * concentrations, 0)
         return conductivity
 
@@ -108,7 +108,7 @@ if __name__ == '__main__':
 
     domain_length = 0.1
     interface_length = 0.01
-    nodes = 100
+    nodes = 200
     my_domain = np.linspace(-domain_length/2., domain_length/2., nodes)
     my_concentrations = np.array([np.ones(my_domain.shape)*.1,
                                  0.05-0.05*erf(my_domain/interface_length),
