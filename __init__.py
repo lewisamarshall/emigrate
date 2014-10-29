@@ -30,7 +30,7 @@ class Electrophoresis(object):
         self.concentrations = np.array(concentrations)
         self.t = 0
 
-    def first_derivative(self, x_input, method='6th-Order'):
+    def first_derivative(self, x_input, method='dissipative'):
         if method is None:
             derivative = x_input
 
@@ -45,7 +45,13 @@ class Electrophoresis(object):
                 np.tile(self.dz, (len(self.ions), 1))
 
         elif method == '6th-Order':
-            derivative = np.linalg.solve(self.A, np.dot(self.B, np.atleast_2d(x_input).T)).T
+            # self.A, self.B =
+            print self.A.shape
+            print self.B.shape
+            print self.concentrations.T
+            print np.dot(self.B.T, x_input.T).shape
+            print np.linalg.solve(self.A, np.dot(self.B, x_input.T)).shape
+            derivative = np.linalg.solve(self.A, np.dot(x_input, self.B).T)
             # derivative = np.ravel(derivative)
 
         return derivative
@@ -125,13 +131,13 @@ class Electrophoresis(object):
         N = len(self.z)
         aI = 1./3.
 
-        A_vector = ([1./6.]*1+[1./3.]*(N-3)+[4.]*1)
+        A_vector = ([1./6.]*1+[1./3.]*(N-4)+[1./2.]+[4.])
         B_vectors = []
         B_vectors.append([0]*(N-5) + [1./12.])  # diag -4
         B_vectors.append([0]*(N-4) + [-2./3.])  # diag -3
         B_vectors.append([(aI*4.-1.)/12.] * (N-4) + [1./18.] + [3.])  # diag -2
         B_vectors.append([-10./18.] + [1./3.*aI+2./3.]*(N-4) + [1.]+[2./3.])  # diag -1
-        B_vectors.append([-35./12.]+[-1./2.]+[0]*(N-4)+[-1./2.]+[-35./12.])  # diag 0
+        B_vectors.append([-37./12.]+[-1./2.]+[0]*(N-4)+[-1./2.]+[-37./12.])  # diag 0
 
         A_constructor = [A_vector+[0], np.ones(self.z.size), [0]+A_vector[::-1]]
         B_constructor = 1/h*np.array([B_vectors[0]+[0]*4,
@@ -146,7 +152,7 @@ class Electrophoresis(object):
                                       ])
         self.A = sparse.spdiags(A_constructor, range(-1, 1+1), N, N).todense()
         self.B = sparse.spdiags(B_constructor, range(-4, 4+1), N, N).todense()
-        self.B = self.B / np.max(self.B*-39./12.)
+        self.B = self.B / -1806.31944*-37./12.
 
 if __name__ == '__main__':
     from scipy.special import erf
@@ -165,13 +171,25 @@ if __name__ == '__main__':
     # my_concentrations = np.array(0.05-0.05*erf(my_domain/interface_length), order=3)
     my_elec = Electrophoresis(my_domain, my_ions, my_concentrations)
     # print my_elec.A
-    # print my_elec.B
+    # print '\n'
+    # print my_elec.B[0]
     # print my_elec.concentrations.shape
     # print np.linalg.solve(my_elec.A, np.dot(my_elec.B, np.atleast_2d(my_elec.concentrations).T))
-    # print my_elec.first_derivative(my_elec.concentrations)
-    my_elec.solve(np.array(np.linspace(0, 5e3, 10)))
-    for my_sol in my_elec.solution:
-        for sub_sol in my_sol:
-            # sub_sol = my_sol
-            plot.plot(my_elec.z, sub_sol)
+    # print my_elec.first_derivative(my_elec.concentrations, method ='dissipative')
+    deriv =  my_elec.first_derivative(my_elec.concentrations, '6th-Order')[:,1]
+    deriv = np.ravel(deriv)
+    print deriv.shape, my_elec.z.shape
+    plot.plot(my_elec.z, deriv)
+    # plot.plot(my_elec.z, my_elec.concentrations[1,:])
+    # my_elec.solve(np.array(np.linspace(0, 5e1, 2)))
+    # for my_sol in my_elec.solution:
+    #     # for sub_sol in my_sol:
+    #         sub_sol = my_sol
+    #         # # my_elec.set_E(my_sol)
+    #         # # print sub_sol.shape
+    #         deriv =  np.ravel(my_elec.first_derivative(sub_sol)[2,:])
+    #         conc = np.ravel(sub_sol[1,:])
+    #         plot.plot(my_elec.z, deriv)
+    #         plot.plot(my_elec.z, conc)
     plot.show()
+#
