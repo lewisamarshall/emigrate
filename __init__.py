@@ -6,6 +6,7 @@ import scipy.sparse as sparse
 
 class Electrophoresis(object):
     import constants
+    from differentiate import differentiator
     V = 100
     E = 1
     dz = None
@@ -23,14 +24,17 @@ class Electrophoresis(object):
     def __init__(self, domain, ions, concentrations):
         self.x = np.array(domain)
         self.z = np.array(self.x[:])
+        self.N = self.x.size
         self.set_dz()
         self.ions = ions
         self.set_ion_properties()
         self.set_derivative_matrices()
         self.concentrations = np.array(concentrations)
         self.t = 0
+        self.differ = self.differentiator(self.N, self.dz[0], method='6th-Order')
 
     def first_derivative(self, x_input, method='dissipative'):
+        return self.differ.first_derivative(x_input.T)
         if method is None:
             derivative = x_input
 
@@ -57,6 +61,8 @@ class Electrophoresis(object):
         return derivative
 
     def second_derivative(self, x_input, method='dissipative'):
+        return self.differ.second_derivative(x_input.T)
+
         if method is None:
             derivative = input
         elif method == 'dissipative':
@@ -163,7 +169,7 @@ if __name__ == '__main__':
 
     domain_length = 0.1
     interface_length = 0.01
-    nodes = 50
+    nodes = 100
     my_domain = np.linspace(-domain_length/2., domain_length/2., nodes)
     my_concentrations = np.array([np.ones(my_domain.shape)*.1,
                                  0.05-0.05*erf(my_domain/interface_length),
@@ -179,17 +185,17 @@ if __name__ == '__main__':
     deriv =  my_elec.first_derivative(my_elec.concentrations, '6th-Order')[:,1]
     deriv = np.ravel(deriv)
     print deriv.shape, my_elec.z.shape
-    plot.plot(my_elec.z, deriv)
+    # plot.plot(my_elec.z, deriv)
     # plot.plot(my_elec.z, my_elec.concentrations[1,:])
-    # my_elec.solve(np.array(np.linspace(0, 5e1, 2)))
-    # for my_sol in my_elec.solution:
-    #     # for sub_sol in my_sol:
-    #         sub_sol = my_sol
-    #         # # my_elec.set_E(my_sol)
-    #         # # print sub_sol.shape
-    #         deriv =  np.ravel(my_elec.first_derivative(sub_sol)[2,:])
-    #         conc = np.ravel(sub_sol[1,:])
-    #         plot.plot(my_elec.z, deriv)
-    #         plot.plot(my_elec.z, conc)
+    my_elec.solve(np.array(np.linspace(0, 1e1, 10)))
+    for my_sol in my_elec.solution:
+        for sub_sol in my_sol:
+            # sub_sol = my_sol
+            # # my_elec.set_E(my_sol)
+            # # print sub_sol.shape
+            # deriv =  np.ravel(my_elec.first_derivative(sub_sol)[2,:])
+            # conc = np.ravel(sub_sol[1,:])
+            # plot.plot(my_elec.z, deriv)
+            plot.plot(my_elec.z, sub_sol)
     plot.show()
 #
