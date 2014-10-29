@@ -19,5 +19,5 @@ install:
     - pip install setuptools
 
 script:
-    - python setup.py nosetests
+    # - python setup.py nosetests
     # - python tests.py
