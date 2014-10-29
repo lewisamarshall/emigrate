@@ -62,14 +62,13 @@ class differentiator(object):
         if self.method == '6th-Order':
             internal_function = [3./44., 12./11., -6./44.-24./11., 12./11., 3./44.]
             boundary_functions = [[1955./156., -4057./156., 1117./78., -55./78., -29./156., 7./156.],
-                                  [99./80., -3., 93./40., -3./5., -3./80]]
+                                  [99./80., -3., 93./40., -3./5., 3./80]] # note typo in paper saying -3/80
             # boundary_functions=[[0],[0]]
         elif self.method == 'dissipative':
             pass
 
         self.B2 = self.construct_matrix(boundary_functions, internal_function)
         self.B2 /= self.dz**2
-
 
     def construct_matrix(self, boundary_functions, internal_function):
         N = self.N

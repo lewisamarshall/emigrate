@@ -34,42 +34,42 @@ class Electrophoresis(object):
         self.differ = self.differentiator(self.N, self.dz[0], method='6th-Order')
 
     def first_derivative(self, x_input, method='dissipative'):
-        return self.differ.first_derivative(x_input.T)
-        if method is None:
-            derivative = x_input
-
-        elif method == 'dissipative':
-            derivative = []
-
-            derivative = np.pad(np.diff(x_input, n=1, axis=1),
-                                ((0, 0), (0, 1)), 'reflect') / \
-                np.tile(self.dz, (len(self.ions), 1))/2 -\
-                np.pad(np.diff(x_input, n=2, axis=1),
-                       ((0, 0), (1, 1)), 'reflect')/2 / \
-                np.tile(self.dz, (len(self.ions), 1))
-
-        elif method == '6th-Order':
-            # self.A, self.B =
-            print self.A.shape
-            print self.B.shape
-            print self.concentrations.T
-            print np.dot(self.B.T, x_input.T).shape
-            print np.linalg.solve(self.A, np.dot(self.B, x_input.T)).shape
-            derivative = np.linalg.solve(self.A, np.dot(x_input, self.B).T)
-            # derivative = np.ravel(derivative)
-
-        return derivative
+        return self.differ.first_derivative(x_input.T).T
+        # if method is None:
+        #     derivative = x_input
+        #
+        # elif method == 'dissipative':
+        #     derivative = []
+        #
+        #     derivative = np.pad(np.diff(x_input, n=1, axis=1),
+        #                         ((0, 0), (0, 1)), 'reflect') / \
+        #         np.tile(self.dz, (len(self.ions), 1))/2 -\
+        #         np.pad(np.diff(x_input, n=2, axis=1),
+        #                ((0, 0), (1, 1)), 'reflect')/2 / \
+        #         np.tile(self.dz, (len(self.ions), 1))
+        #
+        # elif method == '6th-Order':
+        #     # self.A, self.B =
+        #     print self.A.shape
+        #     print self.B.shape
+        #     print self.concentrations.T
+        #     print np.dot(self.B.T, x_input.T).shape
+        #     print np.linalg.solve(self.A, np.dot(self.B, x_input.T)).shape
+        #     derivative = np.linalg.solve(self.A, np.dot(x_input, self.B).T)
+        #     # derivative = np.ravel(derivative)
+        #
+        # return derivative
 
     def second_derivative(self, x_input, method='dissipative'):
-        return self.differ.second_derivative(x_input.T)
+        return self.differ.second_derivative(x_input.T).T
 
-        if method is None:
-            derivative = input
-        elif method == 'dissipative':
-            derivative = self.first_derivative(self.first_derivative(x_input, 'dissipative'), 'dissipative')
-        elif method == '6th-Order':
-            pass
-        return derivative
+        # if method is None:
+        #     derivative = input
+        # elif method == 'dissipative':
+        #     derivative = self.first_derivative(self.first_derivative(x_input, 'dissipative'), 'dissipative')
+        # elif method == '6th-Order':
+        #     pass
+        # return derivative
 
     def set_ion_properties(self):
         pH = 7
@@ -187,7 +187,7 @@ if __name__ == '__main__':
     print deriv.shape, my_elec.z.shape
     # plot.plot(my_elec.z, deriv)
     # plot.plot(my_elec.z, my_elec.concentrations[1,:])
-    my_elec.solve(np.array(np.linspace(0, 1e1, 10)))
+    my_elec.solve(np.array(np.linspace(0, 2e2, 10)))
     for my_sol in my_elec.solution:
         for sub_sol in my_sol:
             # sub_sol = my_sol
