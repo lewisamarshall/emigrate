@@ -1,12 +1,11 @@
 import numpy as np
 import ionize
 import scipy.integrate as integrate
-import scipy.sparse as sparse
 
 
-class Electrophoresis(object):
+class Migrate(object):
     import constants
-    from differentiate import differentiator
+    from Differentiate import Differentiate
     V = 100
     E = 1
     dz = None
@@ -30,7 +29,7 @@ class Electrophoresis(object):
         self.set_ion_properties()
         self.concentrations = np.array(concentrations)
         self.t = 0
-        self.differ = self.differentiator(self.N, self.dz, method='6th-Order')
+        self.differ = self.Differentiate(self.N, self.dz, method='6th-Order')
 
     def first_derivative(self, x_input):
         return self.differ.first_derivative(x_input.T).T
@@ -117,7 +116,7 @@ if __name__ == '__main__':
                                  0.05-0.05*erf(my_domain/interface_length),
                                  0.05*erf(my_domain/interface_length)+0.05])
     # my_concentrations = np.array(0.05-0.05*erf(my_domain/interface_length), order=3)
-    my_elec = Electrophoresis(my_domain, my_ions, my_concentrations)
+    my_elec = Migrate(my_domain, my_ions, my_concentrations)
     # print my_elec.A
     # print '\n'
     # print my_elec.B[0]

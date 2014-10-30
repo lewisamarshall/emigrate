@@ -1,7 +1,7 @@
 import numpy as np
 
 
-class differentiator(object):
+class Differentiate(object):
 
     A1 = None
     B1 = None
