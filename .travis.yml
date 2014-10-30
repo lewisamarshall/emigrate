@@ -18,6 +18,6 @@ before_install:
 install:
     - pip install setuptools
 
-# script:
-#     # - python setup.py nosetests
+script:
+    - python setup.py nosetests
 #     # - python tests.py
