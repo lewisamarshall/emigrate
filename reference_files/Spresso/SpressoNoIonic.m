@@ -36,7 +36,7 @@ end
 
 %--------------------------------------------------------------------------
 % Calculates the Flux For Finite Volume SLIP Scheme With Area Change
-% This function is called in the LocalOde45 function to compute flux 
+% This function is called in the LocalOde45 function to compute flux
 % at each time step of integration
 % at Start of every RK time steps CalcChemEqFlag = 1
 % for intermediate RK time steps CalcChemEqFlag = 0
@@ -56,11 +56,11 @@ global uCST Ngrid PolDeg AChannel
     EquiPLength,LMat,LCube,muCube,ValCube,DCube,N,Nspecies,...
     zetaPot,h,DisableChemFlag,SpatialDiscFlag]=ARGS{:};
 cSize=[N,Nspecies];
-qMat=reshape(y0(1:cSize(1)*cSize(2)),cSize); %N x Nspecies, q=J*c*A; 
+qMat=reshape(y0(1:cSize(1)*cSize(2)),cSize); %N x Nspecies, q=J*c*A;
 phiVec=y0(cSize(1)*cSize(2)+1:cSize(1)*cSize(2)+N); %x(z) spatial coordinate based on grid adaptation
 
 OUT=LinSolve(A1.a,A1.b,A1.c,B1.full*phiVec,N);
-dphidzVec=OUT(:,1); dphidzMat=dphidzVec*ones(Nspecies,1)'; %J=dx/dz 
+dphidzVec=OUT(:,1); dphidzMat=dphidzVec*ones(Nspecies,1)'; %J=dx/dz
 
 JAreaRatioCellVec=y0(cSize(1)*cSize(2)+N+1:cSize(1)*cSize(2)+2*N);
 AreaRatioCellVec=JAreaRatioCellVec./dphidzVec;
@@ -83,12 +83,12 @@ LimiterFlag='ELED';        %'minmod' / 'superbee' / 'VanLeer' /'none'/'ELED'
 %A1.a,b,c are diagonal terms, in matrices Af'=Bf
 
 % OUT=LinSolve(A1.a,A1.b,A1.c,B1.full*[cH',cMat],N);
-% dcHdz=OUT(:,1); dcdzMat=OUT(:,2:Nspecies+1);   
+% dcHdz=OUT(:,1); dcdzMat=OUT(:,2:Nspecies+1);
 
-% 
+%
 % % OUT=LinSolve(A1.a,A1.b,A1.c,B1.full*[cH',cMat, AreaRatioCellVec.*cH', AreaRatioCellMat.*cMat],N);
 % % dcHdz=OUT(:,1); dcdzMat=OUT(:,2:Nspecies+1); dAcHdz=OUT(:,Nspecies+2); dAcdzMat=OUT(:,Nspecies+3:end);
-% % 
+% %
 % % OUT=LinSolve(A2.a,A2.b,A2.c,B2.full*[cMat],N);
 % % d2Dcdz2Mat=OUT(:,1:Nspecies);
 
@@ -96,7 +96,7 @@ LimiterFlag='ELED';        %'minmod' / 'superbee' / 'VanLeer' /'none'/'ELED'
 % Solve Equilibrium
 %DisableChemFlag is only for testing some generic cases It is not actually
 %inputed from the GUI
-if DisableChemFlag 
+if DisableChemFlag
 
     muMat=F*sum(ValCube.*muCube,3)';
     DMat=DCube(:,:,1)';
@@ -117,10 +117,10 @@ end % end of if CalcChemEqFlag
 
     % Calculate velocity (pressure driven)
     L=phiVec(end)-phiVec(1);
-    uBulk = hChannel^2/(bPressure*visc*L)*(-DeltaP); %uBulk is net flow rate 
+    uBulk = hChannel^2/(bPressure*visc*L)*(-DeltaP); %uBulk is net flow rate
 						     %constant along axis (Q)
-  
-    
+
+
 if CalcChemEqFlag
     % Dispersion
     PeMat=uBulk*(hChannel)./DMat;                   %h=diameter  h/2=radius
@@ -139,7 +139,7 @@ end
 ConstVoltFlag=0;
 if (ConstVoltFlag) %for constant voltage case
     %calculate the current
-    Voltage = -350; 
+    Voltage = -350;
     NumCur=2*sum(diff(SVec)./(SigVec(1:N-1)+ SigVec(2:N) ),1);
     DenCur=trapz(phiVec,1./(SigVec.*AreaRatioCellVec));
     Cur=-(Voltage+NumCur)./DenCur;
@@ -147,22 +147,22 @@ if (ConstVoltFlag) %for constant voltage case
 end
 
 if SteadyStateFlag %&& FirstTimeFlag   % Automatic velocity, based on LE (first chemical on list)
-   uCST = -Cur/SigVec(end)*muMat(end,1)-uBulk;    
-%    uCST = -Cur/SigVec(1)*muMat(1,1)-uBulk;  
+   uCST = -Cur/SigVec(end)*muMat(end,1)-uBulk;
+%    uCST = -Cur/SigVec(1)*muMat(1,1)-uBulk;
 end
 
 %FV Scheme
 %|--------------------|-------------------|
 %|		      |			  |
 %|	  j	      |		j+1	  |
-%|		      |			  |	
+%|		      |			  |
 %|--------------------|-------------------|
 %                   j+1/2
 % f_{j+1/2}=(f_j+f_{j+1})/2 + aplha_{j+1/2}(diffusion)+D_{j+1/2}(c_j+1-c_j)/dz
 %  dju/dt+f_{j+1/2}-f_{j-1/2}=D_{j+1/2}(c_j+1-c_j)/dz-D_{j+1/2}(c_j+1-c_j)/dz
 
 %implementation
-%cells 1 and N are "ghost cells": no diffusion, apply BC using incoming/outgoing waves 
+%cells 1 and N are "ghost cells": no diffusion, apply BC using incoming/outgoing waves
 %define flux on 1 and N neglecting diffusion terms in electric field etc.
 %for cells 2:N-1, solve using SLIP scheme including diffusion terms
 
@@ -177,33 +177,33 @@ if AdaptGrid.Coeff~=0
     L=phiVec(end)-phiVec(1); %length of domain
 %     AdaptGrid.wtConst=((N-AdaptGrid.PointsAtInterface)/(AdaptGrid.PointsAtInterface))* ...
 %         Rmu*Temp*mu_c_Char/(abs(Cur)*L);
-    
+
     AdaptGrid.wtConst=(N/(AdaptGrid.PointsAtInterface))*Rmu*Temp*mu_c_Char/(abs(Cur)*L);
-       
-% %     
+
+% %
 % % % % %----------------------------
 % OUT=LinSolve(A1.a,A1.b,A1.c,B1.full*[cH',cMat],N);
-%  dcHdz=OUT(:,1); dcdzMat=OUT(:,2:Nspecies+1); 
+%  dcHdz=OUT(:,1); dcdzMat=OUT(:,2:Nspecies+1);
 %    wttt=abs([dcdzMat,dcHdz]);
 %     wtt=wttt./(ones(N,1)*max([cMat,cH'],[],1));
 %     wt_gradient=max(wtt,[],2).^(AdaptGrid.Power);
- 
+
    %weight= wt_gradient;
   %%%  fprintf('Max Weight = %g, Max J = %g\n', max(weight), max(dphidzVec) );
-% % % % %---------------------------   
+% % % % %---------------------------
 
 %%%%grid adaptation based on numerical dissipation and area variation
 
     wttt=abs(dAdzMat);
     wtt=wttt./AreaRatioCellMat; %  (ones(N,1)*max([AreaRatioCellMat.*cMat,AreaRatioCellMat(:,1).*cH'],[],1));
     wt=wtt/(max(wtt)+1);
-    
+
   wttt_ndif=[0; max(abs(CorrectedDiffEdgeMat(2:N-1,:)-CorrectedDiffEdgeMat(1:N-2,:)),[],2); 0];
   wtt_ndif=wttt_ndif/max(wttt_ndif);
   wt_ndif =wtt_ndif.^(AdaptGrid.Power);
-  
 
-weight= 0.02*wt + wt_ndif/(max(wt_ndif)) ; 
+
+weight= 0.02*wt + wt_ndif/(max(wt_ndif)) ;
 cost = dphidzVec + 0.75*weight/(sum(weight)*AdaptGrid.wtConst/N); %Here sum w/N is the characteristic vaule of w
 %fprintf('Max wt = %g, Max Weight = %g, Max J = %g, Max Cost =%g\n', max(wt), max(weight), max(dphidzVec), max(cost));
 
@@ -231,7 +231,7 @@ dphidtMat=dphidtVec*ones(1,Nspecies); %size N x Nspecies
 % If in prepare grid stage - calculate derivaties and return
 % No need to solve equations
 if PrepareGridStage
-        
+
 AreaRatioVecExtended=[AreaRatioCellVec(1); AreaRatioCellVec ; AreaRatioCellVec(end)];  % length: N+2
 dARatioVec=diff(AreaRatioVecExtended);              % length: N+1
 ALimitVec=LimiterFunc(dARatioVec(3:end,1), dARatioVec(1:end-2,1),LimiterFlag, dz); %(N-1)
@@ -244,7 +244,7 @@ dARatiodtVec(2:N-1,1) = -diff(AGridFluxEdgeVec)./dz;
 dARatiodtVec(1,1)= -AGridFluxCellVec(2,:)/dz;
 dARatiodtVec(N,1)= AGridFluxCellVec(N-1)/dz;
 
-alpTempEdgeVec = 0.5*(-dphidtVec(1:N-1,1).*AreaRatioCellVec(1:N-1,1) - dphidtVec(2:N,1).*AreaRatioCellVec(2:N,1)); 
+alpTempEdgeVec = 0.5*(-dphidtVec(1:N-1,1).*AreaRatioCellVec(1:N-1,1) - dphidtVec(2:N,1).*AreaRatioCellVec(2:N,1));
 alpVecEdge = 0.52*abs(alpTempEdgeVec);
 alpMatEdge=alpVecEdge*ones(1,Nspecies);
 
@@ -255,7 +255,7 @@ GridFluxCellMat = -AreaRatioCellMat.*dphidtMat.*cMat;
 
 dqdtMat(2:N-1,:) =  diff(-GridFluxEdgeMat -CorrectedAdFluxEdgeMat)./(dz);
 dqdtMat(1,:)= -GridFluxCellMat(2,:)/dz;
-dqdtMat(N,:)= GridFluxCellMat(N-1,:)/dz;    
+dqdtMat(N,:)= GridFluxCellMat(N-1,:)/dz;
 
 dydt=[reshape(dqdtMat,numel(dqdtMat),1);dphidtVec; dARatiodtVec];
     %tStepMat=DMat*0;
@@ -266,7 +266,7 @@ end
 
 %Grid Flux = flux due to moving grid -dphidt*c
 % GridFluxCellMat = -dphidtMat.*cMat;
-% GridFluxEdgeMat = (GridFluxCellMat(1:N-1,:)  + GridFluxCellMat(2:N,:))/2; 
+% GridFluxEdgeMat = (GridFluxCellMat(1:N-1,:)  + GridFluxCellMat(2:N,:))/2;
 
 %-----------------------
 % calculate advective flux on cell centers (size N x Nspecies)
@@ -274,7 +274,7 @@ end
 % defined on j=1:N
 %-----------------------
 
-SigMat=SigVec*ones(1, Nspecies) ;%matrix of conductivity size N x Nspecies 
+SigMat=SigVec*ones(1, Nspecies) ;%matrix of conductivity size N x Nspecies
 AdFluxCellMat=(uBulk+uCST)*cMat + muMat.*cMat*Cur./SigMat; %Cur is the total current
 
 %---------------------------------------
@@ -283,13 +283,13 @@ AdFluxCellMat=(uBulk+uCST)*cMat + muMat.*cMat*Cur./SigMat; %Cur is the total cur
 % Electrodiffusion flux = mu_i*c_i*A/sigma*(d/dx SVec) = 1/J*mu_i*c_i*A/sigma*(d/dz SVec)
 % Defined for (N-1) cell edges (j+1/2)
 %---------------------------------------
-SMat=SVec*ones(1, Nspecies); %matrix of S size N x Nspecies 
+SMat=SVec*ones(1, Nspecies); %matrix of S size N x Nspecies
 ElecDiffFactorCellMat=muMat.*cMat./SigMat;
 
 %Case 1: D_eff = (D(i+1)*A^2(i+1) + D(i)*A^2(i))/(A(i+1)*dxdz(i+1)+A(i)*dxdz(i))
 ElecDiffFactorEdgeMat=(ElecDiffFactorCellMat(1:N-1,:).*AreaRatioCellMat(1:N-1,:)./dphidzMat(1:N-1,:) + ...
     ElecDiffFactorCellMat(2:N,:).*AreaRatioCellMat(2:N,:)./dphidzMat(2:N,:))/2;
-   
+
 % %Case 2: D_eff = (D(i+1)*A^2(i+1) + D(i)*A^2(i))/(A(i+1)*dxdz(i+1)+A(i)*dxdz(i))
 % ElecDiffFactorEdgeMat=(ElecDiffFactorCellMat(1:N-1,:).*AreaRatioCellMat(1:N-1,:).^2 + ElecDiffFactorCellMat(2:N,:).*AreaRatioCellMat(2:N,:).^2)...
 %         ./(AreaRatioCellMat(1:N-1,:).*dphidzMat(1:N-1,:) + AreaRatioCellMat(2:N,:).*dphidzMat(2:N,:));
@@ -304,9 +304,9 @@ ElecDiffFluxEdgeMat=ElecDiffFactorEdgeMat.*diff(SMat)/dz; %size (N-1) x Nspecies
 %---------------------------------------
 
 MolecDiffFactorEdgeMat=(AreaRatioCellMat(1:N-1,:)./dphidzMat(1:N-1,:) + ...
-                            AreaRatioCellMat(2:N,:)./dphidzMat(2:N,:))/2; 
+                            AreaRatioCellMat(2:N,:)./dphidzMat(2:N,:))/2;
 MolecDiffFluxEdgeMat = MolecDiffFactorEdgeMat.*diff(DMat.*cMat,1)./dz; %size (N-1) x Nspecies
-                
+
 % Extend cMat to get numerical diffusivity @ boundaries
 % %--------------------------------
 % cMatExtended=[cMat(1,:); cMat;cMat(end,:)];  % length: N+2
@@ -316,7 +316,7 @@ MolecDiffFluxEdgeMat = MolecDiffFactorEdgeMat.*diff(DMat.*cMat,1)./dz; %size (N-
 % %-------------
 
 alpTempEdge = (uBulk+uCST) +  0.5*(muMat(1:N-1,:).*Cur./SigMat(1:N-1,:)+muMat(2:N,:).*Cur./SigMat(2:N,:) -...
-                        dphidtMat(1:N-1,:).*AreaRatioCellMat(1:N-1,:) - dphidtMat(2:N,:).*AreaRatioCellMat(2:N,:)); 
+                        dphidtMat(1:N-1,:).*AreaRatioCellMat(1:N-1,:) - dphidtMat(2:N,:).*AreaRatioCellMat(2:N,:));
 
 
 alpVecEdge= 0.52*(max(abs(alpTempEdge),[],2));
@@ -339,12 +339,12 @@ dARatiodtVec(2:N-1,1) = -diff(AGridFluxEdgeVec)./dz;
 dARatiodtVec(1,1)= -AGridFluxCellVec(2,:)/dz;
 dARatiodtVec(N,1)= AGridFluxCellVec(N-1)/dz;
 
-%----------------------------------  
+%----------------------------------
 
     GridFluxCellMat = -AreaRatioCellMat.*dphidtMat.*cMat;
     GridFluxEdgeMat = (GridFluxCellMat(1:N-1,:)  + GridFluxCellMat(2:N,:))/2- ...
         (cMat(1:N-1,:) + cMat(2:N,:))/2.*(AalpVec.*ACorrectedDiffEdgeVec*ones(1,Nspecies));
-    
+
 dqdtMat(2:N-1,:) =  diff(-GridFluxEdgeMat -CorrectedAdFluxEdgeMat +  MolecDiffFluxEdgeMat-ElecDiffFluxEdgeMat)./(dz);
 
 %------------ zero order extrapolation at boundaries
@@ -362,21 +362,21 @@ dqdtMat(N,:) =  (GridFluxCellMat(N-1,:) + CorrectedAdFluxEdgeMat(N-1,:) - AdFlux
 %     V1L=uBulk + uCST + muMat(IL,:).*Cur./SigVec(IL); %- alpVecEdge(1); %Q + mu*I/sigma
 %     V2L=-Cur./SigVec(IL)^2.*(cMat(IL,:).*muMat(IL,:));
 %     V3L=alphaMat(IL,:);
-% 
+%
 %     AL=diag(V1L)+V2L'*V3L;      [VAL,DAL] = eig(AL); %AL=VAL*DAL*VAL^{-1}
 %     SEigAL=real(DAL);
 %     DAL_negative=(SEigAL<0).*DAL; %diag matrix with only -ve eigenvalues
-%         
+%
 %     %for characteristics leaving the domain, compute derivatives
 %     %for characteristics enterting the domain set derivatives = 0
-%     
+%
 %     %dq/dt= V*Lambda^{-}*V^{-1}*dc/dx + dphi/dt*dc/dx
-%     dcdzL=(cMat(2,:)-cMat(1,:))/dz; 
+%     dcdzL=(cMat(2,:)-cMat(1,:))/dz;
 %     %FluxLeftBC =VAL*(DAL_negative)*(VAL\dcdzL');
 %     FluxLeftBC =VAL*(DAL_negative)*(VAL\dcdzL');
 %     dqdtMat(1,:)= -GridFluxCellMat(2,:)/dz - FluxLeftBC' + alpVecEdge(1)*dcdzL;
-   
-    
+
+
     %     Right boundary
     IR=N;
     V1R = uBulk + uCST + muMat(IR,:).*Cur./SigVec(IR); %Q + mu*I/sigma
@@ -385,12 +385,12 @@ dqdtMat(N,:) =  (GridFluxCellMat(N-1,:) + CorrectedAdFluxEdgeMat(N-1,:) - AdFlux
 
     AR=diag(V1R)+V2R'*V3R;  [VAR,DAR] = eig(AR); %AL=VAL*DAL*VAL^{-1}
     SEigAR=real(DAR);
-    DAR_positive=(SEigAR>0).*DAR;  
+    DAR_positive=(SEigAR>0).*DAR;
     %for characteristics leaving the domain, compute derivatives
     %for characteristics enterting the domain set derivatives = 0
     %dq/dt= V*Lambda^{-}*V^{-1}*dc/dx + dphi/dt*dc/dx
-    
-    dcdzR=(cMat(N,:)-cMat(N-1,:))/dz; 
+
+    dcdzR=(cMat(N,:)-cMat(N-1,:))/dz;
     FluxRightBC =VAR*(DAR_positive/VAR)*dcdzR';
     dqdtMat(N,:)= GridFluxCellMat(N-1,:)/dz - FluxRightBC' - alpVecEdge(N-1)*dcdzR;
 % % %------------------ end of boundary conditions------
@@ -402,39 +402,39 @@ dqdtMat(N,:) =  (GridFluxCellMat(N-1,:) + CorrectedAdFluxEdgeMat(N-1,:) - AdFlux
 %     V1L=uBulk + uCST + muMat(IL,:).*Cur./SigVec(IL); %- alpVecEdge(1); %Q + mu*I/sigma
 %     V2L=-Cur./SigVec(IL)^2.*(cMat(IL,:).*muMat(IL,:));
 %     V3L=alphaMat(IL,:);
-% 
+%
 %     AL=diag(V1L)+V2L'*V3L;      [VAL,DAL] = eig(AL); %AL=VAL*DAL*VAL^{-1}
 %     SEigAL=real(DAL);
 %     DAL_negative=(SEigAL<0).*DAL; %diag matrix with only -ve eigenvalues
-%         
+%
 %     %for characteristics leaving the domain, compute derivatives
 %     %for characteristics enterting the domain set derivatives = 0
-%     
+%
 %     %dq/dt= V*Lambda^{-}*V^{-1}*dc/dx + dphi/dt*dc/dx
-%     dcdzL=(cMat(2,:)-cMat(1,:))/dz; 
+%     dcdzL=(cMat(2,:)-cMat(1,:))/dz;
 %     %FluxLeftBC =VAL*(DAL_negative)*(VAL\dcdzL');
 %     FluxLeftBC =VAL*(DAL_negative)*(VAL\dcdzL');
 %     dqdtMat(1,:)= -GridFluxCellMat(2,:)/dz - FluxLeftBC' + alpVecEdge(1)*dcdzL;
-%    
-%     
+%
+%
 %     %     Right boundary
 %     IR=N;
 %     V1R = uBulk + uCST + muMat(IR,:).*Cur./SigVec(IR); %Q + mu*I/sigma
 %     V2R=-Cur./SigVec(IR)^2.*(cMat(IR,:).*muMat(IR,:));
 %     V3R=alphaMat(IR,:);
-% 
+%
 %     AR=diag(V1R)+V2R'*V3R;  [VAR,DAR] = eig(AR); %AL=VAL*DAL*VAL^{-1}
 %     SEigAR=real(DAR);
-%     DAR_positive=(SEigAR>0).*DAR;  
+%     DAR_positive=(SEigAR>0).*DAR;
 %     %for characteristics leaving the domain, compute derivatives
 %     %for characteristics enterting the domain set derivatives = 0
 %     %dq/dt= V*Lambda^{-}*V^{-1}*dc/dx + dphi/dt*dc/dx
-%     
-%     dcdzR=(cMat(N,:)-cMat(N-1,:))/dz; 
+%
+%     dcdzR=(cMat(N,:)-cMat(N-1,:))/dz;
 %     FluxRightBC =VAR*(DAR_positive/VAR)*dcdzR';
 %     dqdtMat(N,:)= GridFluxCellMat(N-1,:)/dz - FluxRightBC' - alpVecEdge(N-1)*dcdzR;
 % % % %------------------ end of boundary conditions------
-    
+
 OUT=LinSolve(A1.a,A1.b,A1.c,B1.full*[SVec],N);
 dSdzMat=OUT(:,1)*ones(1, Nspecies);
 dPotendxMat=-(Cur./AreaRatioCellMat +  dSdzMat./dphidzMat)./SigMat; %Cur is current density of ARatio=1
@@ -459,7 +459,7 @@ N=cSize(1);
 qMat=reshape(y0(1:cSize(1)*cSize(2)),cSize);
 %phi refers to the physical domain
 phiVec=y0(cSize(1)*cSize(2)+1:cSize(1)*cSize(2)+N);
-JAreaRatioCellVec=y0(cSize(1)*cSize(2)+N+1:end); 
+JAreaRatioCellVec=y0(cSize(1)*cSize(2)+N+1:end);
 
 % Additional parameters
 t0=tspan(1); tfinal=tspan(end);
@@ -494,7 +494,7 @@ muCube=repmat(reshape(muMat,[Nspecies,1,PolDeg]),[1,N,1]); %mobilities
 DCube=repmat(reshape(DMat,[Nspecies,1,PolDeg]),[1,N,1]); %diffusivities
 ValCube=repmat(reshape(ValMat,[Nspecies,1,PolDeg]),[1,N,1]); %valence
 LCube=FastRepmatColumns(reshape(LMat,[Nspecies,1,PolDeg]),N); %???
-cH=zeros(1,size(qMat,1)); %set initial [H+] = 0 
+cH=zeros(1,size(qMat,1)); %set initial [H+] = 0
 Ngrid=length(cH);
 
 % THE MAIN LOOP
@@ -509,22 +509,22 @@ while ~done
         errVec=ones(N,1); [muMat,DMat,alphaMat,betaMat]=deal([]);
         h=ones(1,N*(Nspecies+1));  %Just for initial flux calculation
         GridCost=zeros(N,1);
-        
+
         %run CalculateEquilibrium when FirstTimeFlag=1
         %otherwise run LzCalcEquilibrium inside CalcFlux
         [cizCube,cH,cHCubePower,gizCube]=CalculateEquilibrium(FirstTimeFlag,...
     cH,PMat,Q,PPrimeMat,QPrime,PolDeg,EquiPLength,N,LMat,LCube,cMat,Nspecies);
-        
+
         %Define arguments to call the CalcFlux function
         ARGS={A1,B1,A2,B2,M,Cur,AdaptGrid,FirstTimeFlag,SteadyStateFlag, PolDeg,EquiPLength,...
             LMat,LCube,muCube,ValCube,...
             DCube,N,Nspecies,zetaPot,h,DisableChemFlag,SpatialDiscFlag};
-        
+
         %call CalcFlux function
         [f0,cH,GridCost,muMat,DMat,alphaMat,betaMat,dPotendxMat,SigVec]= ...
             CalcFluxFVSlip(y0,t,cH,ARGS,GridCost,muMat,DMat,alphaMat,betaMat,CalcChemEqFlag, dz);
-     
-        
+
+
 
         % Initialize method parameters.
         if RKOrder==45,       f = zeros(neq,7);
@@ -543,11 +543,11 @@ while ~done
         h = tdir * absh;
 
         FirstTimeFlag=0; %1st step apready done so set this flag = 0
-        CalcChemEqFlag=0; %I dont want to compute chemical equilibrim for 
+        CalcChemEqFlag=0; %I dont want to compute chemical equilibrim for
                           %intermediate steps
-                          
+
     end %end of the First time's if condition
-    %could probably move this out of the loop.. 
+    %could probably move this out of the loop..
 
 
     h = min(hmax, max(hmin, h));
@@ -555,29 +555,29 @@ while ~done
         h=tfinal-t;
     end
 
-    
+
     %NOTE: Chemical equilibrium is not computed in intermediate steps
     % LOOP FOR ADVANCING ONE STEP.
     nofailed = true;                      % no failed attempts
     while true
-        
+
         ARGS={A1,B1,A2,B2,M,Cur,AdaptGrid,FirstTimeFlag,SteadyStateFlag,PolDeg,EquiPLength,...
             LMat,LCube,muCube,ValCube,...
             DCube,N,Nspecies,zetaPot,h,DisableChemFlag,SpatialDiscFlag};
-        
+
         [f(:,2),cH,GridCost,muMat,DMat,alphaMat,betaMat,dPotendxMat,SigVec]= ...
             CalcFluxFVSlip(y+h.*(f*RK_B(:,1)),t,cH,ARGS,GridCost,muMat,DMat,alphaMat,betaMat,CalcChemEqFlag, dz);
-        
+
         [f(:,3),cH,GridCost,muMat,DMat,alphaMat,betaMat,dPotendxMat,SigVec]=...
             CalcFluxFVSlip(y+h.*(f*RK_B(:,2)),t,cH,ARGS,GridCost,muMat,DMat,alphaMat,betaMat,CalcChemEqFlag, dz);
 
         if RKOrder==45
             [f(:,4),cH,GridCost,muMat,DMat,alphaMat,betaMat,dPotendxMat,SigVec]=...
                 CalcFluxFVSlip(y+h.*(f*RK_B(:,3)),t,cH,ARGS,GridCost,muMat,DMat,alphaMat,betaMat,CalcChemEqFlag, dz);
-            
+
             [f(:,5),cH,GridCost,muMat,DMat,alphaMat,betaMat,dPotendxMat,SigVec]=...
                 CalcFluxFVSlip(y+h.*(f*RK_B(:,4)),t,cH,ARGS,GridCost,muMat,DMat,alphaMat,betaMat,CalcChemEqFlag, dz);
-            
+
             [f(:,6),cH,GridCost,muMat,DMat,alphaMat,betaMat,dPotendxMat,SigVec]=...
                 CalcFluxFVSlip(y+h.*(f*RK_B(:,5)),t,cH,ARGS,GridCost,muMat,DMat,alphaMat,betaMat,CalcChemEqFlag, dz);
         end
@@ -591,7 +591,7 @@ while ~done
             ynew = y + deltay;
             [f(:,7),cH,GridCost,muMat,DMat,alphaMat,betaMat,dPotendxMat,SigVec] = ...
                 CalcFluxFVSlip(ynew,t,cH,ARGS,GridCost,muMat,DMat,alphaMat,betaMat,CalcChemEqFlag, dz);
-            
+
         elseif RKOrder==23,
             deltay=h.*(f*RK_B(:,3));
             ynew = y + deltay;
@@ -602,12 +602,12 @@ while ~done
         % Estimate the error.
             errAll= h.*abs((f * RK_E) ./ max(max(abs(y),abs(ynew)),threshold));
             errMat=reshape(errAll,[N Nspecies+2]);
-            errVec=max(errMat,[],2);           
-            err=norm(errVec);            
-            
+            errVec=max(errMat,[],2);
+            err=norm(errVec);
+
         if err < rtol                       % Successful step - go to next time step
             break;
-            
+
         else                                % Failed step - calculate new time step
             if nofailed
                 nofailed = false;
@@ -623,11 +623,11 @@ while ~done
     if (nofailed && err < 0.9*rtol)
         h=h./max(0.2,1.25*(err./rtol).^RK_pow);
     end
-    
+
     % Advance the integration one step.
     t = tnew;     y = ynew;
 
-    % This flag = 1 because, now I have completed one full time step. 
+    % This flag = 1 because, now I have completed one full time step.
     % Now to start another time step I need to compute chemical equilibrium
     % In other words, Chemical Equilibrium is computed only at the
     % beginning of time step and NOT for the intermediate time steps of
@@ -636,24 +636,24 @@ while ~done
     [f(:,1),cH,GridCost,muMat,DMat,alphaMat,betaMat,dPotendxMat,SigVec] = ...
         CalcFluxFVSlip(ynew,t,cH,ARGS,GridCost,muMat,DMat,alphaMat,betaMat,CalcChemEqFlag, dz);
 
-    %Having calculated the flux at start of timestep we don't want to 
-    %compute the equilibrium in intermediate time steps. So, set this 
+    %Having calculated the flux at start of timestep we don't want to
+    %compute the equilibrium in intermediate time steps. So, set this
     %flag = 0 again.
     CalcChemEqFlag=0;
 
-        
-   
+
+
     phiVec=y(cSize(1)*cSize(2)+1:cSize(1)*cSize(2)+N);
-    
+
     OUT=LinSolve(A1.a,A1.b,A1.c,B1.full*phiVec,N);
-    dphidzVec=OUT(:,1);  
+    dphidzVec=OUT(:,1);
 
     JAreaRatioCellVec=y(cSize(1)*cSize(2)+N+1:end);
     AreaRatioCellVec=JAreaRatioCellVec./dphidzVec;
-    
+
     qMat=reshape(y(1:cSize(1)*cSize(2)),cSize);
     cMat=qMat./(JAreaRatioCellVec*ones(1,Nspecies));
-    
+
     if PrepareGridStage
         t=0;
     end
@@ -687,9 +687,9 @@ while ~done
 
         dphidzMat=dphidzVec*ones(Nspecies,1)';
         dxMat=dz*dphidzMat;
-        
+
         % Res(Indtmp,:)=sqrt(sum((deltayReshaped).^2,1)/N);
-         Res(Indtmp,:)=max(abs(deltayReshaped(:,1:Nspecies+1)),[],1);        
+         Res(Indtmp,:)=max(abs(deltayReshaped(:,1:Nspecies+1)),[],1);
         % disp (['Res=',num2str(Res(end,:)./Res(1,:))]);
 
         tVecOut(PlotCounter)=t;
@@ -702,7 +702,7 @@ while ~done
         JAreaRatioVecAllTimes(:,PlotCounter)=JAreaRatioCellVec;
         SigVecAllTime(:,PlotCounter)=SigVec;
         pHVecAllTimes(:,PlotCounter)=-log10(cH);
-        
+
         keyIn = get(gcf, 'CurrentCharacter');
         if (Res(end,end)/Res(1,end)<0.2 && PrepareGridStage) || strcmp(keyIn,'m')
             %tic
@@ -744,7 +744,7 @@ while ~done
 
     end
 end %while over all time steps
-%comments for improvements: 
+%comments for improvements:
 %bring the first time step if() condition out of this while~done loop
 
 if SimulationStoppedFlag
@@ -752,20 +752,20 @@ if SimulationStoppedFlag
     save ([(get(handles.FilenameEdit,'String')),'at'],'Nspecies','cMat', ...
         'phiVec','L1','L2','N','t','dtInit','cMatAllTimes','tVecOut','phiVecAllTimes',....
         'uAllTimes','cH','muMat','Res','dPotendxMat', 'AreaRatioVecAllTimes', 'JAreaRatioVecAllTimes', 'SigVecAllTime', 'pHVecAllTimes');
-  
+
 % if SimulationStoppedFlag
 %     dtInit=h;
 %     [(get(handles.FilenameEdit,'String')),'at']
-%     
+%
 % %     save ([strtok(get(handles.FilenameEdit,'String'),'.'),'.mat'],'Nspecies','cMat', ...
 % %         'phiVec','L1','L2','N','t','dtInit','cMatAllTimes','tVecOut','phiVecAllTimes',....
-% %         'uAllTimes','cH','muMat','Res','dPotendxMat', 'AreaRatioVecAllTimes', 'JAreaRatioVecAllTimes', 'SigVec'); 
-    
+% %         'uAllTimes','cH','muMat','Res','dPotendxMat', 'AreaRatioVecAllTimes', 'JAreaRatioVecAllTimes', 'SigVec');
+
 end
 
 %--------------------------------------------------------------------------
 % Calculates the Flux
-% This function is called in the LocalOde45 function to compute flux 
+% This function is called in the LocalOde45 function to compute flux
 % at each time step of integration
 % at Start of every RK time steps CalcChemEqFlag = 1
 % for intermediate RK time steps CalcChemEqFlag = 0
@@ -788,7 +788,7 @@ phiVec=y0(cSize(1)*cSize(2)+1:end);
 % Solve Equilibrium
 %DisableChemFlag is only for testing some generic cases.
 %It is not actually inputed from the GUI
-if DisableChemFlag 
+if DisableChemFlag
 
     muMat=F*sum(ValCube.*muCube,3)';
     DMat=DCube(:,:,1)';
@@ -800,23 +800,23 @@ if DisableChemFlag
 else
     if CalcChemEqFlag
         [cizCube,cH,cHCubePower,gizCube]=LzCalcEquilibrium(cH,LCube,cMat, ValCube);
-        
+
         muMat=F*sum(ValCube.*muCube.*gizCube,3)';
-        DMat=sum(DCube.*gizCube,3)'; 
-        
+        DMat=sum(DCube.*gizCube,3)';
+
 %         %sieving matrix start----------------------
 %         SievingRatio1=2.5;
 %         SievingRatio2=4;
-%         SievingVec1=(1+1/SievingRatio1)/2-(1-1/SievingRatio1)/2*tanh(500*(phiVec-0.012)); 
-%         SievingVec2=(1+1/SievingRatio2)/2-(1-1/SievingRatio2)/2*tanh(500*(phiVec-0.012)); 
+%         SievingVec1=(1+1/SievingRatio1)/2-(1-1/SievingRatio1)/2*tanh(500*(phiVec-0.012));
+%         SievingVec2=(1+1/SievingRatio2)/2-(1-1/SievingRatio2)/2*tanh(500*(phiVec-0.012));
 %         muMat(:,4)=muMat( :, 4).*SievingVec1;
 %         muMat(:,5)=muMat( :, 5).*SievingVec2;
 %         DMat(:,4)=DMat( :, 4).*SievingVec1;
 %         DMat(:,5)=DMat( :, 5).*SievingVec2;
 %         %sieving matrix end----------------------
-%         
-        
- 
+%
+
+
         alphaMat=F^2*sum(ValCube.^2.*muCube.*gizCube,3)';
         betaMat=F*sum(ValCube.*DCube.*gizCube,3)';
     end
@@ -825,7 +825,7 @@ end % if CalcChemEqFlag
     % Calculate velocity (pressure driven)
     L=phiVec(end)-phiVec(1);
     uBulk = hChannel^2/(bPressure*visc*L)*(-DeltaP); %assuming constant area
-    
+
 if CalcChemEqFlag
     % Dispersion
     PeMat=uBulk*(hChannel)./DMat;                   %h=diameter  h/2=radius
@@ -851,7 +851,7 @@ end
 %gives out 1st derivatives of cH', phiVec, cMat
 %A1.a,b,c are diagonal terms, in matrices Af'=Bf
 OUT=LinSolve(A1.a,A1.b,A1.c,B1.full*[cH',phiVec,cMat],N);
-dcHdz=OUT(:,1);   dphidzVec=OUT(:,2);  dcdzMat=OUT(:,3:end);  
+dcHdz=OUT(:,1);   dphidzVec=OUT(:,2);  dcdzMat=OUT(:,3:end);
 dphidzMat=dphidzVec*ones(Nspecies,1)';
 
 if AdaptGrid.Coeff~=0
@@ -859,7 +859,7 @@ if AdaptGrid.Coeff~=0
     L=phiVec(end)-phiVec(1); %length of domain
     AdaptGrid.wtConst=((N-AdaptGrid.PointsAtInterface)/AdaptGrid.PointsAtInterface)* ...
         Rmu*Temp*mu_c_Char/(abs(Cur)*L);
-    
+
     wttt=abs([dcdzMat,dcHdz]);
     wtt=wttt./(ones(N,1)*max([cMat,cH'],[],1));
     wt=max(wtt,[],2).^(AdaptGrid.Power);
@@ -912,7 +912,7 @@ dDcdzMat=OUT(:,3+Nspecies:2+2*Nspecies);
 OUT=LinSolve(A2.a,A2.b,A2.c,B2.full*[SVec,phiVec,DMat.*cMat],N);
 d2Sdz2Vec=OUT(:,1);  d2phidz2Vec=OUT(:,2);  d2Dcdz2Mat=OUT(:,3:2+Nspecies);
 d2phidz2Mat=d2phidz2Vec*ones(Nspecies,1)';
-    
+
 % Electric potential
 dPotendzVec=-1./SigVec.*(Cur*dphidzVec+dSdzVec);
 dPotendzMat=dPotendzVec*ones(Nspecies,1)';
@@ -940,10 +940,10 @@ switch (SpatialDiscFlag)
         dfdx_UW_Mat=dfdz_UW_Mat./dphidzMat;
         %dc/dt = d^2/dx^2(D*c) + d/dx(Flux_electric) + x_t*d/dx(c)
         dcdtMat = d2Dcdx2Mat + dfdx_UW_Mat + dphidtMat.*dcdxMat; %equation (4.5) in submitted paper
-        
+
     case ('SLIP')
         LimiterFlag='minmod';        %'minmod' / 'superbee' / 'none'
-              
+
         aMat=muMat.*dPotendxMat-uCST-uBulk;
         fluxMat = aMat.*cMat;                   % size N    (with backward differencing at ends)
 
@@ -964,10 +964,10 @@ switch (SpatialDiscFlag)
         dMat=alpMat.*(dcMat(2:end-1,:)-LimitMat);
         NumFluxMat=0.5*(fluxMat(1:end-1,:)+fluxMat(2:end,:)) - dMat;
         dz=(phiVec(end)-phiVec(1))/N;
-               
+
         dcdtMat=[(fluxMat(2,:)-fluxMat(1,:))/dz;diff(NumFluxMat,[],1)/dz; ...
             (fluxMat(end,:)-fluxMat(end-1,:))/dz]./dphidzMat + dphidtMat.*dcdxMat + d2Dcdx2Mat;
-               
+
     otherwise
         dcdtMat  = d2Dcdx2Mat+dmucdxMat.*dPotendxMat+muMat.*d2Potendx2Mat.*cMat+(dphidtMat-uBulk-uCST).*dcdxMat;
 end % switch
@@ -1033,7 +1033,7 @@ SVec   = sum(betaMat'.*cMat',1)'  + Rmu*Temp*(muH*cH'*met2lit-muOH*(Kw./cH)'*met
 %  2) Could remove its call in LocalOde function then
 %  3) INP would need to be updated everytime I calculate new kPa
 %  4) INP is actually part of ARGS used in MainRun to call LocalOde45
-%  5) Would have to take INP as input of CalculateEquilibrium if I need to 
+%  5) Would have to take INP as input of CalculateEquilibrium if I need to
 %     call EquilibriumPolynomials(INP) in that function.
 %--------------------------------------------------------------------------
 function [PMat,PPrimeMat,Q,QPrime,M,zMat,muMat,KaMat,DMat]=EquilibriumPolynomials(INP)
@@ -1071,7 +1071,7 @@ for j=1:size(INP,1)
     KaList=[KaList(1:Im1),1,KaList(Ip1:end)];
     DList=[DList(1:Im1),mean(DList),DList(Ip1:end)];
 
-    
+
     zMat(j,1:length(zList))=zList;
     muMat(j,1:length(muList))=muList;
     KaMat(j,1:length(KaList))=KaList;
@@ -1142,7 +1142,7 @@ Q=sparse(Q);
 %  Using the output of EquilibriumPolynomials, i.e. P, Q etc this function
 %  a) computes C_H = [H+].
 %  b) knowing C_H and LMat, it computes g_iz
-%  Returns c_iz, c_h, g_iz 
+%  Returns c_iz, c_h, g_iz
 %--------------------------------------------------------------------------
 function [cizCube,cH,cHCubePower,gizCube]=CalculateEquilibrium(FirstTimeFlag,...
     cH,PMat,Q,PPrimeMat,QPrime,PolDeg,EquiPLength,N,LMat,LCube,cMat,Nspecies)
@@ -1218,7 +1218,7 @@ AxesData=get(handles.DataHolder,'UserData');
 if isempty(AxesData)
     L = str2num (get(handles.DomainLengthEdit,'string'));
     xVec = linspace(0,L*1e-3,N)';
-    cMat = xVec + nan; cH = xVec + nan; muMat = xVec + nan; DMat = xVec + nan; 
+    cMat = xVec + nan; cH = xVec + nan; muMat = xVec + nan; DMat = xVec + nan;
     SigVec = xVec + nan;
 else
     xVec=AxesData(:,1); cMat=AxesData(:,2:end); %earlier *met2lit;
@@ -1229,8 +1229,8 @@ t=NaN; h=NaN; err=NaN; dphidzVec=xVec+nan; dPotendxMat=xVec + nan;
 
 %%% #plotarea
 AreaFunctionText =  get(handles.AreaVariation_Edit, 'String');
-if isempty(AreaFunctionText)  
-    AreaFunctionText='@(x) 1 + 0*x'; 
+if isempty(AreaFunctionText)
+    AreaFunctionText='@(x) 1 + 0*x';
     set(handles.AreaVariation_Edit, 'String', AreaFunctionText);
 end
 try
@@ -1278,20 +1278,20 @@ switch (LimiterFlag)
     case ('superbee');
         z1(:,:,1)=2*x; z1(:,:,2)=y;
         z2(:,:,1)=x;   z2(:,:,2)=2*y;
-              
+
         m1(:,:,1)=min(abs(z1),[],3);
         m1(:,:,2)=min(abs(z2),[],3);
-        
+
         LVec=0.5*(sign(x)+sign(y)).*max(m1,[],3);
     case ('none')
         LVec=x*0;
-        
+
     case ('ELED') %q=2 gives van-leer q: power in expression of D
         q=2;
         z_xy(:,:,1)=abs(x)+abs(y)+1.0e-14; z_xy(:,:,2)=z_xy(:,:,1)*0; %+0.0*varargin{1}.^1.5;
         D=1-(abs((x-y)./max(z_xy,[],3))).^q;
         LVec=0.5*D.*(x+y);
-        
+
 end % switch
 
 function RHS=LinSolve(a,b,c,RHS,N)
@@ -1302,7 +1302,7 @@ function RHS=LinSolve(a,b,c,RHS,N)
 %     OUT=TriDiagSolve(a,b,c,RHS);
 
 %a(1)=a(1)+0.0; b(1)=b(1)+0.0; c(1)=c(1)+0.0; RHS(1)=RHS(1)+0.0; N=N+0.0;
-%b a c 
+%b a c
 if (min(b==0) && min(c==0) && min(a==1))
     OUT=RHS;
 else
@@ -1316,7 +1316,7 @@ end
 
 
 % Time stepping based on ode45
-%probably make another function LocalOde23, and remove all if conditions 
+%probably make another function LocalOde23, and remove all if conditions
 %for RK45 or RK23
 function LocalOde45(y0,tspan,ARGS)
 global Nspecies betaDispersion bPressure hChannel Ngrid
@@ -1364,7 +1364,7 @@ muCube=repmat(reshape(muMat,[Nspecies,1,PolDeg]),[1,N,1]); %mobilities
 DCube=repmat(reshape(DMat,[Nspecies,1,PolDeg]),[1,N,1]); %diffusivities
 ValCube=repmat(reshape(ValMat,[Nspecies,1,PolDeg]),[1,N,1]); %valence
 LCube=FastRepmatColumns(reshape(LMat,[Nspecies,1,PolDeg]),N); %???
-cH=zeros(1,size(cMat,1)); %set initial [H+] = 0 
+cH=zeros(1,size(cMat,1)); %set initial [H+] = 0
 Ngrid=length(cH);
 
 % THE MAIN LOOP
@@ -1379,18 +1379,18 @@ while ~done
         errVec=ones(N,1); [muMat,DMat,alphaMat,betaMat]=deal([]);
         h=ones(1,N*(Nspecies+1));  %Just for initial flux calculation
         GridCost=zeros(N,1);
-        
+
         %run CalculateEquilibrium when FirstTimeFlag=1
         %otherwise run LzCalcEquilibrium inside CalcFlux
         [cizCube,cH,cHCubePower,gizCube]=CalculateEquilibrium(FirstTimeFlag,...
     cH,PMat,Q,PPrimeMat,QPrime,PolDeg,EquiPLength,N,LMat,LCube,cMat,Nspecies);
-        
-        
+
+
         %Define arguments to call the CalcFlux function
         ARGS={A1,B1,A2,B2,M,Cur,AdaptGrid,FirstTimeFlag,SteadyStateFlag, PolDeg,EquiPLength,...
             LMat,LCube,muCube,ValCube,...
             DCube,N,Nspecies,zetaPot,h,DisableChemFlag,SpatialDiscFlag};
-        
+
         %call CalcFlux function
         [f0,cH,GridCost,muMat,DMat,alphaMat,betaMat,dPotendxMat,SigVec,dphidzVec]= ...
             CalcFlux(y0,t,cH,ARGS,GridCost,muMat,DMat,alphaMat,betaMat,CalcChemEqFlag);
@@ -1412,12 +1412,12 @@ while ~done
         h = tdir * absh;
 
         FirstTimeFlag=0; %1st step apready done so set this flag = 0
-        CalcChemEqFlag=0; %I dont want to compute chemical equilibrim for 
+        CalcChemEqFlag=0; %I dont want to compute chemical equilibrim for
                           %intermediate steps
-                          
+
     end %end of the First time's if condition
-    %could probably move this out of the loop.. 
-    %why do you want to check if it is the first time step even after 
+    %could probably move this out of the loop..
+    %why do you want to check if it is the first time step even after
     %you have computed N steps?????
 
     h = min(hmax, max(hmin, h));
@@ -1425,16 +1425,16 @@ while ~done
         h=tfinal-t;
     end
 
-    
+
     %NOTE: Chemical equilibrium is not computed in intermediate steps
     % LOOP FOR ADVANCING ONE STEP.
     nofailed = true;                      % no failed attempts
     while true
-        
+
         ARGS={A1,B1,A2,B2,M,Cur,AdaptGrid,FirstTimeFlag,SteadyStateFlag,PolDeg,EquiPLength,...
             LMat,LCube,muCube,ValCube,...
             DCube,N,Nspecies,zetaPot,h,DisableChemFlag,SpatialDiscFlag};
-        
+
         [f(:,2),cH,GridCost,muMat,DMat,alphaMat,betaMat,dPotendxMat,SigVec,dphidzVec]= ...
             CalcFlux(y+h.*(f*RK_B(:,1)),t,cH,ARGS,GridCost,muMat,DMat,alphaMat,betaMat,CalcChemEqFlag);
         [f(:,3),cH,GridCost,muMat,DMat,alphaMat,betaMat,dPotendxMat,SigVec,dphidzVec]=...
@@ -1443,10 +1443,10 @@ while ~done
         if RKOrder==45
             [f(:,4),cH,GridCost,muMat,DMat,alphaMat,betaMat,dPotendxMat,SigVec,dphidzVec]=...
                 CalcFlux(y+h.*(f*RK_B(:,3)),t,cH,ARGS,GridCost,muMat,DMat,alphaMat,betaMat,CalcChemEqFlag);
-            
+
             [f(:,5),cH,GridCost,muMat,DMat,alphaMat,betaMat,dPotendxMat,SigVec,dphidzVec]=...
                 CalcFlux(y+h.*(f*RK_B(:,4)),t,cH,ARGS,GridCost,muMat,DMat,alphaMat,betaMat,CalcChemEqFlag);
-            
+
             [f(:,6),cH,GridCost,muMat,DMat,alphaMat,betaMat,dPotendxMat,SigVec,dphidzVec]=...
                 CalcFlux(y+h.*(f*RK_B(:,5)),t,cH,ARGS,GridCost,muMat,DMat,alphaMat,betaMat,CalcChemEqFlag);
         end
@@ -1460,7 +1460,7 @@ while ~done
             ynew = y + deltay;
             [f(:,7),cH,GridCost,muMat,DMat,alphaMat,betaMat,dPotendxMat,SigVec,dphidzVec] = ...
                 CalcFlux(ynew,t,cH,ARGS,GridCost,muMat,DMat,alphaMat,betaMat,CalcChemEqFlag);
-            
+
         elseif RKOrder==23,
             deltay=h.*(f*RK_B(:,3));
             ynew = y + deltay;
@@ -1471,12 +1471,12 @@ while ~done
         % Estimate the error.
             errAll= h.*abs((f * RK_E) ./ max(max(abs(y),abs(ynew)),threshold));
             errMat=reshape(errAll,[N Nspecies+1]);
-            errVec=max(errMat,[],2);           
-            err=norm(errVec);            
-            
+            errVec=max(errMat,[],2);
+            err=norm(errVec);
+
         if err < rtol                       % Successful step - go to next time step
             break;
-            
+
         else                                % Failed step - calculate new time step
             if nofailed
                 nofailed = false;
@@ -1492,11 +1492,11 @@ while ~done
     if (nofailed && err < 0.9*rtol)
         h=h./max(0.2,1.25*(err./rtol).^RK_pow);
     end
-    
+
     % Advance the integration one step.
     t = tnew;     y = ynew;
 
-    % This flag = 1 because, now I have completed one full time step. 
+    % This flag = 1 because, now I have completed one full time step.
     % Now to start another time step I need to compute chemical equilibrium
     % In other words, Chemical Equilibrium is computed only at the
     % beginning of time step and NOT for the intermediate time steps of
@@ -1505,14 +1505,14 @@ while ~done
     [f(:,1),cH,GridCost,muMat,DMat,alphaMat,betaMat,dPotendxMat,SigVec,dphidzVec] = ...
         CalcFlux(ynew,t,cH,ARGS,GridCost,muMat,DMat,alphaMat,betaMat,CalcChemEqFlag);
 
-    %Having calculated the flux at start of timestep we don't want to 
-    %compute the equilibrium in intermediate time steps. So, set this 
+    %Having calculated the flux at start of timestep we don't want to
+    %compute the equilibrium in intermediate time steps. So, set this
     %flag = 0 again.
     CalcChemEqFlag=0;
 
     cMat=reshape(y(1:cSize(1)*cSize(2)),cSize);
     phiVec=y(cSize(1)*cSize(2)+1:end);
-      
+
     if PrepareGridStage
         t=0;
     end
@@ -1547,9 +1547,9 @@ while ~done
         dz=(phiVec(end)-phiVec(1))/N;
         dphidzMat=dphidzVec*ones(Nspecies,1)';
         dxMat=dz*dphidzMat;
-        
+
         % Res(Indtmp,:)=sqrt(sum((deltayReshaped).^2,1)/N);
-         Res(Indtmp,:)=max(abs(deltayReshaped),[],1);        
+         Res(Indtmp,:)=max(abs(deltayReshaped),[],1);
         % disp (['Res=',num2str(Res(end,:)./Res(1,:))]);
 
         tVecOut(PlotCounter)=t;
@@ -1560,7 +1560,7 @@ while ~done
         phiVecAllTimes(:,2,PlotCounter)=phiVec-uCST*t;
         SigVecAllTime(:,PlotCounter)=SigVec;
         pHVecAllTimes(:,PlotCounter)=-log10(cH);
-          
+
         keyIn = get(gcf, 'CurrentCharacter');
         if (Res(end,end)/Res(1,end)<0.2 && PrepareGridStage) || strcmp(keyIn,'m')
             %tic
@@ -1602,7 +1602,7 @@ while ~done
 
     end
 end %while over all time steps
-%comments for improvements: 
+%comments for improvements:
 %bring the first time step if() condition out of this while~done loop
 
 if SimulationStoppedFlag
@@ -1610,13 +1610,13 @@ if SimulationStoppedFlag
     save ([(get(handles.FilenameEdit,'String')),'at'],'Nspecies','cMat', ...
         'phiVec','L1','L2','N','t','dtInit','cMatAllTimes','tVecOut','phiVecAllTimes',....
         'uAllTimes','cH','muMat','dPotendxMat', 'SigVecAllTime', 'pHVecAllTimes');
-  
-    
+
+
 %     save ([strtok(get(handles.FilenameEdit,'String'),'.'),'.mat'],'Nspecies','cMat', ...
 %         'phiVec','L1','L2','N','t','dtInit','cMatAllTimes','tVecOut','phiVecAllTimes',....
 %         'uAllTimes','cH','muMat','Res','dPotendxMat');
-    
-    
+
+
 end
 
 %%original.. uses matrix operations and solves for the cH using vector
@@ -1627,7 +1627,7 @@ end
 %  Using the output of EquilibriumPolynomials, i.e. P, Q etc this function
 %  a) computes C_H = [H+].
 %  b) knowing C_H and LMat, it computes g_iz
-%  Returns c_iz, c_h, g_iz 
+%  Returns c_iz, c_h, g_iz
 %--------------------------------------------------------------------------
 function [cizCube,cH,cHCubePower,gizCube]=LzCalcEquilibrium(cH,LCube,cMat, ValCube)
 global Ngrid Nspecies PolDeg met2lit
@@ -1661,7 +1661,7 @@ gizCube=LCube.*cHCubePower.*FastRepmatPages(1./Temp,PolDeg);
 %  Using the output of EquilibriumPolynomials, i.e. P, Q etc this function
 %  a) computes C_H = [H+].
 %  b) knowing C_H and LMat, it computes g_iz
-%  Returns c_iz, c_h, g_iz 
+%  Returns c_iz, c_h, g_iz
 %--------------------------------------------------------------------------
 function F=MyLzFuncNEW(cH,LCube,cMat, ValCube)
 global Ngrid Nspecies PolDeg Kw N met2lit
@@ -1673,9 +1673,9 @@ global Ngrid Nspecies PolDeg Kw N met2lit
 %     loop over species j=1:Nspecies
 %         zList=zListArranged{j};
 %         nj=min(zList);    pj=max(zList);
-%     
+%
 %                     loop z=zList
-%                      RHS(k)=RHS(k)-z*cizcube(j,k,z-nj+1);    
+%                      RHS(k)=RHS(k)-z*cizcube(j,k,z-nj+1);
 %                     loop over z ends
 %       loop of species ends
 % loop over grid points end
@@ -1728,8 +1728,8 @@ eval(str);
 
 % Additional parameters used in time stepping etc
 normcontrol=0;
-t0=0;  
-rtol=1E-3; 
+t0=0;
+rtol=1E-3;
 atol=1E-20;
 dtMin=0; dtMax=1E5;
 dtInit=0.00001;                  % Initial Time step [sec]
@@ -1737,7 +1737,7 @@ RKOrder=23;
 DisableChemFlag=0;
 
 
-if( strcmp(SpatialDiscFlag, 'SLIP')) 
+if( strcmp(SpatialDiscFlag, 'SLIP'))
     AdaptGrid.Nconv=10;
     SmoothEps=1;
 else
@@ -1791,13 +1791,13 @@ end
 % Calcluate pressure difference in Pa
 WaterDensity = 1000; %[Kg/m^3]
 g = 9.81; % Gravity [m/s^2]
-%pressure is used in case we apply pressure gradient to study taylor 
+%pressure is used in case we apply pressure gradient to study taylor
 %dispersion etc
 DeltaP = WaterDensity*g*(Pressurehead*1E-3); % Pressure difference [N/m^2]
 
 % Resistance coefficient cannot be zero. Set DeltaP to zero to prevent
 % singularity.
-if bPressure==0 
+if bPressure==0
     bPressure=1;
     DeltaP=0;
 end
@@ -1873,21 +1873,21 @@ if( strcmp(SpatialDiscFlag, 'SLIP'))
     atol,normcontrol,RK_A,RK_B,RK_E,RK_pow,uCST,A1,B1,A2,B2,M,Cur,INP, ...
     AdaptGrid,RKOrder,SteadyStateFlag,L1,L2,zetaPot,hChannel,bPressure,DeltaP,...
     betaDispersion,Res,DisableChemFlag,SpatialDiscFlag,handles, dz};
-    
+
     %hard code LocalODE45FV for finite volume scheme with conservation variable J*A*c
     disp('Running Finite Volume SLIP Scheme');
     AreaRatioCellVec = AreaRatio; %getAreaRatio(phiVec);
     AreaRatioCellMat = AreaRatioCellVec*ones(1,Nspecies);
-    
+
 OUT=LinSolve(A1.a,A1.b,A1.c,B1.full*phiVec,N);
-dphidzVec=OUT(:,1); dphidzMat=dphidzVec*ones(Nspecies,1)'; %J=dx/dz 
-    
-    
+dphidzVec=OUT(:,1); dphidzMat=dphidzVec*ones(Nspecies,1)'; %J=dx/dz
+
+
     qMat=cMat.*AreaRatioCellMat.*dphidzMat; %here J=dx/dz=1
     cSize=size(cMat);
-    
+
     IC=[reshape(qMat,numel(cMat),1);phiVec; AreaRatioCellVec.*dphidzVec];
-    
+
     LocalOde45FV(IC,[t0 tEnd],ARGS);%pass initial condition in IC in y0
 else
     cSize=size(cMat);
@@ -1895,14 +1895,14 @@ else
     atol,normcontrol,RK_A,RK_B,RK_E,RK_pow,uCST,A1,B1,A2,B2,M,Cur,INP, ...
     AdaptGrid,RKOrder,SteadyStateFlag,L1,L2,zetaPot,hChannel,bPressure,DeltaP,...
     betaDispersion,Res,DisableChemFlag,SpatialDiscFlag,handles};
-    
+
     IC=[reshape(cMat,numel(cMat),1);phiVec];
-    
+
     if (max(abs(AreaRatio-1))>0)
     fprintf('Using constant channel cross-section\n');
-    fprintf('Variable cross-section is avialable only with SLIP scheme\n'); 
+    fprintf('Variable cross-section is avialable only with SLIP scheme\n');
     end
-   
+
     LocalOde45(IC,[t0 tEnd],ARGS);%pass initial condition in IC in y0
 end
 
@@ -1946,16 +1946,16 @@ global ColorList
         case (7) %%% #plotarea
             plot(handles.MainAxes,xVec*1E3, CrossArea/CrossArea(1),'.-');
             xlabel(handles.MainAxes,'x [mm]'); ylabel(handles.MainAxes,'Area Ratio [A/A(x=0)]');
-                        
+
     end %switch
       Voltage=trapz(xVec,dPotendx(:,1));
-   
-  
+
+
     title (handles.MainAxes,['t=',num2str(t),' s  \Deltat=',num2str(h),'s  \DeltaV = ',num2str(Voltage,4),' V  \DeltaP = ',num2str(DeltaP,4),' Pa']);
- 
+
     drawnow;
 
-    
+
     % prepares derivatives depending on the different numerical schemes
 function [A,B]=PrepareDerivMatrices(x,Order,Flag)
 
@@ -2069,13 +2069,13 @@ BackgroundVec=xVec*0+1;
 
 for ij=1:size(InputTable,1)
     INP{ij,1}=str2num(InputTable{ij,2});
-    
+
     Conc=InputTable{ij,3};
     if ~isnumeric(Conc)
         Conc=str2num(Conc);
     end
-    
-    
+
+
     switch(InputTable{ij,4})
         case('LE')
             cMat(:,ij)=Conc*LEVec;
@@ -2088,22 +2088,18 @@ for ij=1:size(InputTable,1)
     end
 end %for ij
 [cH,SigVec,muMat,DMat] = CalculateSpatialProperties(INP,N,FirstTimeFlag,cMat);
-t=NaN; h=NaN; err=NaN; dphidzVec=xVec+nan; dPotendxMat=xVec+nan; 
+t=NaN; h=NaN; err=NaN; dphidzVec=xVec+nan; dPotendxMat=xVec+nan;
 
 
 %%% #plotarea
-AreaFunctionText =  get(handles.AreaVariation_Edit, 'String');  
+AreaFunctionText =  get(handles.AreaVariation_Edit, 'String');
 if isempty(AreaFunctionText)  AreaFunctionText='@(x) 1 + 0*x'; end
-A = feval( eval(AreaFunctionText), xVec); 
+A = feval( eval(AreaFunctionText), xVec);
 AreaRatio=A./max(A);
 
-cMat=cMat*met2lit;                % Convert from mol/lit to mol/m^3  
+cMat=cMat*met2lit;                % Convert from mol/lit to mol/m^3
 PlotCurrentSelection(handles,xVec,cMat,muMat,DMat,dPotendxMat,cH,t,h,err,SigVec,dphidzVec, AreaRatio);
 set(handles.DataHolder,'UserData',[xVec,cMat]);
 set(handles.StartButton,'enable','off');
 
 %-------------------------------------------------------
-
-
-
-
