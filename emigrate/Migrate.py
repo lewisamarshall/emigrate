@@ -6,7 +6,7 @@ import scipy.integrate as integrate
 class Migrate(object):
     import constants
     from Differentiate import Differentiate
-    V = 100
+    V = .1
     E = 1
     dz = None
     z = None
@@ -17,18 +17,19 @@ class Migrate(object):
     mobility = None
     molar_conductivity = None
     j = 0
-    solution = None
+    solution = []
     solver_info = None
 
-    def __init__(self, domain, ions, concentrations):
-        self.x = np.array(domain)
+    def __init__(self, system):
+        self.x = np.array(system.domain)
         self.z = np.array(self.x[:])
         self.N = self.x.size
         self.set_dz()
-        self.ions = ions
+        self.ions = system.ions
         self.set_ion_properties()
-        self.concentrations = np.array(concentrations)
-        self.t = 0
+        self.concentrations = np.array(system.concentrations)
+        self.V = system.V
+        self.t = 0.0
         self.differ = self.Differentiate(self.N, self.dz, method='6th-Order')
 
     def first_derivative(self, x_input):
@@ -89,12 +90,23 @@ class Migrate(object):
         flux = np.ravel(self.flux(concentrations))
         return flux
 
-    def solve(self, t):
-        self.solution, self.solver_info =\
-            integrate.odeint(self.reshaped_flux,
-                             self.concentrations.flatten(),
-                             t,
-                             full_output=True)
+    def solve(self, t, method='odeint'):
+        if method == 'odeint':
+            self.solution, self.solver_info =\
+                integrate.odeint(self.reshaped_flux,
+                                 self.concentrations.flatten(),
+                                 t,
+                                 full_output=True)
+        elif method == 'rk45':
+            solver = integrate.ode(self.reshaped_flux)
+            solver.set_integrator('dopri5')
+            solver.set_initial_value(self.concentrations.flatten(), t=0)
+            for tp in t:
+                solver.integrate(tp)
+                self.solution.append(solver.y)
+                if not solver.successful():
+                    break
+
         self.solution = [sol.reshape(self.concentrations.shape)
                          for sol in self.solution]
 
