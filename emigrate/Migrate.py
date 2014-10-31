@@ -90,22 +90,35 @@ class Migrate(object):
         flux = np.ravel(self.flux(concentrations))
         return flux
 
-    def solve(self, t, method='odeint'):
-        if method == 'odeint':
-            self.solution, self.solver_info =\
-                integrate.odeint(self.reshaped_flux,
-                                 self.concentrations.flatten(),
-                                 t,
-                                 full_output=True)
+    def ode_reshaped_flux(self, t, concentrations):
+        return self.reshaped_flux(concentrations, t)
+
+    def solve(self, t, method='rk45'):
+        self.solution = []
+        solver = integrate.ode(self.ode_reshaped_flux)
+
+        if method == 'lsoda':
+            solver.set_integrator('lsoda')
+
         elif method == 'rk45':
-            solver = integrate.ode(self.reshaped_flux)
             solver.set_integrator('dopri5')
-            solver.set_initial_value(self.concentrations.flatten(), t=0)
-            for tp in t:
-                solver.integrate(tp)
-                self.solution.append(solver.y)
-                if not solver.successful():
-                    break
+
+        elif method == 'rk8(53)':
+            solver.set_integrator('dop853')
+
+        elif method == 'vode':
+            solver.set_integrator('vode')
+
+        elif method == 'zvode':
+            solver.set_integrator('zvode')
+
+        solver.set_initial_value(self.concentrations.flatten())
+        for tp in t[1:-1]:
+            solver.integrate(tp)
+            self.solution.append(solver.y)
+            if not solver.successful():
+                print 'solver failed'
+                break
 
         self.solution = [sol.reshape(self.concentrations.shape)
                          for sol in self.solution]
