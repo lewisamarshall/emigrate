@@ -1,5 +1,4 @@
 import numpy as np
-import ionize
 import scipy.integrate as integrate
 from scipy.signal import gaussian
 
@@ -21,9 +20,9 @@ class Migrate(object):
     solution = []
     solver_info = None
     pH = 7
-    self.epsilon = 0.75
-    self.Kag = 0.01
-    self.pointwave = 1
+    epsilon = 0.75
+    Kag = 0.01
+    pointwave = 1
 
     def __init__(self, system):
         self.x = np.array(system.domain)
@@ -85,7 +84,17 @@ class Migrate(object):
         return total_flux
 
     def node_flux(self, concentrations):
-        flux = -self.pointwave * self
+        flux = -self.pointwave *\
+            self.first_derivative(self.node_cost(concentrations) *
+                                  self.first_derivative(self.x))
+        flux = np.convolve(flux, gaussian(self.N/10, self.N*self.epsilon/10), 'same')
+        return flux
+
+    def node_cost(self, concentrations):
+        deriv = np.abs(self.first_derivative(concentrations))
+        cost = deriv / np.tile(np.nanmax(deriv, 1), (len(self.z), 1)).T
+        cost = np.nanmax(cost, 0) + self.Kag
+        return cost
 
     def reshaped_flux(self, concentrations, t):
         if not t == self.t:
