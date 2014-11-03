@@ -158,13 +158,13 @@ class Migrate(object):
         solver.set_initial_value(self.compose_state(self.x, self.concentrations))
         for tp in t[1:-1]:
             solver.integrate(tp)
-            self.solution.append(solver.y)
+            self.solution.append(self.decompose_state(solver.y))
             if not solver.successful():
                 print 'solver failed at time', tp
                 break
 
-        self.solution = [sol.reshape(self.concentrations.shape)
-                         for sol in self.solution]
+        # self.solution = [sol.reshape(self.concentrations.shape)
+        #                  for sol in self.solution]
 
     def calc_equilibrium(self):
         pass
