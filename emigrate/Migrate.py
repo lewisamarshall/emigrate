@@ -27,6 +27,7 @@ class Migrate(object):
     Kag = 0.01
     pointwave = 1
     t = 0
+    adaptive_grid = False
 
     def __init__(self, system):
         """Initialize with a system from the constructor class."""
@@ -81,27 +82,49 @@ class Migrate(object):
     def flux(self, concentrations):
         """Calculate the flux of chemical species."""
         self.set_E(concentrations)
-        diffusion = \
-            self.second_derivative(np.tile(self.diffusivity,
-                                           (1, len(self.z)))
-                                   * concentrations
-                                   )
-        advection = \
-            -self.first_derivative(np.tile(self.mobility,
-                                           (1, len(self.z)))
-                                   * concentrations *
-                                   self.E
-                                   )
+        if self.adaptive_grid is True:
+            diffusion = \
+                (self.second_derivative(np.tile(self.diffusivity,
+                                                (1, len(self.z)))
+                                       * concentrations) -
+                 self.first_derivative(np.tile(self.diffusivity,
+                                                (1, len(self.z)))
+                                        * concentrations) *
+                                        self.second_derivative(self.x)/
+                                        self.first_derivative(self.x))/\
+                self.first_derivative(self.x)**2
+
+            advection = \
+                -self.first_derivative(np.tile(self.mobility,
+                                               (1, len(self.z)))
+                                       * concentrations *
+                                       self.E
+                                       )
+        else:
+            diffusion = \
+                self.second_derivative(np.tile(self.diffusivity,
+                                               (1, len(self.z)))
+                                       * concentrations
+                                       )
+            advection = \
+                -self.first_derivative(np.tile(self.mobility,
+                                               (1, len(self.z)))
+                                       * concentrations *
+                                       self.E
+                                       )
 
         total_flux = diffusion + advection
         return total_flux
 
     def node_flux(self, x, concentrations):
         """Calculate the flux of nodes."""
-        flux = -self.pointwave *\
-            self.first_derivative(self.node_cost(concentrations) *
-                                  self.first_derivative(x))
-        flux = np.convolve(flux, gaussian(self.N, self.N*0.01), 'same')
+        if self.adaptive_grid is True:
+            flux = -self.pointwave *\
+                self.first_derivative(self.node_cost(concentrations) *
+                                      self.first_derivative(x))
+            flux = np.convolve(flux, gaussian(self.N, self.N*0.01), 'same')
+        else:
+            flux = np.zeros(x.shape)
         return flux
 
     def node_cost(self, concentrations):
