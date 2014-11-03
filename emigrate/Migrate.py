@@ -87,7 +87,7 @@ class Migrate(object):
         flux = -self.pointwave *\
             self.first_derivative(self.node_cost(concentrations) *
                                   self.first_derivative(self.x))
-        flux = np.convolve(flux, gaussian(self.N/10, self.N*self.epsilon/10), 'same')
+        flux = np.convolve(flux, gaussian(self.N, self.N*0.01), 'same')
         return flux
 
     def node_cost(self, concentrations):
@@ -96,19 +96,16 @@ class Migrate(object):
         cost = np.nanmax(cost, 0) + self.Kag
         return cost
 
-    def reshaped_flux(self, concentrations, t):
+    def reshaped_flux(self, t, concentrations):
         if not t == self.t:
             self.calc_equilibrium()
         concentrations = concentrations.reshape(self.concentrations.shape)
         flux = np.ravel(self.flux(concentrations))
         return flux
 
-    def ode_reshaped_flux(self, t, concentrations):
-        return self.reshaped_flux(concentrations, t)
-
     def solve(self, t, method='rk45'):
         self.solution = []
-        solver = integrate.ode(self.ode_reshaped_flux)
+        solver = integrate.ode(self.reshaped_flux)
 
         if method == 'lsoda':
             solver.set_integrator('lsoda')
