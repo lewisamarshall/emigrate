@@ -12,7 +12,6 @@ class Differentiate(object):
         self.N = N
         self.dz = dz
         self.method = method
-
         self.set_matrices()
 
     def first_derivative(self, x):
@@ -31,32 +30,32 @@ class Differentiate(object):
 
     def set_A1(self):
         if self.method == '6th-Order':
-            internal_function = [1./3., 1, 1./3.]
-            boundary_functions = [[1., 4.], [1./6., 1, 1./2.]]
+            internal_function = [1./3., 1., 1./3.]
+            boundary_functions = [[1., 4.], [1./6., 1., 1./2.]]
         elif self.method == 'dissipative':
             pass
 
         self.A1 = self.construct_matrix(boundary_functions, internal_function)
 
-    def set_A2(self):
-        if self.method == '6th-Order':
-            internal_function = [2./11., 1, 2./11.]
-            boundary_functions = [[1., 137./13.], [1./10., 1, -7./20.]]
-        elif self.method == 'dissipative':
-            pass
-
-        self.A2 = self.construct_matrix(boundary_functions, internal_function)
-
     def set_B1(self):
         if self.method == '6th-Order':
             internal_function = [-1./36., -14./18., 0., 14./18., 1./36.]
-            boundary_functions = [[-37./12, 2./3., 3., -2./3., 1./12.],
+            boundary_functions = [[-37./12., 2./3., 3., -2./3., 1./12.],
                                   [-10./18., -1./2., 1., 1./18.]]
         elif self.method == 'dissipative':
             pass
 
-        self.B1 = self.construct_matrix(boundary_functions, internal_function)
+        self.B1 = self.construct_matrix(boundary_functions, internal_function, True)
         self.B1 /= self.dz
+
+    def set_A2(self):
+        if self.method == '6th-Order':
+            internal_function = [2./11., 1., 2./11.]
+            boundary_functions = [[1., 137./13.], [1./10., 1., -7./20.]]
+        elif self.method == 'dissipative':
+            pass
+
+        self.A2 = self.construct_matrix(boundary_functions, internal_function)
 
     def set_B2(self):
         if self.method == '6th-Order':
@@ -67,10 +66,10 @@ class Differentiate(object):
         elif self.method == 'dissipative':
             pass
 
-        self.B2 = self.construct_matrix(boundary_functions, internal_function)
+        self.B2 = self.construct_matrix(boundary_functions, internal_function, False)
         self.B2 /= self.dz**2
 
-    def construct_matrix(self, boundary_functions, internal_function):
+    def construct_matrix(self, boundary_functions, internal_function, invert=False):
         N = self.N
         l = len(internal_function)
         construct = [[0]*i + internal_function + [0] * (N-i+1) for i in range(N)]
@@ -81,15 +80,19 @@ class Differentiate(object):
         boundary_functions[1].reverse()
         construct[-1, :] = [0] * (N - len(boundary_functions[0])) + boundary_functions[0]
         construct[-2, :] = [0] * (N - len(boundary_functions[1])) + boundary_functions[1]
+        if invert == True:
+            construct[-2:,:] = -construct[-2:,:]
         return construct
 
 if __name__ == '__main__':
     from scipy.special import erf
     from matplotlib import pyplot as plot
-    N = 50
+    N = 30
     z = np.linspace(-1, 1, N)
     x = np.array([erf(z*3), erf(z*2)])
-    my_diff = differentiator(N, 1, method='6th-Order')
+    my_diff = Differentiate(N, 1, method='6th-Order')
+    print my_diff.A1, '\n'
+    print my_diff.B1
 
     if False:
         plot.plot(z, x)
@@ -100,6 +103,6 @@ if __name__ == '__main__':
         d2 = my_diff.second_derivative(x.T)
 
     if True:
-        plot.plot(z, np.ravel(x[0,:]))
+        # plot.plot(z, np.ravel(x[0,:]))
         plot.plot(z, np.ravel(d2[:,0]))
         plot.show()
