@@ -27,7 +27,7 @@ class Migrate(object):
     Kag = 0.01
     pointwave = .5
     t = 0
-    adaptive_grid = True
+    adaptive_grid = False
 
     def __init__(self, system):
         """Initialize with a system from the constructor class."""
