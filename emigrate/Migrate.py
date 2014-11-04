@@ -1,3 +1,5 @@
+"""An electrophoresis solver."""
+
 import numpy as np
 import scipy.integrate as integrate
 from scipy.signal import gaussian
