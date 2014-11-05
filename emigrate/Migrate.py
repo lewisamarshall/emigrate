@@ -88,7 +88,7 @@ class Migrate(object):
         self.set_current(concentrations)
         self.E = self.j/self.conductivity(concentrations)
         if self.adaptive_grid is True:
-            self.E = self.E # * self.first_derivative(self.x)
+            self.E = self.E * self.first_derivative(self.x)
 
     def flux(self):
         """Calculate the flux of chemical species."""
