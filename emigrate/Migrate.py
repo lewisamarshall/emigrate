@@ -27,8 +27,8 @@ class Migrate(object):
     solver_info = None
     pH = 7
     epsilon = 0.75
-    Kag = 0.01
-    pointwave = .5
+    Kag = 0.02
+    pointwave = 1e-7
     t = 0
     adaptive_grid = True
     calls = 0
@@ -85,8 +85,8 @@ class Migrate(object):
 
     def set_E(self, concentrations):
         """Calculate the electric field at each node."""
-        self.set_current(concentrations)
-        self.E = self.j/self.conductivity(concentrations)
+        self.set_current(self.concentrations)
+        self.E = self.j/self.conductivity(self.concentrations)
         if self.adaptive_grid is True:
             self.E = self.E * self.first_derivative(self.x)
 
@@ -107,16 +107,9 @@ class Migrate(object):
                     self.tile_m(self.E)
             advection /= -self.tile_m(self.xz**2)
 
+            node_movement = self.tile_m(self.node_flux() / self.xz) * \
+                self.first_derivative(self.concentrations)
 
-            # advection = np.tile(self.mobility, (1, len(self.z)))*self.concentrations
-            # advection *= np.tile(self.first_derivative(self.E) - \
-            #              self.second_derivative(self.x) / \
-            #              self.first_derivative(self.x) * \
-            #              self.E, (self.M, 1))
-            # advection += self.first_derivative(np.tile(self.mobility, (1, len(self.z)))*self.concentrations) *\
-            #              np.tile(self.E, (self.M, 1))
-            #
-            # advection /= -self.first_derivative(self.x)**2
         else:
             diffusion = \
                 self.second_derivative(np.tile(self.diffusivity,
@@ -129,8 +122,9 @@ class Migrate(object):
                                        * self.concentrations *
                                        self.E
                                        )
+            node_movement = 0
 
-        total_flux = diffusion + advection
+        total_flux = diffusion + advection + node_movement
         return total_flux
 
     def node_flux(self):
