@@ -27,11 +27,12 @@ class Migrate(object):
     solver_info = None
     pH = 7
     epsilon = 0.75
-    Kag = 0.02
-    pointwave = 1e-7
+    Kag = 0.01
+    pointwave = 1e-5
     t = 0
     adaptive_grid = True
     calls = 0
+    u = 0
 
     def __init__(self, system):
         """Initialize with a system from the constructor class."""
@@ -42,7 +43,8 @@ class Migrate(object):
         self.ions = system.ions
         self.M = len(self.ions)
         self.set_ion_properties()
-        self.concentrations = np.array(system.concentrations)
+        self.initial_concentrations = np.array(system.concentrations)
+        self.concentrations = self.initial_concentrations
         self.V = system.V
         self.t = 0.0
         self.differ = self.Differentiate(self.N, self.dz, method='6th-Order')
@@ -107,7 +109,7 @@ class Migrate(object):
                     self.tile_m(self.E)
             advection /= self.tile_m(self.xz**2)
 
-            node_movement = self.tile_m(self.node_flux() / self.xz) * \
+            node_movement = self.tile_m((self.node_flux()-self.u) / self.xz) * \
                 self.first_derivative(self.concentrations)
 
         else:
@@ -122,9 +124,11 @@ class Migrate(object):
                                        * self.concentrations *
                                        self.E
                                        )
-            node_movement = 0
+            node_movement = self.first_derivative(-self.u * self.concentrations)
 
         total_flux = diffusion + advection + node_movement
+        # total_flux[:, -1] *= 0
+        # total_flux[:, 0] *= 0
         return total_flux
 
     def node_flux(self):
@@ -134,7 +138,7 @@ class Migrate(object):
                 self.first_derivative(self.node_cost() *
                                       self.first_derivative(self.x))
             flux = np.convolve(flux, gaussian(self.N, self.N*0.1), 'same')
-            flux[0,] = flux[-1,] = 0
+            flux[0, ] = flux[-1, ] = 0
         else:
             flux = np.zeros(self.x.shape)
         return flux
@@ -215,13 +219,14 @@ class Migrate(object):
             solver.set_integrator('zvode')
 
         solver.set_solout(self.write_solution)
-        solver.set_initial_value(self.compose_state(self.x, self.concentrations))
+        self.x = self.z
+        solver.set_initial_value(self.compose_state(self.x, self.initial_concentrations))
 
         for tp in t[1:-1]:
             solver.integrate(tp)
             self.write_solution(solver.t, solver.y, False)
             if not solver.successful():
-                print 'solver failed at time', tp
+                print 'solver failed at time', solver.t
                 break
 
     def calc_equilibrium(self):
