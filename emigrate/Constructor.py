@@ -25,8 +25,8 @@ class Constructor(object):
 
     def create_domain(self):
         if self.domain_mode == 'centered':
-            self.domain = np.linspace(-self.domain_length/.2,
-                                      self.domain_length/.2,
+            self.domain = np.linspace(-self.domain_length/2.,
+                                      self.domain_length/2.,
                                       self.nodes)
 
         elif self.domain_mode == 'left':
