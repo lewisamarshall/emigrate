@@ -197,7 +197,7 @@ class Migrate(object):
             self.full_solution.append([t, x, concentrations])
         return None
 
-    def solve(self, t, method='rk45'):
+    def solve(self, tmax, dt=1, method='rk45'):
         """Solve for a series of time points using an ODE solver."""
         self.solution = []
         self.full_solution = []
@@ -222,12 +222,16 @@ class Migrate(object):
         self.x = self.z
         solver.set_initial_value(self.compose_state(self.x, self.initial_concentrations))
 
-        for tp in t[1:-1]:
-            solver.integrate(tp)
+        while solver.successful() and solver.t < tmax:
+            tnew = solver.t + dt
+            if tnew > tmax:
+                tnew = tmax
+            solver.integrate(tnew)
             self.write_solution(solver.t, solver.y, False)
-            if not solver.successful():
-                print 'solver failed at time', solver.t
-                break
+
+        if not solver.successful():
+            print 'solver failed at time', solver.t
+
 
     def calc_equilibrium(self):
         pass
