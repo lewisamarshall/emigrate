@@ -218,8 +218,9 @@ class Migrate(object):
         elif method == 'zvode':
             solver.set_integrator('zvode')
 
-        solver.set_solout(self.write_solution)
-        self.x = self.z
+        if method in ['rk45', 'rk8']:
+            solver.set_solout(self.write_solution)
+        self.x = self.z[:]
         solver.set_initial_value(self.compose_state(self.x, self.initial_concentrations))
 
         while solver.successful() and solver.t < tmax:
