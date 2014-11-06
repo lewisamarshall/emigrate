@@ -86,7 +86,7 @@ class Migrate(object):
     def set_E(self, concentrations):
         """Calculate the electric field at each node."""
         self.set_current(self.concentrations)
-        self.E = self.j/self.conductivity(self.concentrations)
+        self.E = -self.j/self.conductivity(self.concentrations)
         if self.adaptive_grid is True:
             self.E = self.E * self.first_derivative(self.x)
 
@@ -102,10 +102,10 @@ class Migrate(object):
 
             advection = (self.tile_n(self.mobility) * self.concentrations) *\
                 self.tile_m(self.first_derivative(self.E) -
-                    (self.xzz/self.x) * self.E) + self.first_derivative(
+                    (self.xzz/self.xz) * self.E) + self.first_derivative(
                     (self.tile_n(self.mobility) * self.concentrations)) *\
                     self.tile_m(self.E)
-            advection /= -self.tile_m(self.xz**2)
+            advection /= self.tile_m(self.xz**2)
 
             node_movement = self.tile_m(self.node_flux() / self.xz) * \
                 self.first_derivative(self.concentrations)
@@ -117,7 +117,7 @@ class Migrate(object):
                                        * self.concentrations
                                        )
             advection = \
-                -self.first_derivative(np.tile(self.mobility,
+                self.first_derivative(np.tile(self.mobility,
                                                (1, len(self.z)))
                                        * self.concentrations *
                                        self.E
