@@ -3,6 +3,7 @@
 import numpy as np
 import scipy.integrate as integrate
 from scipy.signal import gaussian
+from collections import OrderedDict
 
 
 class Migrate(object):
@@ -23,7 +24,9 @@ class Migrate(object):
     molar_conductivity = None
     j = 0
     solution = []
+    solution_dict = OrderedDict()
     full_solution = []
+    full_solution_dict = OrderedDict()
     solver_info = None
     pH = 7
     epsilon = 0.75
@@ -129,6 +132,7 @@ class Migrate(object):
         total_flux = diffusion + advection + node_movement
         # total_flux[:, -1] *= 0
         # total_flux[:, 0] *= 0
+
         return total_flux
 
     def node_flux(self):
@@ -188,13 +192,21 @@ class Migrate(object):
     def tile_n(self, tileable):
         return np.tile(tileable, (1, self.N))
 
-    def write_solution(self, t, state, full=True):
+    def write_solution(self, t, state, full=True, use_dict=True):
         """Write the current state to solutions."""
         (x, concentrations) = self.decompose_state(state)
         if full is False:
             self.solution.append([t, x, concentrations])
         else:
             self.full_solution.append([t, x, concentrations])
+
+        if use_dict:
+            if full:
+                if t not in self.full_solution_dict.keys():
+                    self.full_solution_dict[t] = (x, concentrations)
+            else:
+                if t not in self.solution_dict.keys():
+                    self.solution_dict[t] = (x, concentrations)
         return None
 
     def solve(self, tmax, dt=1, method='rk45'):
