@@ -1,5 +1,5 @@
 """An electrophoresis solver."""
-
+# pylint: disable=W0212
 import numpy as np
 import scipy.integrate as integrate
 from scipy.signal import gaussian
@@ -30,12 +30,14 @@ class Migrate(object):
     solver_info = None
     pH = 7
     epsilon = 0.75
+    NI = 10
     Kag = 0.01
-    pointwave = 1e-5
+    pointwave = 1e-4
     t = 0
     adaptive_grid = True
     calls = 0
     u = 0
+    N_window = 10
 
     def __init__(self, system):
         """Initialize with a system from the constructor class."""
@@ -141,7 +143,11 @@ class Migrate(object):
             flux = self.pointwave *\
                 self.first_derivative(self.node_cost() *
                                       self.first_derivative(self.x))
-            flux = np.convolve(flux, gaussian(self.N, self.N*0.1), 'same')
+            if False:
+                window = gaussian(self.N, self.N*0.1)
+            else:
+                window = np.bartlett(self.N_window)
+            flux = np.convolve(flux, window, 'same')
             flux[0, ] = flux[-1, ] = 0
         else:
             flux = np.zeros(self.x.shape)
@@ -232,6 +238,7 @@ class Migrate(object):
 
         if solver._integrator.supports_solout:
             solver.set_solout(self.write_solution)
+
         self.x = self.z[:]
         solver.set_initial_value(self.compose_state(self.x, self.initial_concentrations))
 
@@ -244,6 +251,8 @@ class Migrate(object):
 
         if not solver.successful():
             print 'solver failed at time', solver.t
+        else:
+            (self.x, self.concentrations) = self.decompose_state(solver.y)
 
 
     def calc_equilibrium(self):
