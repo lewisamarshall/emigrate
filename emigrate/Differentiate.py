@@ -9,8 +9,10 @@ class Differentiate(object):
     """Take derivatives quickly."""
 
     A1 = None
+    fA1 = None
     B1 = None
     A2 = None
+    fA2 = None
     B2 = None
     sparse = True
     factorized = True
@@ -63,7 +65,6 @@ class Differentiate(object):
         elif self.method == 'dissipative':
             self.A1 = sp.csc_matrix(np.identity(self.N))
 
-
     def set_B1(self):
         """Setup for B1."""
         if self.method == '6th-Order':
@@ -86,19 +87,20 @@ class Differentiate(object):
         if self.method == '6th-Order':
             internal_function = [2./11., 1., 2./11.]
             boundary_functions = [[1., 137./13.], [1./10., 1., -7./20.]]
-            self.A2 = self.construct_matrix(boundary_functions, internal_function)
+            self.A2 = self.construct_matrix(boundary_functions,
+                                            internal_function)
         elif self.method == 'dissipative':
             self.A2 = sp.csc_matrix(np.identity(self.N))
-
 
     def set_B2(self):
         """Setup for B2."""
         if self.method == '6th-Order':
             internal_function = \
                 [3./44., 12./11., -6./44.-24./11., 12./11., 3./44.]
-            boundary_functions = [[1955./156., -4057./156., 1117./78., -55./78., -29./156., 7./156.],
+            boundary_functions = [[1955./156., -4057./156., 1117./78.,
+                                   -55./78., -29./156., 7./156.],
                                   [99./80., -3., 93./40., -3./5., 3./80]]
-                                  # note typo in paper saying -3/80
+            # note typo in paper saying -3/80
         elif self.method == 'dissipative':
             internal_function = [1, -2, 1]
             boundary_functions = [[1, -2, 1]]
@@ -122,22 +124,7 @@ class Differentiate(object):
             func.reverse()
             if invert is True:
                 func = [-i for i in func]
-            construct[-1-idx, :] =  [0] * (N - len(func)) + func
-
-        # construct[0, :] = boundary_functions[0] + \
-        #     [0] * (N - len(boundary_functions[0]))
-        # construct[1, :] = boundary_functions[1] + \
-        #     [0] * (N - len(boundary_functions[1]))
-        # boundary_functions[0].reverse()
-        # boundary_functions[1].reverse()
-        # construct[-1, :] = [0] * (N - len(boundary_functions[0])) + \
-        #     boundary_functions[0]
-        # construct[-2, :] = [0] * (N - len(boundary_functions[1])) + \
-        #     boundary_functions[1]
-        #
-        #
-        # if invert is True:
-        #     construct[-2:, :] = -construct[-2:, :]
+            construct[-1-idx, :] = [0] * (N - len(func)) + func
 
         if self.sparse is True:
             construct = sp.csc_matrix(construct)
@@ -149,22 +136,22 @@ if __name__ == '__main__':
     from matplotlib import pyplot as plot
     Nt = 30
     z = np.linspace(-1, 1, Nt)
-    x = np.array([erf(z*3), erf(z*2)])
+    test_functions = np.array([erf(z*3), erf(z*2)])
     my_diff = Differentiate(Nt, 1, method='6th-Order')
     # my_diff = Differentiate(Nt, 1, method='dissipative')
     print my_diff.A1.todense(), '\n'
     print my_diff.B1.todense()
 
     if False:
-        plot.plot(z, x)
+        plot.plot(z, test_functions)
         plot.show()
 
     if True:
-        d1 = my_diff.first_derivative(x.T)
-        d2 = my_diff.second_derivative(x.T)
+        d1 = my_diff.first_derivative(test_functions.T)
+        d2 = my_diff.second_derivative(test_functions.T)
 
     if True:
-        # plot.plot(z, np.ravel(x[0,:]))
+        # plot.plot(z, np.ravel(test_functions[0,:]))
         plot.plot(z, np.ravel(d2[:, 0]))
         plot.plot(z, np.ravel(d2[:, 1]))
         plot.plot(z, np.ravel(d1[:, 0]))
