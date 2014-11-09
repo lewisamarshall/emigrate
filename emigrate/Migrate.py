@@ -32,12 +32,13 @@ class Migrate(object):
     epsilon = 0.75
     NI = 10
     Kag = 0.01
-    pointwave = 1e-4
+    pointwave = 1e-5
     t = 0
     adaptive_grid = True
     calls = 0
     u = 0
-    N_window = 10
+    N_window = 20
+    Vthermal = .025
 
     def __init__(self, system):
         """Initialize with a system from the constructor class."""
@@ -54,6 +55,7 @@ class Migrate(object):
         self.t = 0.0
         self.differ = self.Differentiate(self.N, self.dz, method='6th-Order')
         self.differ_dissipative = self.Differentiate(self.N, self.dz, method='dissipative')
+        self.set_Kag()
 
     def first_derivative(self, x_input, mode='compact'):
         """Calculate the first derivative with respect to z."""
@@ -81,6 +83,9 @@ class Migrate(object):
     def set_dz(self):
         """Set spatial step size in the z domain."""
         self.dz = self.z[1]-self.z[0]
+
+    def set_Kag(self):
+        self.Kag = ((self.N-self.NI)/self.NI) * self.Vthermal / self.V
 
     def set_current(self, concentrations):
         """Calculate the current based on a fixed voltage drop."""
@@ -139,8 +144,7 @@ class Migrate(object):
             node_movement = self.first_derivative(-self.u * self.concentrations)
 
         total_flux = diffusion + advection + node_movement
-        # total_flux[:, -1] *= 0
-        # total_flux[:, 0] *= 0
+
 
         return total_flux
 
