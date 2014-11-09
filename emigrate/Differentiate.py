@@ -59,10 +59,10 @@ class Differentiate(object):
         if self.method == '6th-Order':
             internal_function = [1./3., 1., 1./3.]
             boundary_functions = [[1., 4.], [1./6., 1., 1./2.]]
+            self.A1 = self.construct_matrix(boundary_functions, internal_function)
         elif self.method == 'dissipative':
-            pass
+            self.A1 = sp.csc_matrix(np.identity(self.N))
 
-        self.A1 = self.construct_matrix(boundary_functions, internal_function)
 
     def set_B1(self):
         """Setup for B1."""
@@ -70,12 +70,15 @@ class Differentiate(object):
             internal_function = [-1./36., -14./18., 0., 14./18., 1./36.]
             boundary_functions = [[-37./12., 2./3., 3., -2./3., 1./12.],
                                   [-10./18., -1./2., 1., 1./18.]]
+            flag = True
         elif self.method == 'dissipative':
-            pass
+            internal_function = [-1./2., 0, 1./2.]
+            boundary_functions = [[-1, 1]]
+            flag = True
 
         self.B1 = self.construct_matrix(boundary_functions,
                                         internal_function,
-                                        True)
+                                        flag)
         self.B1 /= self.dz
 
     def set_A2(self):
@@ -83,10 +86,10 @@ class Differentiate(object):
         if self.method == '6th-Order':
             internal_function = [2./11., 1., 2./11.]
             boundary_functions = [[1., 137./13.], [1./10., 1., -7./20.]]
+            self.A2 = self.construct_matrix(boundary_functions, internal_function)
         elif self.method == 'dissipative':
-            pass
+            self.A2 = sp.csc_matrix(np.identity(self.N))
 
-        self.A2 = self.construct_matrix(boundary_functions, internal_function)
 
     def set_B2(self):
         """Setup for B2."""
@@ -97,7 +100,8 @@ class Differentiate(object):
                                   [99./80., -3., 93./40., -3./5., 3./80]]
                                   # note typo in paper saying -3/80
         elif self.method == 'dissipative':
-            pass
+            internal_function = [1, -2, 1]
+            boundary_functions = [[1, -2, 1]]
 
         self.B2 = self.construct_matrix(boundary_functions,
                                         internal_function,
@@ -112,18 +116,28 @@ class Differentiate(object):
         construct = [[0]*i + internal_function +
                      [0] * (N-i+1) for i in range(N)]
         construct = np.array(construct)[:, (l-1.)/2.:-(l+3.)/2.]
-        construct[0, :] = boundary_functions[0] + \
-            [0] * (N - len(boundary_functions[0]))
-        construct[1, :] = boundary_functions[1] + \
-            [0] * (N - len(boundary_functions[1]))
-        boundary_functions[0].reverse()
-        boundary_functions[1].reverse()
-        construct[-1, :] = [0] * (N - len(boundary_functions[0])) + \
-            boundary_functions[0]
-        construct[-2, :] = [0] * (N - len(boundary_functions[1])) + \
-            boundary_functions[1]
-        if invert is True:
-            construct[-2:, :] = -construct[-2:, :]
+
+        for idx, func in enumerate(boundary_functions):
+            construct[idx, :] = func + [0] * (N - len(func))
+            func.reverse()
+            if invert is True:
+                func = [-i for i in func]
+            construct[-1-idx, :] =  [0] * (N - len(func)) + func
+
+        # construct[0, :] = boundary_functions[0] + \
+        #     [0] * (N - len(boundary_functions[0]))
+        # construct[1, :] = boundary_functions[1] + \
+        #     [0] * (N - len(boundary_functions[1]))
+        # boundary_functions[0].reverse()
+        # boundary_functions[1].reverse()
+        # construct[-1, :] = [0] * (N - len(boundary_functions[0])) + \
+        #     boundary_functions[0]
+        # construct[-2, :] = [0] * (N - len(boundary_functions[1])) + \
+        #     boundary_functions[1]
+        #
+        #
+        # if invert is True:
+        #     construct[-2:, :] = -construct[-2:, :]
 
         if self.sparse is True:
             construct = sp.csc_matrix(construct)
@@ -137,8 +151,9 @@ if __name__ == '__main__':
     z = np.linspace(-1, 1, Nt)
     x = np.array([erf(z*3), erf(z*2)])
     my_diff = Differentiate(Nt, 1, method='6th-Order')
-    # print my_diff.A1, '\n'
-    # print my_diff.B1
+    # my_diff = Differentiate(Nt, 1, method='dissipative')
+    print my_diff.A1.todense(), '\n'
+    print my_diff.B1.todense()
 
     if False:
         plot.plot(z, x)

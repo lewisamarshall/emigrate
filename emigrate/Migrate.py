@@ -53,14 +53,21 @@ class Migrate(object):
         self.V = system.V
         self.t = 0.0
         self.differ = self.Differentiate(self.N, self.dz, method='6th-Order')
+        self.differ_dissipative = self.Differentiate(self.N, self.dz, method='dissipative')
 
-    def first_derivative(self, x_input):
+    def first_derivative(self, x_input, mode='compact'):
         """Calculate the first derivative with respect to z."""
-        return self.differ.first_derivative(x_input.T).T
+        if mode == 'compact':
+            return self.differ.first_derivative(x_input.T).T
+        else:
+            return self.differ_dissipative.first_derivative(x_input.T).T
 
-    def second_derivative(self, x_input):
+    def second_derivative(self, x_input, mode='compact'):
         """Calculate the second derivative with respect to z."""
-        return self.differ.second_derivative(x_input.T).T
+        if mode == 'compact':
+            return self.differ.second_derivative(x_input.T).T
+        else:
+            return self.differ_dissipative.second_derivative(x_input.T).T
 
     def set_ion_properties(self):
         """Set the properties of ions in the system."""
@@ -142,7 +149,7 @@ class Migrate(object):
         if self.adaptive_grid is True:
             flux = self.pointwave *\
                 self.first_derivative(self.node_cost() *
-                                      self.first_derivative(self.x))
+                                      self.first_derivative(self.x), mode=2)
             if False:
                 window = gaussian(self.N, self.N*0.1)
             else:
