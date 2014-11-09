@@ -149,7 +149,7 @@ class Migrate(object):
         if self.adaptive_grid is True:
             flux = self.pointwave *\
                 self.first_derivative(self.node_cost() *
-                                      self.first_derivative(self.x), mode=2)
+                                      self.first_derivative(self.x))
             if False:
                 window = gaussian(self.N, self.N*0.1)
             else:
