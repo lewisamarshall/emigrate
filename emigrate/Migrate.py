@@ -23,10 +23,8 @@ class Migrate(object):
     mobility = None
     molar_conductivity = None
     j = 0
-    solution = []
-    solution_dict = OrderedDict()
-    full_solution = []
-    full_solution_dict = OrderedDict()
+    solution = OrderedDict()
+    full_solution = OrderedDict()
     solver_info = None
     pH = 7
     epsilon = 0.75
@@ -39,6 +37,7 @@ class Migrate(object):
     u = 0
     N_window = 20
     Vthermal = .025
+    alpha = None
 
     def __init__(self, system):
         """Initialize with a system from the constructor class."""
@@ -86,6 +85,9 @@ class Migrate(object):
 
     def set_Kag(self):
         self.Kag = ((self.N-self.NI)/self.NI) * self.Vthermal / self.V
+
+    def set_alpha(self):
+        pass
 
     def set_current(self, concentrations):
         """Calculate the current based on a fixed voltage drop."""
@@ -161,10 +163,7 @@ class Migrate(object):
             flux = self.pointwave *\
                 self.first_derivative(self.node_cost() *
                                       self.first_derivative(self.x))
-            if False:
-                window = gaussian(self.N, self.N*0.1)
-            else:
-                window = np.bartlett(self.N_window)
+            window = np.bartlett(self.N_window)
             flux = np.convolve(flux, window, 'same')
             flux[0, ] = flux[-1, ] = 0
         else:
@@ -207,8 +206,6 @@ class Migrate(object):
     def set_derivatives(self):
         self.xz = self.first_derivative(self.x)
         self.xzz = self.second_derivative(self.x)
-        # self.phiz =
-        # self.phizz =
 
     def tile_m(self, tileable):
         return np.tile(tileable, (self.M, 1))
@@ -216,48 +213,30 @@ class Migrate(object):
     def tile_n(self, tileable):
         return np.tile(tileable, (1, self.N))
 
-    def write_solution(self, t, state, full=True, use_dict=True):
+    def write_solution(self, t, state, full=True):
         """Write the current state to solutions."""
         (x, concentrations) = self.decompose_state(state)
-        if full is False:
-            self.solution.append([t, x, concentrations])
-        else:
-            self.full_solution.append([t, x, concentrations])
 
         if use_dict:
             if full:
-                if t not in self.full_solution_dict.keys():
-                    self.full_solution_dict[t] = (x, concentrations)
+                if t not in self.full_solution.keys():
+                    self.full_solution[t] = (x, concentrations)
             else:
-                if t not in self.solution_dict.keys():
-                    self.solution_dict[t] = (x, concentrations)
-        return None
+                if t not in self.solution.keys():
+                    self.solution[t] = (x, concentrations)
 
-    def solve(self, tmax, dt=1, method='rk45'):
+    def solve(self, tmax, dt=1, method='dopri5'):
         """Solve for a series of time points using an ODE solver."""
-        self.solution = []
-        self.full_solution = []
+        self.solution = OrderedDict()
+        self.full_solution = OrderedDict()
+        self.x = self.z[:]
+
         solver = integrate.ode(self.reshaped_flux)
 
-        if method == 'lsoda':
-            solver.set_integrator('lsoda')
-
-        elif method == 'rk45':
-            solver.set_integrator('dopri5')
-
-        elif method == 'rk8':
-            solver.set_integrator('dop853')
-
-        elif method == 'vode':
-            solver.set_integrator('vode')
-
-        elif method == 'zvode':
-            solver.set_integrator('zvode')
-
+        solver.set_integrator(method)
         if solver._integrator.supports_solout:
-            solver.set_solout(self.write_solution)
+            solver.set_solout(self.solout)
 
-        self.x = self.z[:]
         solver.set_initial_value(self.compose_state(self.x, self.initial_concentrations))
 
         while solver.successful() and solver.t < tmax:
@@ -272,6 +251,9 @@ class Migrate(object):
         else:
             (self.x, self.concentrations) = self.decompose_state(solver.y)
 
+    def solout(self, t, state):
+        self.write_solution(t, state)
+        self.calc_equilibrium()
 
     def calc_equilibrium(self):
         pass
