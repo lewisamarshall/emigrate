@@ -217,13 +217,12 @@ class Migrate(object):
         """Write the current state to solutions."""
         (x, concentrations) = self.decompose_state(state)
 
-        if use_dict:
-            if full:
-                if t not in self.full_solution.keys():
-                    self.full_solution[t] = (x, concentrations)
-            else:
-                if t not in self.solution.keys():
-                    self.solution[t] = (x, concentrations)
+        if full:
+            if t not in self.full_solution.keys():
+                self.full_solution[t] = (x, concentrations)
+        else:
+            if t not in self.solution.keys():
+                self.solution[t] = (x, concentrations)
 
     def solve(self, tmax, dt=1, method='dopri5'):
         """Solve for a series of time points using an ODE solver."""
