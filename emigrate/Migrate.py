@@ -87,31 +87,31 @@ class Migrate(object):
 
     def set_alpha(self):
         self.set_characteristic()
-        self.alpha = 0.5 * np.maximum(np.fabs(self.characteristic,0))
+        self.alpha = 0.5 * np.maximum(np.fabs(self.characteristic/self.tile_m(self.xz)),0)
 
     def set_characteristic(self):
         self.characteristic = self.u + self.tile_m(self.E)*self.tile_n(self.mobility) -\
             self.node_flux()
 
-    def set_current(self, concentrations):
+    def set_current(self):
         """Calculate the current based on a fixed voltage drop."""
         if self.adaptive_grid is True:
             self.j = self.V/sum(self.dz * self.first_derivative(self.x) /
-                                self.conductivity(concentrations))
+                                self.conductivity())
         else:
-            self.j = self.V/sum(self.dz / self.conductivity(concentrations))
+            self.j = self.V/sum(self.dz / self.conductivity())
 
-    def conductivity(self, concentrations):
+    def conductivity(self):
         """Calculate the conductivty at each location."""
         conductivity = np.sum(np.tile(self.molar_conductivity,
                                       (1, self.N))
-                              * concentrations, 0)
+                              * self.concentrations, 0)
         return conductivity
 
     def set_E(self, concentrations):
         """Calculate the electric field at each node."""
-        self.set_current(self.concentrations)
-        self.E = -self.j/self.conductivity(self.concentrations)
+        self.set_current()
+        self.E = -self.j/self.conductivity()
         if self.adaptive_grid is True:
             self.E = self.E * self.first_derivative(self.x)
 
