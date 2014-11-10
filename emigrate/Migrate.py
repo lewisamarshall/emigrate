@@ -17,8 +17,6 @@ class Migrate(object):
     dz = None
     z = None
     x = None
-    A = 0
-    B = 0
     diffusivity = None
     mobility = None
     molar_conductivity = None
@@ -38,6 +36,7 @@ class Migrate(object):
     N_window = 20
     Vthermal = .025
     alpha = None
+    characteristic = None
 
     def __init__(self, system):
         """Initialize with a system from the constructor class."""
@@ -87,7 +86,12 @@ class Migrate(object):
         self.Kag = ((self.N-self.NI)/self.NI) * self.Vthermal / self.V
 
     def set_alpha(self):
-        pass
+        self.set_characteristic()
+        self.alpha = 0.5 * np.maximum(np.fabs(self.characteristic,0))
+
+    def set_characteristic(self):
+        self.characteristic = self.u + self.tile_m(self.E)*self.tile_n(self.mobility) -\
+            self.node_flux()
 
     def set_current(self, concentrations):
         """Calculate the current based on a fixed voltage drop."""
