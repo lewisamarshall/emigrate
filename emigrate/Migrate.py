@@ -112,41 +112,48 @@ class Migrate(object):
     def flux(self):
         """Calculate the flux of chemical species."""
         self.set_E(self.concentrations)
+        total_flux = self.diffusive_flux() + self.advective_flux() + self.node_movement_flux()
+        return total_flux
+
+    def diffusive_flux(self):
         if self.adaptive_grid is True:
             cD = self.tile_n(self.diffusivity) * self.concentrations
             diffusion = \
                 (self.second_derivative(cD) -
                  self.first_derivative(cD) * self.tile_m(self.xzz / self.xz)) / \
                  self.tile_m(self.xz**2)
-
-            advection = (self.tile_n(self.mobility) * self.concentrations) *\
-                self.tile_m(self.first_derivative(self.E) -
-                    (self.xzz/self.xz) * self.E) + self.first_derivative(
-                    (self.tile_n(self.mobility) * self.concentrations)) *\
-                    self.tile_m(self.E)
-            advection /= self.tile_m(self.xz**2)
-
-            node_movement = self.tile_m((self.node_flux()-self.u) / self.xz) * \
-                self.first_derivative(self.concentrations)
-
         else:
             diffusion = \
                 self.second_derivative(np.tile(self.diffusivity,
                                                (1, len(self.z)))
                                        * self.concentrations
                                        )
+        return diffusion
+
+    def advective_flux(self):
+        if self.adaptive_grid is True:
+            advection = (self.tile_n(self.mobility) * self.concentrations) *\
+                self.tile_m(self.first_derivative(self.E) -
+                    (self.xzz/self.xz) * self.E) + self.first_derivative(
+                    (self.tile_n(self.mobility) * self.concentrations)) *\
+                    self.tile_m(self.E)
+            advection /= self.tile_m(self.xz**2)
+        else:
             advection = \
                 self.first_derivative(np.tile(self.mobility,
                                                (1, len(self.z)))
                                        * self.concentrations *
                                        self.E
                                        )
+        return advection
+
+    def node_movement_flux(self):
+        if self.adaptive_grid is True:
+            node_movement = self.tile_m((self.node_flux()-self.u) / self.xz) * \
+                self.first_derivative(self.concentrations)
+        else:
             node_movement = self.first_derivative(-self.u * self.concentrations)
-
-        total_flux = diffusion + advection + node_movement
-
-
-        return total_flux
+        return node_movement
 
     def node_flux(self):
         """Calculate the flux of nodes."""
