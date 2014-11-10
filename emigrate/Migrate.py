@@ -37,6 +37,7 @@ class Migrate(object):
     Vthermal = .025
     alpha = None
     characteristic = None
+    boundary_mode = 'fixed'
 
     def __init__(self, system):
         """Initialize with a system from the constructor class."""
@@ -119,6 +120,7 @@ class Migrate(object):
         """Calculate the flux of chemical species."""
         self.set_E(self.concentrations)
         total_flux = self.diffusive_flux() + self.advective_flux() + self.node_movement_flux()
+        total_flux = self.set_boundary(total_flux)
         return total_flux
 
     def diffusive_flux(self):
@@ -160,6 +162,14 @@ class Migrate(object):
         else:
             node_movement = self.first_derivative(-self.u * self.concentrations)
         return node_movement
+
+    def set_boundary(self, flux):
+        if self.boundary_mode == 'fixed':
+            flux[:, 0] *= 0
+            flux[:, -1] *= 0
+        elif self.boundary_mode == 'characteristic':
+            pass
+        return flux
 
     def node_flux(self):
         """Calculate the flux of nodes."""
