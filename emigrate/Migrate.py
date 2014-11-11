@@ -109,7 +109,7 @@ class Migrate(object):
                               * self.concentrations, 0)
         return conductivity
 
-    def set_E(self, concentrations):
+    def set_E(self):
         """Calculate the electric field at each node."""
         self.set_current()
         self.E = -self.j/self.conductivity()
@@ -118,32 +118,28 @@ class Migrate(object):
 
     def flux(self):
         """Calculate the flux of chemical species."""
-        self.set_E(self.concentrations)
+        self.set_E()
         total_flux = self.diffusive_flux() + self.advective_flux() + self.node_movement_flux()
         total_flux = self.set_boundary(total_flux)
         return total_flux
 
     def diffusive_flux(self):
+        cD = self.tile_n(self.diffusivity) * self.concentrations
         if self.adaptive_grid is True:
-            cD = self.tile_n(self.diffusivity) * self.concentrations
             diffusion = \
                 (self.second_derivative(cD) -
                  self.first_derivative(cD) * self.tile_m(self.xzz / self.xz)) / \
-                 self.tile_m(self.xz**2)
+                 self.tile_m(self.xz**2.)
         else:
             diffusion = \
-                self.second_derivative(np.tile(self.diffusivity,
-                                               (1, len(self.z)))
-                                       * self.concentrations
-                                       )
+                self.second_derivative(cD)
         return diffusion
 
     def advective_flux(self):
         if self.adaptive_grid is True:
             advection = (self.tile_n(self.mobility) * self.concentrations) *\
-                self.tile_m(self.first_derivative(self.E) -
-                    (self.xzz/self.xz) * self.E) + self.first_derivative(
-                    (self.tile_n(self.mobility) * self.concentrations)) *\
+                self.tile_m(self.first_derivative(self.E) -(self.xzz/self.xz) * self.E)\
+                + self.first_derivative((self.tile_n(self.mobility) * self.concentrations)) *\
                     self.tile_m(self.E)
             advection /= self.tile_m(self.xz**2)
         else:
