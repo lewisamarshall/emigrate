@@ -2,7 +2,7 @@
 # pylint: disable=W0212
 import numpy as np
 import scipy.integrate as integrate
-from scipy.signal import gaussian
+# from scipy.signal import gaussian
 from collections import OrderedDict
 
 
@@ -38,6 +38,8 @@ class Migrate(object):
     alpha = None
     characteristic = None
     boundary_mode = 'fixed'
+    xz = None
+    xzz = None
 
     def __init__(self, system):
         """Initialize with a system from the constructor class."""
@@ -53,22 +55,15 @@ class Migrate(object):
         self.V = system.V
         self.t = 0.0
         self.differ = self.Differentiate(self.N, self.dz, method='6th-Order')
-        self.differ_dissipative = self.Differentiate(self.N, self.dz, method='dissipative')
         self.set_Kag()
 
-    def first_derivative(self, x_input, mode='compact'):
+    def first_derivative(self, x_input):
         """Calculate the first derivative with respect to z."""
-        if mode == 'compact':
-            return self.differ.first_derivative(x_input.T).T
-        else:
-            return self.differ_dissipative.first_derivative(x_input.T).T
+        return self.differ.first_derivative(x_input.T).T
 
-    def second_derivative(self, x_input, mode='compact'):
+    def second_derivative(self, x_input):
         """Calculate the second derivative with respect to z."""
-        if mode == 'compact':
-            return self.differ.second_derivative(x_input.T).T
-        else:
-            return self.differ_dissipative.second_derivative(x_input.T).T
+        return self.differ.second_derivative(x_input.T).T
 
     def set_ion_properties(self):
         """Set the properties of ions in the system."""
@@ -84,13 +79,16 @@ class Migrate(object):
         self.dz = self.z[1]-self.z[0]
 
     def set_Kag(self):
+        """Set the Kag parameter for spacing of low-gradient grid points."""
         self.Kag = ((self.N-self.NI)/self.NI) * self.Vthermal / self.V
 
     def set_alpha(self):
+        """Set alpha for dissipation."""
         self.set_characteristic()
         self.alpha = 0.5 * np.maximum(np.fabs(self.characteristic/self.tile_m(self.xz)),0)
 
     def set_characteristic(self):
+        """Calculate the characteristic speed of paramters."""
         self.characteristic = self.u + self.tile_m(self.E)*self.tile_n(self.mobility) -\
             self.node_flux()
 
@@ -119,37 +117,39 @@ class Migrate(object):
     def flux(self):
         """Calculate the flux of chemical species."""
         self.set_E()
-        total_flux = self.diffusive_flux() + self.advective_flux() + self.node_movement_flux()
+        total_flux = self.diffusive_flux() + \
+            self.electromigration_flux() + \
+            self.node_movement_flux()
         total_flux = self.set_boundary(total_flux)
         return total_flux
 
     def diffusive_flux(self):
+        """Calculate flux due to diffusion."""
         cD = self.tile_n(self.diffusivity) * self.concentrations
         if self.adaptive_grid is True:
             diffusion = \
                 (self.second_derivative(cD) -
                  self.first_derivative(cD) * self.tile_m(self.xzz / self.xz)) / \
-                 self.tile_m(self.xz**2.)
+                self.tile_m(self.xz**2.)
         else:
             diffusion = \
                 self.second_derivative(cD)
         return diffusion
 
-    def advective_flux(self):
+    def electromigration_flux(self):
+        """Calculate flux due to electromigration."""
+        uc = self.tile_n(self.mobility) * self.concentrations
+
+        temp  = (uc * (self.first_derivative(self.E) -(self.xzz/self.xz) * self.E)
+                + self.first_derivative(uc) * self.E)/self.xz**2.
+        print self.xzz
         if self.adaptive_grid is True:
-            advection = (self.tile_n(self.mobility) * self.concentrations) *\
-                self.tile_m(self.first_derivative(self.E) -(self.xzz/self.xz) * self.E)\
-                + self.first_derivative((self.tile_n(self.mobility) * self.concentrations)) *\
-                    self.tile_m(self.E)
-            advection /= self.tile_m(self.xz**2)
+            electromigration = temp
         else:
-            advection = \
-                self.first_derivative(np.tile(self.mobility,
-                                               (1, len(self.z)))
-                                       * self.concentrations *
-                                       self.E
-                                       )
-        return advection
+            electromigration = \
+                self.first_derivative(uc * self.E)
+            print np.max(electromigration-temp)/np.max(electromigration)
+        return electromigration
 
     def node_movement_flux(self):
         if self.adaptive_grid is True:
