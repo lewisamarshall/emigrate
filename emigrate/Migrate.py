@@ -142,13 +142,12 @@ class Migrate(object):
 
         temp  = (uc * (self.first_derivative(self.E) -(self.xzz/self.xz) * self.E)
                 + self.first_derivative(uc) * self.E)/self.xz**2.
-        print self.xzz
         if self.adaptive_grid is True:
             electromigration = temp
         else:
             electromigration = \
                 self.first_derivative(uc * self.E)
-            print np.max(electromigration-temp)/np.max(electromigration)
+            # print np.max(electromigration-temp)/np.max(electromigration)
         return electromigration
 
     def node_movement_flux(self):
