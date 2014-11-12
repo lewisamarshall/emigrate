@@ -172,8 +172,11 @@ class Migrate(object):
             flux = self.pointwave *\
                 self.first_derivative(self.node_cost() *
                                       self.first_derivative(self.x))
-            window = np.bartlett(self.N_window)
-            flux = np.convolve(flux, window, 'same')
+            if False:
+                window = np.bartlett(self.N_window)
+                flux = np.convolve(flux, window, 'same')
+            else:
+                flux = self.differ.smooth(flux)
             flux[0, ] = flux[-1, ] = 0.
         else:
             flux = np.zeros(self.x.shape)
