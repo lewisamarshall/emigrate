@@ -174,7 +174,7 @@ class Migrate(object):
                                       self.first_derivative(self.x))
             window = np.bartlett(self.N_window)
             flux = np.convolve(flux, window, 'same')
-            flux[0, ] = flux[-1, ] = 0
+            flux[0, ] = flux[-1, ] = 0.
         else:
             flux = np.zeros(self.x.shape)
         return flux
