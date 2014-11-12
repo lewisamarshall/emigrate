@@ -40,6 +40,8 @@ class Migrate(object):
     boundary_mode = 'fixed'
     xz = None
     xzz = None
+    atol = 1e-12
+    rtol = 1e-6
 
     def __init__(self, system):
         """Initialize with a system from the constructor class."""
@@ -244,7 +246,10 @@ class Migrate(object):
 
         solver = integrate.ode(self.reshaped_flux)
 
-        solver.set_integrator(method)
+        solver.set_integrator(method,
+                              atol=self.atol,
+                              rtol=self.rtol
+                              )
         if solver._integrator.supports_solout:
             solver.set_solout(self.solout)
 
