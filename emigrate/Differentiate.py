@@ -14,8 +14,12 @@ class Differentiate(object):
     A2 = None
     fA2 = None
     B2 = None
+    M = None
+    fM = None
+    epsilon = 1.
     sparse = True
     factorized = True
+    truncate = False
 
     def __init__(self, N, dz, method):
         """Initialize with a length and step size."""
@@ -46,15 +50,32 @@ class Differentiate(object):
             derivative = np.linalg.solve(self.A2, np.dot(self.B2, x))
         return derivative
 
+    def smooth(self, x):
+        """Smooth x using an implicit smoothing formula."""
+        if self.sparse is True:
+            if self.factorized is True:
+                if self.truncate:
+                    smooth = np.copy(x)
+                    smooth[1:-1,:] = self.fM(self.A2[1:-1, 1:-1].dot(x[1:-1,:]))
+                else:
+                    smooth = self.fM(self.A2.dot(x))
+            else:
+                smooth = linalg.spsolve(self.M, self.A2.dot(x))
+        else:
+            smooth = np.linalg.solve(self.M, np.dot(self.A2, x))
+        return smooth
+
     def set_matrices(self):
         """Set up all required matrices."""
         self.set_A1()
         self.set_A2()
         self.set_B1()
         self.set_B2()
+        self.set_M()
         if self.factorized is True:
             self.fA1 = linalg.factorized(self.A1)
             self.fA2 = linalg.factorized(self.A2)
+            self.fM = linalg.factorized(self.M)
 
     def set_A1(self):
         """Setup for A1."""
@@ -110,6 +131,11 @@ class Differentiate(object):
                                         False)
         self.B2 /= self.dz**2
 
+    def set_M(self):
+        self.M = self.A2 - self.epsilon * self.B2
+        if self.truncate:
+            self.M = self.M[1:-1, 1:-1]
+
     def construct_matrix(self, boundary_functions,
                          internal_function, invert=False):
         """Construct matrices based on inputs."""
@@ -136,24 +162,29 @@ if __name__ == '__main__':
     from matplotlib import pyplot as plot
     Nt = 30
     z = np.linspace(-1, 1, Nt)
-    test_functions = np.array([erf(z*3), erf(z*2)])
+    test_functions = np.array([erf(z*3), erf(z*2), (erf(z*2)+.1*np.random.random(z.shape))/(10*z**2+1)])
     my_diff = Differentiate(Nt, 1, method='6th-Order')
     # my_diff = Differentiate(Nt, 1, method='dissipative')
-    print my_diff.A1.todense(), '\n'
-    print my_diff.B1.todense()
+    # print my_diff.A1.todense(), '\n'
+    # print my_diff.B1.todense()
 
     if False:
         plot.plot(z, test_functions)
         plot.show()
 
-    if True:
+    if False:
         d1 = my_diff.first_derivative(test_functions.T)
         d2 = my_diff.second_derivative(test_functions.T)
 
     if True:
-        # plot.plot(z, np.ravel(test_functions[0,:]))
-        plot.plot(z, np.ravel(d2[:, 0]))
-        plot.plot(z, np.ravel(d2[:, 1]))
-        plot.plot(z, np.ravel(d1[:, 0]))
-        plot.plot(z, np.ravel(d1[:, 1]))
+        smoothed = my_diff.smooth(test_functions.T)
+
+    if True:
+        plot.plot(z, np.ravel(test_functions[2,:]), label='test-function')
+        # plot.plot(z, np.ravel(d2[:, 0]))
+        plot.plot(z, np.ravel(smoothed[:, 2]), label='smoothed')
+        # plot.plot(z, np.ravel(d2[:, 1]))
+        # plot.plot(z, np.ravel(d1[:, 0]))
+        # plot.plot(z, np.ravel(d1[:, 1]))
+        plot.legend()
         plot.show()
