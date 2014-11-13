@@ -46,7 +46,7 @@ class Migrate(object):
     def __init__(self, system):
         """Initialize with a system from the constructor class."""
         self.x = np.array(system.domain)
-        self.z = np.array(self.x[:])
+        self.z = self.x.copy()
         self.N = self.x.size
         self.set_dz()
         self.ions = system.ions
