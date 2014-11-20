@@ -56,7 +56,8 @@ class Differentiate(object):
             if self.factorized is True:
                 if self.truncate:
                     smooth = np.copy(x)
-                    smooth[1:-1,:] = self.fM(self.A2[1:-1, 1:-1].dot(x[1:-1,:]))
+                    smooth[1:-1, :] = \
+                        self.fM(self.A2[1:-1, 1:-1].dot(x[1:-1, :]))
                 else:
                     smooth = self.fM(self.A2.dot(x))
             else:
@@ -82,7 +83,8 @@ class Differentiate(object):
         if self.method == '6th-Order':
             internal_function = [1./3., 1., 1./3.]
             boundary_functions = [[1., 4.], [1./6., 1., 1./2.]]
-            self.A1 = self.construct_matrix(boundary_functions, internal_function)
+            self.A1 = self.construct_matrix(boundary_functions,
+                                            internal_function)
         elif self.method == 'dissipative':
             self.A1 = sp.csc_matrix(np.identity(self.N))
 
@@ -132,6 +134,7 @@ class Differentiate(object):
         self.B2 /= self.dz**2
 
     def set_M(self):
+        """Set up the implicit smoothing matrix."""
         self.M = self.A2 - self.epsilon * self.B2
         if self.truncate:
             self.M = self.M[1:-1, 1:-1]
@@ -162,7 +165,8 @@ if __name__ == '__main__':
     from matplotlib import pyplot as plot
     Nt = 30
     z = np.linspace(-1, 1, Nt)
-    test_functions = np.array([erf(z*3), erf(z*2), (erf(z*2)+.1*np.random.random(z.shape))/(10*z**2+1)])
+    test_functions = np.array([erf(z*3), erf(z*2), (erf(z*2) +
+                               .1*np.random.random(z.shape))/(10*z**2+1)])
     my_diff = Differentiate(Nt, 1, method='6th-Order')
     # my_diff = Differentiate(Nt, 1, method='dissipative')
     # print my_diff.A1.todense(), '\n'
@@ -180,7 +184,7 @@ if __name__ == '__main__':
         smoothed = my_diff.smooth(test_functions.T)
 
     if True:
-        plot.plot(z, np.ravel(test_functions[2,:]), label='test-function')
+        plot.plot(z, np.ravel(test_functions[2, :]), label='test-function')
         # plot.plot(z, np.ravel(d2[:, 0]))
         plot.plot(z, np.ravel(smoothed[:, 2]), label='smoothed')
         # plot.plot(z, np.ravel(d2[:, 1]))
