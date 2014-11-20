@@ -12,7 +12,7 @@ class Compact(object):
     V = 0
     x = None
     concentrations = None
-    boundary_mode = 'fixed'
+    boundary_mode = 'characteristic'
 
     def __init__(self, N, dz, V,  mobility, diffusivity, molar_conductivity):
         """Initialize the compact flux solver."""
@@ -72,17 +72,6 @@ class Compact(object):
             flux[:, -1] *= 0
         elif self.boundary_mode == 'characteristic':
             pass
-        return flux
-
-    def reshaped_flux(self, t, state):
-        """1-D flux function for ode solver."""
-        self.t = t
-        (self.x, self.concentrations) = self.decompose_state(state)
-        self.set_derivatives()
-
-        x_flux = self.node_flux()
-        ion_flux = self.flux()
-        flux = self.compose_state(x_flux, ion_flux)
         return flux
 
     def conductivity(self):
