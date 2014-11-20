@@ -62,11 +62,11 @@ class Migrate(object):
     def set_equilibrium_mode(self):
         if self.equilibrum_mode == 'fixed':
             from equilibration_schemes import Fixed
-            self.equlibrator = Fixed(self.ions, self.pH)
+            self.equlibrator = Fixed(self.ions, self.pH, self.concentrations)
         else:
             pass
         self.mobility, self.diffusivity, self.molar_conductivity = \
-            self.equlibrator.set_ion_properties()
+            self.equlibrator.equilibrate(self.concentrations)
 
     def set_flux_mode(self):
         if self.flux_mode == 'compact':
