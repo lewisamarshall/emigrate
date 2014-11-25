@@ -52,7 +52,6 @@ class Compact(_Flux_Base):
 
     def conductivity(self):
         """Calculate the conductivty at each location."""
-        conductivity = np.sum(np.tile(self.molar_conductivity,
-                                      (1, self.N))
+        conductivity = np.sum(self.molar_conductivity
                               * self.concentrations, 0)
         return conductivity

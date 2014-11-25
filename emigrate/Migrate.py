@@ -42,7 +42,7 @@ class Migrate(object):
     atol = 1e-12
     rtol = 1e-6
 
-    def __init__(self, system, flux_mode='compact', equilibrium_mode='fixed'):
+    def __init__(self, system, flux_mode='compact', equilibrium_mode='pH'):
         """Initialize with a system from the constructor class."""
         self.x = np.array(system.domain)
         self.z = self.x.copy()
@@ -63,6 +63,9 @@ class Migrate(object):
         if self.equilibrum_mode == 'fixed':
             from equilibration_schemes import Fixed
             self.equlibrator = Fixed(self.ions, self.pH, self.concentrations)
+        elif self.equilibrum_mode == 'pH':
+            from equilibration_schemes import Variable_pH
+            self.equlibrator = Variable_pH(self.ions, self.pH, self.concentrations)
         else:
             pass
         self.mobility, self.diffusivity, self.molar_conductivity = \
@@ -138,8 +141,9 @@ class Migrate(object):
 
     def solout(self, t, state):
         """Perform actions when a successful solution step is found."""
+        (self.x, self.concentrations) = self.decompose_state(state)
         self.write_solution(t, state)
-        self.calc_equilibrium()
+        self.equlibrator.equilibrate(self.concentrations)
 
     def objective(self, t, state):
         """The objective function of the solver."""
@@ -149,6 +153,3 @@ class Migrate(object):
         x_flux = np.zeros(self.x.shape)
         flux = self.compose_state(x_flux, ion_flux)
         return flux
-
-    def calc_equilibrium(self):
-        pass
