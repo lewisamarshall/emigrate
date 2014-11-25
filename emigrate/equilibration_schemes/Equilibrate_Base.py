@@ -7,10 +7,12 @@ class Equilibrate_Base(object):
     diffusivity = None
     molar_conductivity = None
 
+
     def __init__(self, ions, pH, concentrations):
         self.ions = ions
         self.pH = pH
         self.concentrations = concentrations
+        self.set_arrays()
 
     def calc_equilibrium(self):
         self.mobility = self.concentrations * 0.
@@ -21,3 +23,6 @@ class Equilibrate_Base(object):
         self.concentrations = concentrations
         self.calc_equilibrium()
         return (self.mobility, self.diffusivity, self.molar_conductivity)
+
+    def set_arrays(self):
+        pass
