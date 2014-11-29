@@ -1,9 +1,8 @@
 """An electrophoresis solver."""
-# pylint: disable=W0212
 import numpy as np
 import scipy.integrate as integrate
-# from scipy.signal import gaussian
 from collections import OrderedDict
+# pylint: disable=W0212
 
 
 class Migrate(object):
@@ -41,6 +40,8 @@ class Migrate(object):
     xzz = None
     atol = 1e-12
     rtol = 1e-6
+    equlibrator = None
+    flux_calculator = None
 
     def __init__(self, system, flux_mode='compact', equilibrium_mode='pH'):
         """Initialize with a system from the constructor class."""
@@ -60,18 +61,21 @@ class Migrate(object):
         self.set_flux_mode()
 
     def set_equilibrium_mode(self):
+        """Import an equilibration object to calculate ion properties."""
         if self.equilibrum_mode == 'fixed':
             from equilibration_schemes import Fixed
             self.equlibrator = Fixed(self.ions, self.pH, self.concentrations)
         elif self.equilibrum_mode == 'pH':
             from equilibration_schemes import Variable_pH
-            self.equlibrator = Variable_pH(self.ions, self.pH, self.concentrations)
+            self.equlibrator = Variable_pH(self.ions, self.pH,
+                                           self.concentrations)
         else:
             pass
         self.mobility, self.diffusivity, self.molar_conductivity = \
             self.equlibrator.equilibrate(self.concentrations)
 
     def set_flux_mode(self):
+        """Import a flux calculator to calculate ion fluxes."""
         if self.flux_mode == 'compact':
             from flux_schemes import Compact
             self.flux_calculator = Compact(self.N,
@@ -126,7 +130,9 @@ class Migrate(object):
         if solver._integrator.supports_solout:
             solver.set_solout(self.solout)
 
-        solver.set_initial_value(self.compose_state(self.x, self.initial_concentrations))
+        solver.set_initial_value(self.compose_state(self.x,
+                                                    self.initial_concentrations
+                                                    ))
 
         while solver.successful() and solver.t < tmax:
             tnew = solver.t + dt

@@ -1,7 +1,7 @@
 """Define the Compact flux solver."""
-from Differentiate import Differentiate
 import numpy as np
 from Flux_Base import _Flux_Base
+# pylint: disable = W0232, E1101
 
 
 class Compact(_Flux_Base):

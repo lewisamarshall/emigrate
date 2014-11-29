@@ -1,8 +1,9 @@
+"""Defines an equlibration scheme with pH calculation."""
+
 import numpy as np
 from Equilibrate_Base import Equilibrate_Base
-import scipy
 from math import log10
-# pylint: disable=W0232, E1101, W0201
+# pylint: disable=W0232, E1101, W0201, E1103
 
 
 class Variable_pH(Equilibrate_Base):
@@ -27,6 +28,7 @@ class Variable_pH(Equilibrate_Base):
     T = 25
 
     def set_arrays(self):
+        """Prepare arrays to solve problems during initialization."""
         self.set_l_matrix()
         self.set_Q()
         self.set_Pmat()
@@ -34,9 +36,12 @@ class Variable_pH(Equilibrate_Base):
         self.set_absolute_mobility()
 
     def set_absolute_mobility(self):
-        self.absolute_mobility = np.array([i.absolute_mobility for i in self.ions])
+        """Build the absolute mobility matrix."""
+        self.absolute_mobility = np.array([i.absolute_mobility
+                                           for i in self.ions])
 
     def set_l_matrix(self):
+        """Build the L matrix."""
         # Find the order of the polynomial. This is the maximum
         # size of the list of charge states in an ion.
         self.max_columns = max([max(i.z)-min(i.z)+2 for i in self.ions])
@@ -46,12 +51,14 @@ class Variable_pH(Equilibrate_Base):
         # Set up the matrix of Ls, the multiplication
         # of acidity coefficients for each ion.
         self.l_matrix = np.array([np.resize(i.L(I=0),
-                             [self.max_columns]) for i in self.ions])
+                                 [self.max_columns]) for i in self.ions])
 
     def set_z0_matrix(self):
+        """Build the matrix of valences."""
         self.z0_matrix = np.array([i.z0 for i in self.ions])
 
     def set_Q(self):
+        """Build the Q matrix for pH solving."""
         # Construct Q vector.
         self.Q = 1.
         for j in range(self.m_ions):
@@ -61,6 +68,7 @@ class Variable_pH(Equilibrate_Base):
         self.Q = np.convolve(self.Q, [-self.Kw, 0.0, 1.0])
 
     def set_Pmat(self):
+        """Build the Pmat Matrix for pH solving."""
         self.PMat = []
         for i in range(self.m_ions):
             z_list = np.resize(self.ions[i].z0, [self.max_columns])
@@ -90,14 +98,14 @@ class Variable_pH(Equilibrate_Base):
 
         # Multiply P matrix by concentrations, and sum.
         P = np.sum(self.PMat *
-                   np.array(self.concentrations)[:, np.newaxis,:], 0)
+                   np.array(self.concentrations)[:, np.newaxis, :], 0)
 
-        # Construct polynomial. Change the shapes as needed, then reverse  order
+        # Construct polynomial. Change the shapes, then reverse  order
         if P.shape[0] < self.Q.shape[0]:
             P.resize((self.Q.shape[0], P.shape[1]))
         elif P.shape[0] > self.Q.shape[0]:
-            Q.resize(P.shape[0])
-        poly = (P+self.Q[:,np.newaxis])[::-1]
+            self.Q.resize(P.shape[0])
+        poly = (P+self.Q[:, np.newaxis])[::-1]
         # Solve Polynomial for concentration
         # reverse order for poly function
         self.pH = []
@@ -116,50 +124,35 @@ class Variable_pH(Equilibrate_Base):
             self.cH.append(cH)
 
     def calc_mobility(self):
-        # self.mobility = np.array([[ion.effective_mobility(self.pH[j]) for j in range(self.concentrations.shape[1])]
-        #         for ion in self.ions])
-
-        # effective_mobility = sum([f*m for (f, m) in zip(i_frac, actual_mobility)])
-        self.mobility = np.sum(self.ionization_fraction * self.absolute_mobility[:, :, np.newaxis], 1)
-
+        """Calculate effective mobility."""
+        self.mobility = np.sum(self.ionization_fraction *
+                               self.absolute_mobility[:, :, np.newaxis], 1)
 
     def calc_diffusivity(self):
-        # self.diffusivity =  np.array([[ion.diffusivity(self.pH[j]) for j in range(self.concentrations.shape[1])]
-        #         for ion in self.ions])
-
-        self.diffusivity = (self.absolute_mobility[:, :, np.newaxis] * self.ionization_fraction /
-                               (self.z0_matrix[:, :, np.newaxis]+.5)) * self._kB * (self.T + 273.15)
+        """Calculate diffusivity."""
+        self.diffusivity = (self.absolute_mobility[:, :, np.newaxis] *
+                            self.ionization_fraction /
+                            (self.z0_matrix[:, :, np.newaxis]+.5)) *\
+            self._kB * (self.T + 273.15)
         self.diffusivity = np.sum(self.diffusivity, 1)
 
-    #     diffusivity = sum([m * f / float(z) for
-    #                   m,f,z in zip(self.absolute_mobility,
-    #                                self.ionization_fraction(pH),
-    #                                self.z
-    #                                )]) * self._kB * (self.T + 273.15)
-    # diffusivity/=sum(self.ionization_fraction(pH))
-
     def calc_molar_conductivity(self):
-        # self.molar_conductivity =  np.array([[ion.molar_conductivity(self.pH[j]) for j in range(self.concentrations.shape[1])]
-        #         for ion in self.ions])
-
+        """Calculate molar conductivity."""
         self.molar_conductivity = self._Lpm3 * self._F * \
-            np.sum(self.z0_matrix[:, :, np.newaxis] * self.ionization_fraction * self.absolute_mobility[:, :, np.newaxis], 1)
-
-        # m_conductivity = (self._Lpm3 * self._F *
-        #               sum(z * f * m for (z, f, m)
-        #                   in zip(self.z, i_frac, actual_mobility)))
+            np.sum(self.z0_matrix[:, :, np.newaxis] *
+                   self.ionization_fraction *
+                   self.absolute_mobility[:, :, np.newaxis], 1)
 
     def calc_ionization_fraction(self):
+        """Calculate ionization fraction."""
         # Get the vector of products of acidity constants.
         # Compute the concentration of H+ from the pH.
         # Calculate the numerator of the function for ionization fraction.
-        # i_frac_vector = [Lp * cH ** z for (Lp, z) in zip(L, self.z0)]
-        i_frac_vector = self.l_matrix[:, :, np.newaxis] * self.cH**self.z0_matrix[:,:, np.newaxis]
+        i_frac_vector = self.l_matrix[:, :, np.newaxis] *\
+            self.cH**self.z0_matrix[:, :, np.newaxis]
 
         # Calculate the vector of ionization fractions
         # Filter out the neutral fraction
         denom = np.sum(i_frac_vector, 1)
 
-        # i_frac_vector = i_frac_vector[]
         self.ionization_fraction = i_frac_vector/denom[:, np.newaxis, :]
-        # self.ionization_fraction = [i/denom for (i, z) in zip(i_frac_vector, self.z0) if z]
