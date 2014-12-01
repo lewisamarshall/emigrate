@@ -29,11 +29,19 @@ class Variable_pH(Equilibrate_Base):
 
     def set_arrays(self):
         """Prepare arrays to solve problems during initialization."""
+        self.set_z0_matrix()
         self.set_l_matrix()
         self.set_Q()
         self.set_Pmat()
-        self.set_z0_matrix()
         self.set_absolute_mobility()
+
+    def calc_equilibrium(self):
+        """Calculate equilibrium."""
+        self.calc_pH()
+        self.calc_ionization_fraction()
+        self.calc_mobility()
+        self.calc_diffusivity()
+        self.calc_molar_conductivity()
 
     def set_absolute_mobility(self):
         """Build the absolute mobility matrix."""
@@ -84,18 +92,8 @@ class Variable_pH(Equilibrate_Base):
             self.PMat.append(Pi)
         self.PMat = np.array(self.PMat, ndmin=2)[:, :, np.newaxis]
 
-    def calc_equilibrium(self):
-        """Calculate equilibrium."""
-        self.calc_pH()
-        self.calc_ionization_fraction()
-        self.calc_mobility()
-        self.calc_diffusivity()
-        self.calc_molar_conductivity()
-
     def calc_pH(self):
         """Return the pH of the object."""
-        # Construct P matrix
-
         # Multiply P matrix by concentrations, and sum.
         P = np.sum(self.PMat *
                    np.array(self.concentrations)[:, np.newaxis, :], 0)
@@ -106,8 +104,8 @@ class Variable_pH(Equilibrate_Base):
         elif P.shape[0] > self.Q.shape[0]:
             self.Q.resize(P.shape[0])
         poly = (P+self.Q[:, np.newaxis])[::-1]
+
         # Solve Polynomial for concentration
-        # reverse order for poly function
         self.pH = []
         self.cH = []
         for i in range(self.nodes):
@@ -145,14 +143,13 @@ class Variable_pH(Equilibrate_Base):
 
     def calc_ionization_fraction(self):
         """Calculate ionization fraction."""
-        # Get the vector of products of acidity constants.
-        # Compute the concentration of H+ from the pH.
         # Calculate the numerator of the function for ionization fraction.
         i_frac_vector = self.l_matrix[:, :, np.newaxis] *\
             self.cH**self.z0_matrix[:, :, np.newaxis]
 
         # Calculate the vector of ionization fractions
-        # Filter out the neutral fraction
         denom = np.sum(i_frac_vector, 1)
+
+        # Filter out the uncharged state.
 
         self.ionization_fraction = i_frac_vector/denom[:, np.newaxis, :]
