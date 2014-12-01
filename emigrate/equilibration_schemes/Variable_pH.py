@@ -104,10 +104,9 @@ class Variable_pH(Equilibrate_Base):
         """Build the Pmat Matrix for pH solving."""
         self.PMat = []
         for i in range(self.m_ions):
-            z_list = np.resize(self.ions[i].z0, [self.max_columns])
 
             Mmod = self.l_matrix.copy()
-            Mmod[i, :] *= np.array(z_list)
+            Mmod[i, :] *= self.z0
 
             Pi = 1.
             for k in range(self.m_ions):
