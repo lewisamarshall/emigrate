@@ -5,7 +5,7 @@ setup(name='emigrate',
       version='0.1.0',
       author='Lewis A. Marshall',
       author_email='lewis.a.marshall@gmail.com',
-    #   url="http://lewisamarshall.github.io/ionize/",
+      url="https://github.com/lewisamarshall/emigrate",
       classifiers=[
           "Programming Language :: Python",
           "Development Status :: 3 - Alpha",
