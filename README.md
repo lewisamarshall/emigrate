@@ -18,7 +18,7 @@ Installation
 ------------
 One-line install using [pip](https://pypi.python.org/pypi/pip):
 
-pip install emigrate
+    pip install emigrate
 
 Tutorial
 --------
