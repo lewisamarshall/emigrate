@@ -4,6 +4,7 @@ import numpy as np
 from Equilibrate_Base import Equilibrate_Base
 from math import log10
 from scipy.optimize import newton
+from multiroot import multiroot
 # pylint: disable=W0232, E1101, W0201, E1103
 
 
@@ -149,16 +150,19 @@ class Variable_pH(Equilibrate_Base):
                 self.cH.append(cH)
         else:
             # old_pH = self.pH
-            old_cH = self.cH
-            self.pH = []
-            self.cH = []
-
-            for i in range(self.nodes):
-                p = np.poly1d(poly[:, i])
-                p2 = np.polyder(p)
-                cH = newton(p, old_cH[i], p2,)
-                self.pH.append(-log10(cH))
-                self.cH.append(cH)
+            self.cH = multiroot(poly, self.cH)
+            self.pH = -np.log10(self.cH)
+            # old_cH = self.cH
+            # self.pH = []
+            # self.cH = []
+            #
+            # for i in range(self.nodes):
+            #     p = np.poly1d(poly[:, i])
+            #     p2 = np.polyder(p)
+            #     # p3 = np.polyder(p2)
+            #     cH = newton(p, old_cH[i], p2)#fprime2=p3)
+            #     self.pH.append(-log10(cH))
+            #     self.cH.append(cH)
 
     def calc_mobility(self):
         """Calculate effective mobility."""

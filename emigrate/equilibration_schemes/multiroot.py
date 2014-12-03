@@ -1,26 +1,23 @@
 """A function for calculating the roots of a set of polynomials."""
-from numpy.polynomial.polynomial import polycompanion
-from scipy.linalg import block_diag
-from scipy.sparse.linalg import eigs
-import numpy
+import numpy as np
+from scipy.optimize import root
 
 
-def multiroot(polys, last_roots=None):
+def multiroot(polys, last_roots, method='broyden1', use_jac=False):
     """A function for calculating the roots of a set of polynomials."""
-    comp = [polycompanion(p) for p in polys]
-    n = len(comp)
-    all_comp = block_diag(*comp)
-    if last_roots is not None:
-        w, v = eigs(all_comp, n, sigma=0, v0=last_roots, OPpart='r')
+    n = np.arange(polys.shape[0])
+
+    if use_jac:
+        p2 = polys[:, 1:] * np.arange(1, polys.shape[1])
+        m = range(p2.shape[1])
+        def jac(x):
+            xn = x[:, np.newaxis] ** m
+            return np.diag(np.sum(p2 * xn, 1))
     else:
-        w, v = eigs(all_comp, n, sigma=0, OPpart='r')
+        jac = False
 
-    return w, v
+    def polyval(x):
+        xn = x ** n[:, np.newaxis]
+        return np.sum(polys * xn, 0)
 
-if __name__ == '__main__':
-    from numpy.polynomial import Polynomial as P
-
-    p = [[-1, 0, 1], [-1, 0, 1]]
-    print p
-    print multiroot(p)
-    print [numpy.roots(pl) for pl in p]
+    return root(polyval, last_roots, jac=jac, method=method).x
