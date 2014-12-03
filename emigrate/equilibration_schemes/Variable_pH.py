@@ -3,6 +3,7 @@
 import numpy as np
 from Equilibrate_Base import Equilibrate_Base
 from math import log10
+from multiroot import multiroot
 # pylint: disable=W0232, E1101, W0201, E1103
 
 
@@ -132,6 +133,8 @@ class Variable_pH(Equilibrate_Base):
         # Solve Polynomial for concentration
         self.pH = []
         self.cH = []
+        poly_list = [poly[:,i] for i in range(self.nodes)]
+        print multiroot(poly_list)
         for i in range(self.nodes):
             cH = np.roots(poly[:, i])
 
