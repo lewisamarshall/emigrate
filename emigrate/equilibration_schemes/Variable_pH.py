@@ -3,7 +3,7 @@
 import numpy as np
 from Equilibrate_Base import Equilibrate_Base
 from math import log10
-from multiroot import multiroot
+from scipy.optimize import newton
 # pylint: disable=W0232, E1101, W0201, E1103
 
 
@@ -131,22 +131,34 @@ class Variable_pH(Equilibrate_Base):
         poly = (P+self.Q[:, np.newaxis])[::-1]
 
         # Solve Polynomial for concentration
-        self.pH = []
-        self.cH = []
-        poly_list = [poly[:,i] for i in range(self.nodes)]
-        print multiroot(poly_list)
-        for i in range(self.nodes):
-            cH = np.roots(poly[:, i])
+        if self.pH is None or self.cH is None:
+            self.pH = []
+            self.cH = []
 
-            cH = [c for c in cH if c.real > 0 and c.imag == 0]
-            if cH:
-                cH = float(cH[-1].real)
-            else:
-                print 'Failed to find pH.'
+            for i in range(self.nodes):
+                cH = np.roots(poly[:, i])
 
-        # Convert to pH. Use the activity to correct the calculation.
-            self.pH.append(-log10(cH))
-            self.cH.append(cH)
+                cH = [c for c in cH if c.real > 0 and c.imag == 0]
+                if cH:
+                    cH = float(cH[-1].real)
+                else:
+                    print 'Failed to find pH.'
+
+            # Convert to pH. Use the activity to correct the calculation.
+                self.pH.append(-log10(cH))
+                self.cH.append(cH)
+        else:
+            # old_pH = self.pH
+            old_cH = self.cH
+            self.pH = []
+            self.cH = []
+
+            for i in range(self.nodes):
+                p = np.poly1d(poly[:, i])
+                p2 = np.polyder(p)
+                cH = newton(p, old_cH[i], p2,)
+                self.pH.append(-log10(cH))
+                self.cH.append(cH)
 
     def calc_mobility(self):
         """Calculate effective mobility."""
