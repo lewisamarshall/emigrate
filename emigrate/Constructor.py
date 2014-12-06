@@ -75,17 +75,16 @@ class Constructor(object):
         self.concentrations = np.array(self.concentrations)
 
 if __name__ == '__main__':
-    import ionize
     from matplotlib import pyplot as plot
 
     tris = ionize.load_ion('tris')
-    solutions = [ionize.Solution(['hydrochloric acid', tris], [.05, .1]),
-                 ionize.Solution(['caproic acid', tris], [.05, .1])
-                 ]
+    my_solutions = [ionize.Solution(['hydrochloric acid', tris], [.05, .1]),
+                    ionize.Solution(['caproic acid', tris], [.05, .1])
+                    ]
     system = Constructor(domain_length=0.1,
                          nodes=50,
                          interface_length=.05,
-                         solutions=solutions,
+                         solutions=my_solutions,
                          V=500, I=None,
                          domain_mode='centered'
                          )
