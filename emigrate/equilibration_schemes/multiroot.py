@@ -6,6 +6,7 @@ from scipy.optimize import root
 def multiroot(polys, last_roots, method='lm', use_jac=True):
     """A function for calculating the roots of a set of polynomials."""
     n = np.arange(polys.shape[0])
+    polys = polys[::-1, :]
 
     if use_jac:
         p2 = polys[1:, :] * np.arange(1, polys.shape[0])[:, np.newaxis]

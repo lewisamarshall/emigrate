@@ -1,9 +1,34 @@
+"""Contains the emigrate Constructor class."""
 import numpy as np
 from scipy.special import erf
 import ionize
 
 
 class Constructor(object):
+
+    """Construct an electrophoresis system.
+
+    Args:
+    domain_length, nodes, interface_length,
+                 solutions, V, I=None, domain_mode='centered'
+
+    Attributes:
+
+    Raises:
+        None
+
+    Example:
+        To to initialize an system, call as:
+
+        >>> system = emigrate.Constructor(domain_length=0.01,
+                         nodes=1005,
+                         interface_length=.0005,
+                         solutions=solutions,
+                         V= -25., I=None,
+                         domain_mode='centered'
+                         )
+    """
+
     domain = None
     ions = None
     concentrations = None

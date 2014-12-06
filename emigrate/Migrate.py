@@ -107,13 +107,14 @@ class Migrate(object):
     def write_solution(self, t, state, full=True):
         """Write the current state to solutions."""
         (x, concentrations) = self.decompose_state(state)
+        pH = self.equlibrator.pH
 
         if full:
             if t not in self.full_solution.keys():
-                self.full_solution[t] = (x, concentrations)
+                self.full_solution[t] = (x, concentrations, pH)
         else:
             if t not in self.solution.keys():
-                self.solution[t] = (x, concentrations)
+                self.solution[t] = (x, concentrations, pH)
 
     def solve(self, tmax, dt=1, method='dopri5'):
         """Solve for a series of time points using an ODE solver."""
@@ -148,8 +149,8 @@ class Migrate(object):
     def solout(self, t, state):
         """Perform actions when a successful solution step is found."""
         (self.x, self.concentrations) = self.decompose_state(state)
-        self.write_solution(t, state)
         self.equlibrator.equilibrate(self.concentrations)
+        self.write_solution(t, state)
 
     def objective(self, t, state):
         """The objective function of the solver."""
