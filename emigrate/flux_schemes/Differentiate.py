@@ -20,13 +20,15 @@ class Differentiate(object):
     sparse = True
     factorized = True
     truncate = False
+    smoother = False
 
-    def __init__(self, N, dz, method):
+    def __init__(self, N, dz, method, smoother=False):
         """Initialize with a length and step size."""
         self.N = N
         self.dz = dz
         self.method = method
         self.set_matrices()
+        self.smoother = smoother
 
     def first_derivative(self, x):
         """Take the first derivative of the input."""
@@ -72,11 +74,13 @@ class Differentiate(object):
         self.set_A2()
         self.set_B1()
         self.set_B2()
-        self.set_M()
+        if self.smoother:
+            self.set_M()
         if self.factorized is True:
             self.fA1 = linalg.factorized(self.A1)
             self.fA2 = linalg.factorized(self.A2)
-            self.fM = linalg.factorized(self.M)
+            if self.smoother:
+                self.fM = linalg.factorized(self.M)
 
     def set_A1(self):
         """Setup for A1."""
