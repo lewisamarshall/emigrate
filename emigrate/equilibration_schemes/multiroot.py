@@ -3,7 +3,7 @@ import numpy as np
 from scipy.optimize import root
 
 
-def multiroot(polys, last_roots, method='lm', use_jac=True):
+def multiroot(polys, last_roots, method='hybr', use_jac=True):
     """A function for calculating the roots of a set of polynomials."""
     n = np.arange(polys.shape[0])
     polys = polys[::-1, :]
@@ -17,7 +17,7 @@ def multiroot(polys, last_roots, method='lm', use_jac=True):
             return np.diag(np.sum(p2 * xn, 0))
 
     else:
-        jac = False
+        jac = None
 
     def polyval(x):
         xn = x ** n[:, np.newaxis]
