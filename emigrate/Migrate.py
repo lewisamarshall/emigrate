@@ -2,6 +2,7 @@
 import numpy as np
 import scipy.integrate as integrate
 from collections import OrderedDict
+from .Electrolyte import Electrolyte
 # pylint: disable=W0212
 
 
@@ -108,13 +109,18 @@ class Migrate(object):
         """Write the current state to solutions."""
         (x, concentrations) = self.decompose_state(state)
         pH = self.equlibrator.pH
-
+        ionic_strength = self.equlibrator.ionic_strength
+        current_electrolyte = Electrolyte(nodes=x, ions=self.ions,
+                                          concentrations=concentrations,
+                                          pH=pH, ionic_strength=None,
+                                          voltage=self.V,
+                                          current_density=self.j)
         if full:
             if t not in self.full_solution.keys():
-                self.full_solution[t] = (x, concentrations, pH)
+                self.full_solution[t] = current_electrolyte
         else:
             if t not in self.solution.keys():
-                self.solution[t] = (x, concentrations, pH)
+                self.solution[t] = current_electrolyte
 
     def solve(self, tmax, dt=1, method='dopri5'):
         """Solve for a series of time points using an ODE solver."""

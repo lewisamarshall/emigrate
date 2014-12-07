@@ -11,6 +11,7 @@ class Equilibrate_Base(object):
     mobility = None
     diffusivity = None
     molar_conductivity = None
+    ionic_strength = None
 
     def __init__(self, ions, pH, concentrations):
         """Initialize with ions, pH concentrations."""
