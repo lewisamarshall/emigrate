@@ -45,7 +45,7 @@ class Migrate(object):
 
     def __init__(self, system, flux_mode='compact', equilibrium_mode='pH'):
         """Initialize with a system from the constructor class."""
-        self.x = np.array(system.domain)
+        self.x = np.array(system.nodes)
         self.z = self.x.copy()
         self.N = self.x.size
         self.set_dz()
@@ -53,7 +53,7 @@ class Migrate(object):
         self.M = len(self.ions)
         self.initial_concentrations = np.array(system.concentrations)
         self.concentrations = self.initial_concentrations
-        self.V = system.V
+        self.V = system.voltage
         self.t = 0.0
         self.equilibrum_mode = equilibrium_mode
         self.set_equilibrium_mode()

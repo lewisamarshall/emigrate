@@ -6,4 +6,4 @@ Class Migrate solves the system.
 """
 import ionize
 from Migrate import Migrate
-from Constructor import Constructor
+from Electrolyte import Electrolyte
