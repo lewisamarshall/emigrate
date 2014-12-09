@@ -3,6 +3,7 @@ import numpy as np
 import scipy.integrate as integrate
 from collections import OrderedDict
 from .Electrolyte import Electrolyte
+import warnings
 # pylint: disable=W0212
 
 
@@ -11,38 +12,37 @@ class Migrate(object):
     """A class for performing electromigration calculations."""
 
     import constants
+
+    # Migrate State
+    t = 0
+    # (Transfer these to other objects.)
     V = None
     E = None
     dz = None
     z = None
     x = None
+    j = 0
     diffusivity = None
     mobility = None
     molar_conductivity = None
-    j = 0
-    solution = OrderedDict()
-    full_solution = OrderedDict()
-    solver_info = None
-    pH = 7
-    epsilon = 0.75
-    NI = 10
-    Kag = 0.01
-    pointwave = 1e-5
-    t = 0
-    adaptive_grid = True
-    calls = 0
-    u = 0
-    N_window = 20
-    Vthermal = .025
-    alpha = None
-    characteristic = None
-    boundary_mode = 'fixed'
-    xz = None
-    xzz = None
+    pH = None
+
+    # Initial Condition Electrolyte
+    initial_condition = None
+
+    # Solver Parameters
     atol = 1e-12
     rtol = 1e-6
+    solver_info = None
+
+    # Modules
     equlibrator = None
     flux_calculator = None
+    adaptive_grid = False
+
+    # Solutions
+    solution = OrderedDict()
+    full_solution = OrderedDict()
 
     def __init__(self, system, flux_mode='compact', equilibrium_mode='pH'):
         """Initialize with a system from the constructor class."""
@@ -112,7 +112,7 @@ class Migrate(object):
         ionic_strength = self.equlibrator.ionic_strength
         current_electrolyte = Electrolyte(nodes=x, ions=self.ions,
                                           concentrations=concentrations,
-                                          pH=pH, ionic_strength=None,
+                                          pH=pH, ionic_strength=ionic_strength,
                                           voltage=self.V,
                                           current_density=self.j)
         if full:
@@ -136,6 +136,8 @@ class Migrate(object):
                               )
         if solver._integrator.supports_solout:
             solver.set_solout(self.solout)
+        else:
+            warnings.warn("Solver doesn't support solout.")
 
         solver.set_initial_value(self.compose_state(self.x,
                                                     self.initial_concentrations
