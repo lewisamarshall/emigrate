@@ -70,20 +70,21 @@ class Electrolyte(object):
         self.voltage = voltage
         self.current_density = current_density
 
-    def construct(self, solutions, domain_length=1e-2, n_nodes=100,
+    def construct(self, solutions, lengths, n_nodes=100,
                   interface_length=1e-4, voltage=0, current_density=0,
                   domain_mode='centered'):
         """Construct electrophoretic system based on a set of solutions."""
         self.voltage = voltage
         self.current_density = current_density
-
-        self.create_domain(n_nodes, domain_length, domain_mode)
         self.create_ions(solutions)
-        self.create_concentrations(solutions, interface_length)
+
+        domain_length = sum(lengths)
+        self.create_domain(n_nodes, domain_length, domain_mode)
+        self.create_concentrations(solutions, lengths, interface_length)
         return self
 
     def create_domain(self, n_nodes=100, domain_length=1e-2,
-                      domain_mode='centered'):
+                      domain_mode='centered', detector_location = None):
         """Initially place grid points in the domain."""
         if domain_mode == 'centered':
             self.nodes = np.linspace(-domain_length/2.,
@@ -94,8 +95,15 @@ class Electrolyte(object):
             self.nodes = np.linspace(0,
                                      domain_length,
                                      n_nodes)
+        elif domain_mode == 'right':
+            self.nodes = np.linspace(-domain_length, 0, n_nodes)
+
+        elif domain_mode == 'detector':
+            self.nodes = np.linspace(-detector_location,
+                                     domain_length-detector_location,
+                                     n_nodes)
         else:
-            raise
+            raise NotImplementedError
 
     def create_ions(self, solutions):
         self.ions = []
@@ -106,13 +114,23 @@ class Electrolyte(object):
         # Replace strings with ion objects.
         self.ions = ionize.Solution(self.ions, [0]*len(self.ions)).ions
 
-    def create_concentrations(self, solutions, interface_length):
+    def create_concentrations(self, solutions, lengths, interface_length):
         self.concentrations = []
+
         for ion in self.ions:
-            domain = max(self.nodes)-min(self.nodes)
+            ion_concentration = np.zeros(self.nodes.shape)
             cs = [solution.get_concentration(ion) for solution in solutions]
-            self.concentrations.append((erf(self.nodes/interface_length)/2.+0.5)*
-                                       (cs[1]-cs[0]) + cs[0])
+
+            for idx in range(len(cs)):
+                if idx == 0:
+                    ion_concentration += cs[0]
+                    left_side, right_side = self.nodes[0], self.nodes[0] + lengths[idx]
+                else:
+                    left_side, right_side = right_side, right_side + lengths[idx]
+                    ion_concentration += ((cs[idx]-cs[idx-1]) *
+                                          (erf((self.nodes-left_side)/interface_length)/2.+.5))
+
+            self.concentrations.append(ion_concentration)
         self.concentrations = np.array(self.concentrations)
 
 if __name__ == '__main__':
