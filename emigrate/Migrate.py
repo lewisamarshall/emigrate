@@ -85,7 +85,7 @@ class Migrate(object):
                                            self.mobility,
                                            self.diffusivity,
                                            self.molar_conductivity)
-        if self.flux_mode == 'compact adaptive':
+        elif self.flux_mode == 'compact adaptive':
             from flux_schemes import CompactAdaptive
             self.flux_calculator = CompactAdaptive(self.N,
                                                    self.dz,

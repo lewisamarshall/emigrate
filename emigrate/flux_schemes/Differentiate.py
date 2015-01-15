@@ -27,8 +27,8 @@ class Differentiate(object):
         self.N = N
         self.dz = dz
         self.method = method
-        self.set_matrices()
         self.smoother = smoother
+        self.set_matrices()
 
     def first_derivative(self, x):
         """Take the first derivative of the input."""
@@ -76,7 +76,7 @@ class Differentiate(object):
         self.set_B2()
         if self.smoother:
             self.set_M()
-        if self.factorized is True:
+        if self.factorized:
             self.fA1 = linalg.factorized(self.A1)
             self.fA2 = linalg.factorized(self.A2)
             if self.smoother:

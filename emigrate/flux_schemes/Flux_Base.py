@@ -13,6 +13,7 @@ class _Flux_Base(object):
     V = 0
     x = None
     concentrations = None
+    smoother = False
 
     def __init__(self, N, dz, V,  mobility, diffusivity, molar_conductivity):
         """Initialize the compact flux solver."""
@@ -22,7 +23,7 @@ class _Flux_Base(object):
         self.mobility = mobility
         self.diffusivity = diffusivity
         self.molar_conductivity = molar_conductivity
-        self.differ = Differentiate(N, dz, method=self.differentiation_method)
+        self.differ = Differentiate(N, dz, method=self.differentiation_method, smoother=self.smoother)
 
     def first_derivative(self, x_input):
         """Calculate the first derivative with respect to z."""

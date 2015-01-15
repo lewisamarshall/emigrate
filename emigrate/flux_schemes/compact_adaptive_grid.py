@@ -1,12 +1,27 @@
 from compact import Compact
 import numpy as np
 
+
 class CompactAdaptive(Compact):
-    pointwave = 1
+    # pointwave = 1e-10
+    # Kag = 10
+    differentiation_method = 'dissipative'
+    smoother = True
+    u = 0
+    # NI = 10
+    Kag = 0.01
+    pointwave = 1e-5
+    # t = 0
+    # adaptive_grid = True
+    # calls = 0
+    # u = 0
+    # # N_window = 20
+    # Vthermal = .025
 
     def flux(self, x, concentrations):
         """Caclulate the flux of chemical species."""
         self.x = x
+        self.z = self.x.copy()
         self.concentrations = concentrations
         self.set_derivatives()
         self.set_E()
@@ -15,7 +30,7 @@ class CompactAdaptive(Compact):
                       self.electromigration_flux() +
                       self.node_movement_flux())
 
-        total_flux = self.set_boundry(total_flux)
+        total_flux = self.set_boundary(total_flux)
         return total_flux
 
     def set_derivatives(self):
@@ -28,17 +43,6 @@ class CompactAdaptive(Compact):
         self.E = -self.j/self.conductivity()
         # if self.adaptive_grid is True:
         self.E = self.E * self.first_derivative(self.x)
-
-    def set_current(self):
-        """Calculate the current based on a fixed voltage drop."""
-        self.j = self.V/sum(self.dz * self.first_derivative(self.x) /
-                            self.conductivity())
-
-    # def conductivity(self):
-    #     """Calculate the conductivty at each location."""
-    #     conductivity = np.sum(np.tile(self.molar_conductivity,
-    #                                   (1, self.N))
-    #                           * self.concentrations, 0)
 
     def diffusive_flux(self):
         """Calculate flux due to diffusion."""
@@ -62,14 +66,6 @@ class CompactAdaptive(Compact):
         node_movement = ((self.node_flux()-self.u) / self.xz) * \
             self.first_derivative(self.concentrations)
         return node_movement
-
-    def set_boundary(self, flux):
-        if self.boundary_mode == 'fixed':
-            flux[:, 0] *= 0
-            flux[:, -1] *= 0
-        elif self.boundary_mode == 'characteristic':
-            pass
-        return flux
 
     def node_flux(self):
         """Calculate the flux of nodes."""
