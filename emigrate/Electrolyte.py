@@ -84,7 +84,7 @@ class Electrolyte(object):
         return self
 
     def create_domain(self, n_nodes=100, domain_length=1e-2,
-                      domain_mode='centered', detector_location = None):
+                      domain_mode='centered', detector_location=None):
         """Initially place grid points in the domain."""
         if domain_mode == 'centered':
             self.nodes = np.linspace(-domain_length/2.,
@@ -124,11 +124,14 @@ class Electrolyte(object):
             for idx in range(len(cs)):
                 if idx == 0:
                     ion_concentration += cs[0]
-                    left_side, right_side = self.nodes[0], self.nodes[0] + lengths[idx]
+                    left_side, right_side = (self.nodes[0],
+                                             self.nodes[0] + lengths[idx])
                 else:
-                    left_side, right_side = right_side, right_side + lengths[idx]
+                    left_side, right_side = (right_side,
+                                             right_side + lengths[idx])
                     ion_concentration += ((cs[idx]-cs[idx-1]) *
-                                          (erf((self.nodes-left_side)/interface_length)/2.+.5))
+                                          (erf((self.nodes-left_side)
+                                           / interface_length) / 2. + .5))
 
             self.concentrations.append(ion_concentration)
         self.concentrations = np.array(self.concentrations)
@@ -151,5 +154,5 @@ if __name__ == '__main__':
     print system.ions
     print system.concentrations
     for i in range(3):
-        plot.plot(system.domain, system.concentrations[i,:])
+        plot.plot(system.domain, system.concentrations[i, :])
     plot.show()

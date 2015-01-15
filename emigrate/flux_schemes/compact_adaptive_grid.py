@@ -69,14 +69,13 @@ class CompactAdaptive(Compact):
 
     def node_flux(self):
         """Calculate the flux of nodes."""
-        flux = self.pointwave *\
-            self.first_derivative(self.node_cost() *
-                                  self.first_derivative(self.x))
-        if False:
-            window = np.bartlett(self.N_window)
-            flux = np.convolve(flux, window, 'same')
-        else:
-            flux = self.differ.smooth(flux)
+        flux = self.first_derivative(self.node_cost() *
+                                     self.first_derivative(self.x))
+
+        flux = self.differ.smooth(flux)
+
+        flux *= self.pointwave
+
         flux[0, ] = flux[-1, ] = 0.
 
         return flux
@@ -91,5 +90,3 @@ class CompactAdaptive(Compact):
     def set_Kag(self):
         """Set the Kag parameter for spacing of low-gradient grid points."""
         self.Kag = ((self.N-self.NI)/self.NI) * self.Vthermal / self.V
-
-        return conductivity
