@@ -55,3 +55,6 @@ class Compact(_Flux_Base):
         conductivity = np.sum(self.molar_conductivity
                               * self.concentrations, 0)
         return conductivity
+
+    def node_flux(self):
+        return np.zeros(self.x.shape)

@@ -85,8 +85,16 @@ class Migrate(object):
                                            self.mobility,
                                            self.diffusivity,
                                            self.molar_conductivity)
+        if self.flux_mode == 'compact adaptive':
+            from flux_schemes import CompactAdaptive
+            self.flux_calculator = CompactAdaptive(self.N,
+                                                   self.dz,
+                                                   self.V,
+                                                   self.mobility,
+                                                   self.diffusivity,
+                                                   self.molar_conductivity)
         else:
-            pass
+            raise RuntimeError
 
     def set_dz(self):
         """Set spatial step size in the z domain."""
@@ -165,6 +173,6 @@ class Migrate(object):
         self.t = t
         (self.x, self.concentrations) = self.decompose_state(state)
         ion_flux = self.flux_calculator.flux(self.x, self.concentrations)
-        x_flux = np.zeros(self.x.shape)
+        x_flux = self.flux_calculator.node_flux()
         flux = self.compose_state(x_flux, ion_flux)
         return flux
