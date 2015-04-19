@@ -22,13 +22,7 @@ class Migrate(object):
     z = None
     x = None
     j = 0
-    diffusivity = None
-    mobility = None
-    molar_conductivity = None
     pH = None
-
-    # Initial Condition Electrolyte
-    initial_condition = None
 
     # Solver Parameters
     atol = 1e-12
@@ -65,13 +59,14 @@ class Migrate(object):
         """Import an equilibration object to calculate ion properties."""
         if self.equilibrum_mode == 'fixed':
             from equilibration_schemes import Fixed
-            self.equlibrator = Fixed(self.ions, self.pH, self.concentrations)
+            self.equlibrator_class = Fixed
         elif self.equilibrum_mode == 'pH':
             from equilibration_schemes import Variable_pH
-            self.equlibrator = Variable_pH(self.ions, self.pH,
-                                           self.concentrations)
+            self.equlibrator_class = Variable_pH
         else:
-            pass
+            raise RuntimeError('Available equlibibrators are "fixed" and "pH".')
+        self.equlibrator = self.equlibrator_class(self.ions, self.pH,
+                                                   self.concentrations)
         self.mobility, self.diffusivity, self.molar_conductivity = \
             self.equlibrator.equilibrate(self.concentrations)
 
@@ -79,30 +74,21 @@ class Migrate(object):
         """Import a flux calculator to calculate ion fluxes."""
         if self.flux_mode == 'compact':
             from flux_schemes import Compact
-            self.flux_calculator = Compact(self.N,
-                                           self.dz,
-                                           self.V,
-                                           self.mobility,
-                                           self.diffusivity,
-                                           self.molar_conductivity)
+            self.flux_calculator_class = Compact
         elif self.flux_mode == 'compact adaptive':
             from flux_schemes import CompactAdaptive
-            self.flux_calculator = CompactAdaptive(self.N,
-                                                   self.dz,
-                                                   self.V,
-                                                   self.mobility,
-                                                   self.diffusivity,
-                                                   self.molar_conductivity)
+            self.flux_calculator_class = CompactAdaptive
         elif self.flux_mode == 'slip':
             from flux_schemes import SLIP
-            self.flux_calculator = SLIP(self.N,
-                                        self.dz,
-                                        self.V,
-                                        self.mobility,
-                                        self.diffusivity,
-                                        self.molar_conductivity)
+            self.flux_calculator_class = SLIP
         else:
             raise RuntimeError
+        self.flux_calculator = self.flux_calculator_class(self.N,
+                                                          self.dz,
+                                                          self.V,
+                                                          self.mobility,
+                                                          self.diffusivity,
+                                                          self.molar_conductivity)
 
     def set_dz(self):
         """Set spatial step size in the z domain."""
@@ -174,13 +160,20 @@ class Migrate(object):
         """Perform actions when a successful solution step is found."""
         (self.x, self.concentrations) = self.decompose_state(state)
         self.equlibrator.equilibrate(self.concentrations)
+        self._update_flux_parameters()
         self.write_solution(t, state)
 
     def objective(self, t, state):
         """The objective function of the solver."""
         self.t = t
         (self.x, self.concentrations) = self.decompose_state(state)
-        ion_flux = self.flux_calculator.flux(self.x, self.concentrations)
+        ion_flux = self.flux_calculator.dcdt(self.x, self.concentrations)
         x_flux = self.flux_calculator.node_flux()
         flux = self.compose_state(x_flux, ion_flux)
         return flux
+
+    def _update_flux_parameters(self):
+        self.flux_calculator.mobility = self.equlibrator.mobility
+        self.flux_calculator.diffusivity = self.equlibrator.diffusivity
+        self.flux_calculator.molar_conductivity =\
+            self.equlibrator.molar_conductivity
