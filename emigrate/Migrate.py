@@ -93,6 +93,14 @@ class Migrate(object):
                                                    self.mobility,
                                                    self.diffusivity,
                                                    self.molar_conductivity)
+        elif self.flux_mode == 'slip':
+            from flux_schemes import SLIP
+            self.flux_calculator = SLIP(self.N,
+                                        self.dz,
+                                        self.V,
+                                        self.mobility,
+                                        self.diffusivity,
+                                        self.molar_conductivity)
         else:
             raise RuntimeError
 
