@@ -13,9 +13,9 @@ class Flux_Limiter(object):
         """Initialize."""
         self.mode = mode
         self.limiter_dict = {"minmod": self.minmod,
-                       "superbee": self.superbee,
-                       "koren": self.koren
-                       }
+                             "superbee": self.superbee,
+                             "koren": self.koren
+                             }
 
     def limit(self, solution):
         """Select a function and return a limiter."""
@@ -28,13 +28,17 @@ class Flux_Limiter(object):
     def get_r(self, solution):
         """Calculate r, the input parameter for limiters."""
         diff = np.diff(solution, 1)
+        self.diff = diff
         r = diff[:, 1:]/diff[:, :-1]
         r = np.pad(r, ((0.,0.),(1.,1.)), 'constant', constant_values=0)
         return r
 
     def minmod(self, r):
         """The minmod limiter function."""
-        return np.maximum(0., np.minimum(1.,r))
+        # return np.maximum(0., np.minimum(1.,r))
+        v = self.diff[:, 2:]
+        w = self.diff[:, :-2]
+        L = 1./2.*(v + w)*(1-np.fabs((v-w)/(np.fabs(v)-np.fabs(w))))
 
     def superbee(self, r):
         """The superbee limiter function."""
