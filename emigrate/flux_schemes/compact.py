@@ -17,7 +17,7 @@ class Compact(_Flux_Base):
     x = None
     concentrations = None
 
-    def flux(self, x, concentrations):
+    def _dcdt(self, x, concentrations):
         """Calculate the flux of chemical species."""
         self.x = x
         self.concentrations = concentrations

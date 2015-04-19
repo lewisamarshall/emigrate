@@ -1,4 +1,5 @@
 from Differentiate import Differentiate
+import numpy as np
 
 
 class _Flux_Base(object):
@@ -14,6 +15,7 @@ class _Flux_Base(object):
     x = None
     concentrations = None
     smoother = False
+    nonnegative = True
 
     def __init__(self, N, dz, V,  mobility, diffusivity, molar_conductivity):
         """Initialize the compact flux solver."""
@@ -42,7 +44,17 @@ class _Flux_Base(object):
             pass
         return flux
 
-    def flux(self, x, concentrations):
+    def dcdt(self, x, concentrations):
+        dcdt = self._dcdt(x, concentrations)
+        if self.nonnegative is True:
+            dcdt = self.impose_nonnegativity(concentrations, dcdt)
+        return dcdt
+
+    def impose_nonnegativity(self, concentrations, dcdt):
+        dcdt = np.where(np.greater(concentrations, 0), dcdt, np.maximum(0, dcdt))
+        return dcdt
+
+    def _dcdt(self, x, concentrations):
         """Calculate the flux of chemical species."""
         self.x = x
         self.concentrations = concentrations

@@ -20,11 +20,11 @@ class SLIP(_Flux_Base):
     concentrations = None
     # limiter = Flux_limiter(minmod)
 
-    def flux(self, x, concentrations):
+    def _dcdt(self, x, concentrations):
         self.x = x
         self.concentrations = concentrations
         self.set_derivatives()
-        flux = self.limit(self.concentrations, self.fluxk())
+        flux = self.limit(self.concentrations, self.flux())
         dcdt = np.diff(flux, 1)/self.dz
         dcdt = np.pad(dcdt, ((0, 0), (2, 2)), 'constant', constant_values=((0, 0), (0, 0)))
         return dcdt
@@ -33,7 +33,7 @@ class SLIP(_Flux_Base):
         self.xz = self.first_derivative(self.x)
         self.xzz = self.second_derivative(self.x)
 
-    def fluxk(self):
+    def flux(self):
         """Calculate the flux of chemical species."""
         self.set_E()
         total_flux = self.diffusive_flux() + \
