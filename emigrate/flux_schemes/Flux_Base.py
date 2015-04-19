@@ -22,7 +22,9 @@ class _Flux_Base(object):
         self.N = N
         self.dz = dz
         self.V = V
-        self.differ = Differentiate(N, dz, method=self.differentiation_method, smoother=self.smoother)
+        self.differ = Differentiate(N, dz,
+                                    method=self.differentiation_method,
+                                    smoother=self.smoother)
 
     def first_derivative(self, x_input):
         """Calculate the first derivative with respect to z."""

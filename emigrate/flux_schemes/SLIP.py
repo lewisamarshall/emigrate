@@ -36,8 +36,9 @@ class SLIP(_Flux_Base):
     def flux(self):
         """Calculate the flux of chemical species."""
         self.set_E()
-        total_flux = self.diffusive_flux() + \
-            self.electromigration_flux()
+        total_flux = (self.diffusive_flux() +
+                      self.electromigration_flux() +
+                      self.node_movement_flux())
         # total_flux = self.set_boundary(total_flux)
         return total_flux
 
@@ -98,3 +99,8 @@ class SLIP(_Flux_Base):
         L = 0.5*(np.sign(v)+np.sign(w))*np.min(np.fabs(np.min([v, w], 1)))
         # L = 1./2.*(v + w)*(1.-np.fabs((v-w)/(np.fabs(v)-np.fabs(w))))
         return L
+
+    def node_movement_flux(self):
+        node_movement = ((self.node_flux()-self.u) / self.xz) * \
+            self.first_derivative(self.concentrations)
+        return node_movement

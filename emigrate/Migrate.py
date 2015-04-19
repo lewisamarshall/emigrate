@@ -14,7 +14,7 @@ class Migrate(object):
     import constants
 
     # Migrate State
-    t = 0
+    t = 0.
     V = None
     E = None
     dz = None
@@ -40,22 +40,32 @@ class Migrate(object):
 
     def __init__(self, system, flux_mode='compact', equilibrium_mode='pH'):
         """Initialize with a system from the constructor class."""
-        self.x = np.array(system.nodes)
-        self.z = self.x.copy()
-        self.N = self.x.size
-        self.set_dz()
-        self.ions = system.ions
-        self.M = len(self.ions)
-        self.initial_concentrations = np.array(system.concentrations)
-        self.concentrations = self.initial_concentrations
-        self.V = system.voltage
-        self.t = 0.
-        self.equilibrum_mode = equilibrium_mode
-        self.set_equilibrium_mode()
-        self.flux_mode = flux_mode
-        self.set_flux_mode()
 
-    def set_equilibrium_mode(self):
+        # Prepare System Domain
+        self._prep_domain(system.nodes)
+
+        # Prepare ions
+        self.ions = system.ions
+        self.concentrations = np.array(system.concentrations)
+
+        # Set system voltage mode
+        self.V = system.voltage
+
+        # Set equilibrium mode.
+        self.equilibrum_mode = equilibrium_mode
+        self._set_equilibrium_mode()
+
+        # Set flux mode
+        self.flux_mode = flux_mode
+        self._set_flux_mode()
+
+    def _prep_domain(self, nodes):
+        self.x = np.array(nodes)
+        self.z = np.linspace(min(self.x), max(self.x), len(self.x))
+        self.N = self.x.size
+        self.dz = self.z[1]-self.z[0]
+
+    def _set_equilibrium_mode(self):
         """Import an equilibration object to calculate ion properties."""
         if self.equilibrum_mode == 'fixed':
             from equilibration_schemes import Fixed
@@ -64,13 +74,14 @@ class Migrate(object):
             from equilibration_schemes import Variable_pH
             self.equlibrator_class = Variable_pH
         else:
-            raise RuntimeError('Available equlibibrators are "fixed" and "pH".')
+            raise RuntimeError('Available equlibibrators are "fixed" and "pH".'
+                               )
 
         self.equlibrator = self.equlibrator_class(self.ions, self.pH,
                                                   self.concentrations)
         self.equlibrator.equilibrate(self.concentrations)
 
-    def set_flux_mode(self):
+    def _set_flux_mode(self):
         """Import a flux calculator to calculate ion fluxes."""
         if self.flux_mode == 'compact':
             from flux_schemes import Compact
@@ -81,6 +92,9 @@ class Migrate(object):
         elif self.flux_mode == 'slip':
             from flux_schemes import SLIP
             self.flux_calculator_class = SLIP
+        elif self.flux_mode == 'minmod':
+            from flux_schemes import MinmodLimited
+            self.flux_calculator_class = MinmodLimited
         else:
             raise RuntimeError
         self.flux_calculator = self.flux_calculator_class(self.N,
@@ -88,26 +102,22 @@ class Migrate(object):
                                                           self.V)
         self.flux_calculator.update_ion_parameters(self.equlibrator)
 
-    def set_dz(self):
-        """Set spatial step size in the z domain."""
-        self.dz = self.z[1]-self.z[0]
-
-    def decompose_state(self, state):
+    def _decompose_state(self, state):
         """Decompose the state into X and concentrations."""
         x = state[:self.N]
         concentrations = state[self.N:].reshape(self.concentrations.shape)
         return (x, concentrations)
 
-    def compose_state(self, x, concentrations):
+    def _compose_state(self, x, concentrations):
         """Compose X and concentrations into a state."""
         x = x.flatten()
         concentrations = concentrations.flatten()
         state = np.concatenate((x, concentrations))
         return state
 
-    def write_solution(self, t, state, full=True):
+    def _write_solution(self, t, state, full=True):
         """Write the current state to solutions."""
-        (x, concentrations) = self.decompose_state(state)
+        (x, concentrations) = self._decompose_state(state)
         pH = self.equlibrator.pH
         ionic_strength = self.equlibrator.ionic_strength
         current_electrolyte = Electrolyte(nodes=x, ions=self.ions,
@@ -124,48 +134,42 @@ class Migrate(object):
 
     def solve(self, tmax, dt=1, method='dopri5'):
         """Solve for a series of time points using an ODE solver."""
-        self.solution = OrderedDict()
-        self.full_solution = OrderedDict()
-        self.x = self.z[:]
+        self.solver = solver = integrate.ode(self._objective)
 
-        solver = integrate.ode(self.objective)
+        solver.set_integrator(method, atol=self.atol, rtol=self.rtol)
 
-        solver.set_integrator(method,
-                              atol=self.atol,
-                              rtol=self.rtol
-                              )
         if solver._integrator.supports_solout:
-            solver.set_solout(self.solout)
+            solver.set_solout(self._solout)
         else:
             warnings.warn("Solver doesn't support solout.")
 
-        solver.set_initial_value(self.compose_state(self.x,
-                                                    self.initial_concentrations
-                                                    ))
+        solver.set_initial_value(self._compose_state(self.x,
+                                                     self.concentrations
+                                                     ))
 
         while solver.successful() and solver.t < tmax:
             tnew = solver.t + dt
             if tnew > tmax:
                 tnew = tmax
             solver.integrate(tnew)
-            self.write_solution(solver.t, solver.y, False)
-        (self.x, self.concentrations) = self.decompose_state(solver.y)
+            self._write_solution(solver.t, solver.y, full=False)
+        (self.x, self.concentrations) = self._decompose_state(solver.y)
 
         if not solver.successful():
             print 'solver failed at time', solver.t
 
-    def solout(self, t, state):
+    def _solout(self, t, state):
         """Perform actions when a successful solution step is found."""
-        (self.x, self.concentrations) = self.decompose_state(state)
+        (self.x, self.concentrations) = self._decompose_state(state)
         self.equlibrator.equilibrate(self.concentrations)
         self.flux_calculator.update_ion_parameters(self.equlibrator)
-        self.write_solution(t, state)
+        self._write_solution(t, state, full=True)
 
-    def objective(self, t, state):
+    def _objective(self, t, state):
         """The objective function of the solver."""
         self.t = t
-        (self.x, self.concentrations) = self.decompose_state(state)
-        ion_flux = self.flux_calculator.dcdt(self.x, self.concentrations)
-        x_flux = self.flux_calculator.node_flux()
-        flux = self.compose_state(x_flux, ion_flux)
-        return flux
+        (self.x, self.concentrations) = self._decompose_state(state)
+        dcdt = self.flux_calculator.dcdt(self.x, self.concentrations)
+        dxdt = self.flux_calculator.node_flux()
+        dstatedt = self._compose_state(dxdt, dcdt)
+        return dstatedt
