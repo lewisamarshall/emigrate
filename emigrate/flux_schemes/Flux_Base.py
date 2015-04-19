@@ -17,14 +17,11 @@ class _Flux_Base(object):
     smoother = False
     nonnegative = True
 
-    def __init__(self, N, dz, V,  mobility, diffusivity, molar_conductivity):
+    def __init__(self, N, dz, V):
         """Initialize the compact flux solver."""
         self.N = N
         self.dz = dz
         self.V = V
-        self.mobility = mobility
-        self.diffusivity = diffusivity
-        self.molar_conductivity = molar_conductivity
         self.differ = Differentiate(N, dz, method=self.differentiation_method, smoother=self.smoother)
 
     def first_derivative(self, x_input):
@@ -53,6 +50,11 @@ class _Flux_Base(object):
     def impose_nonnegativity(self, concentrations, dcdt):
         dcdt = np.where(np.greater(concentrations, 0), dcdt, np.maximum(0, dcdt))
         return dcdt
+
+    def update_ion_parameters(self, equlibrator):
+        self.mobility = equlibrator.mobility
+        self.diffusivity = equlibrator.diffusivity
+        self.molar_conductivity = equlibrator.molar_conductivity
 
     def _dcdt(self, x, concentrations):
         """Calculate the flux of chemical species."""

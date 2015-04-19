@@ -15,7 +15,6 @@ class Migrate(object):
 
     # Migrate State
     t = 0
-    # (Transfer these to other objects.)
     V = None
     E = None
     dz = None
@@ -23,11 +22,12 @@ class Migrate(object):
     x = None
     j = 0
     pH = None
+    ions = None
+    concntrations = None
 
     # Solver Parameters
     atol = 1e-12
     rtol = 1e-6
-    solver_info = None
 
     # Modules
     equlibrator = None
@@ -49,7 +49,7 @@ class Migrate(object):
         self.initial_concentrations = np.array(system.concentrations)
         self.concentrations = self.initial_concentrations
         self.V = system.voltage
-        self.t = 0.0
+        self.t = 0.
         self.equilibrum_mode = equilibrium_mode
         self.set_equilibrium_mode()
         self.flux_mode = flux_mode
@@ -65,10 +65,10 @@ class Migrate(object):
             self.equlibrator_class = Variable_pH
         else:
             raise RuntimeError('Available equlibibrators are "fixed" and "pH".')
+
         self.equlibrator = self.equlibrator_class(self.ions, self.pH,
-                                                   self.concentrations)
-        self.mobility, self.diffusivity, self.molar_conductivity = \
-            self.equlibrator.equilibrate(self.concentrations)
+                                                  self.concentrations)
+        self.equlibrator.equilibrate(self.concentrations)
 
     def set_flux_mode(self):
         """Import a flux calculator to calculate ion fluxes."""
@@ -85,10 +85,8 @@ class Migrate(object):
             raise RuntimeError
         self.flux_calculator = self.flux_calculator_class(self.N,
                                                           self.dz,
-                                                          self.V,
-                                                          self.mobility,
-                                                          self.diffusivity,
-                                                          self.molar_conductivity)
+                                                          self.V)
+        self.flux_calculator.update_ion_parameters(self.equlibrator)
 
     def set_dz(self):
         """Set spatial step size in the z domain."""
@@ -160,7 +158,7 @@ class Migrate(object):
         """Perform actions when a successful solution step is found."""
         (self.x, self.concentrations) = self.decompose_state(state)
         self.equlibrator.equilibrate(self.concentrations)
-        self._update_flux_parameters()
+        self.flux_calculator.update_ion_parameters(self.equlibrator)
         self.write_solution(t, state)
 
     def objective(self, t, state):
@@ -171,9 +169,3 @@ class Migrate(object):
         x_flux = self.flux_calculator.node_flux()
         flux = self.compose_state(x_flux, ion_flux)
         return flux
-
-    def _update_flux_parameters(self):
-        self.flux_calculator.mobility = self.equlibrator.mobility
-        self.flux_calculator.diffusivity = self.equlibrator.diffusivity
-        self.flux_calculator.molar_conductivity =\
-            self.equlibrator.molar_conductivity
