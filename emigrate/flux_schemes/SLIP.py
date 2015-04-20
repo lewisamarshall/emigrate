@@ -49,7 +49,7 @@ class SLIP(_Flux_Base):
         flux = self.limit(self.concentrations, self.electromigration_flux())
         dcdt = np.diff(flux, 1)/self.dz
         dcdt = np.pad(dcdt, ((0, 0), (2, 2)), 'constant',
-                      constant_values=((0, 0), (0, 0)))
+                      constant_values=((0, 0), (0, 0))) / self.xz
         return dcdt
 
     def diffusion_dcdt(self):
@@ -85,6 +85,7 @@ class SLIP(_Flux_Base):
         self.set_characteristic()
         self.alpha = 0.5 * np.maximum(np.fabs(self.characteristic /
                                       self.xz), 0)
+
 
     def set_characteristic(self):
         """Calculate the characteristic speed of paramters."""
