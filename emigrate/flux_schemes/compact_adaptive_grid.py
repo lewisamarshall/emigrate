@@ -18,11 +18,8 @@ class CompactAdaptive(Compact):
     # # N_window = 20
     # Vthermal = .025
 
-    def flux(self, x, concentrations):
+    def _dcdt(self):
         """Caclulate the flux of chemical species."""
-        self.x = x
-        self.z = self.x.copy()
-        self.concentrations = concentrations
         self.set_derivatives()
         self.set_E()
 

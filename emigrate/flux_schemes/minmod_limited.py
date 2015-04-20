@@ -20,9 +20,7 @@ class MinmodLimited(_Flux_Base):
     concentrations = None
     # limiter = Flux_limiter(minmod)
 
-    def _dcdt(self, x, concentrations):
-        self.x = x
-        self.concentrations = concentrations
+    def _dcdt(self):
         self.set_derivatives()
         flux = self.limit(self.concentrations, self.flux())
         dcdt = np.diff(flux, 1)/self.dz
@@ -88,7 +86,7 @@ class MinmodLimited(_Flux_Base):
     def set_characteristic(self):
         """Calculate the characteristic speed of paramters."""
         self.characteristic = self.u + self.E * \
-            self.mobility - self.node_flux()
+            self.mobility
 
     def limiter(self, c):
         """temporary implimentation of a flux limiter."""

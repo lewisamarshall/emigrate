@@ -99,7 +99,8 @@ class Migrate(object):
             raise RuntimeError
         self.flux_calculator = self.flux_calculator_class(self.N,
                                                           self.dz,
-                                                          self.V)
+                                                          self.V,
+                                                          self.z)
         self.flux_calculator.update_ion_parameters(self.equlibrator)
 
     def _decompose_state(self, state):
@@ -124,7 +125,8 @@ class Migrate(object):
                                           concentrations=concentrations,
                                           pH=pH, ionic_strength=ionic_strength,
                                           voltage=self.V,
-                                          current_density=self.j)
+                                          current_density=self.j,
+                                          )
         if full:
             if t not in self.full_solution.keys():
                 self.full_solution[t] = current_electrolyte
