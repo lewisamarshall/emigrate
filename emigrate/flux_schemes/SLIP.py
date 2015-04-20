@@ -97,7 +97,7 @@ class SLIP(_Flux_Base):
         diff = np.diff(c, 1)
         v = diff[:, 2:]
         w = diff[:, :-2]
-        L = 0.5*(np.sign(v)+np.sign(w))*np.min(np.fabs(np.min([v, w], 1)))
+        L = 0.5*(np.sign(v)+np.sign(w))*np.min(np.fabs([v, w]), 0)
         # L = 1./2.*(v + w)*(1.-np.fabs((v-w)/(np.fabs(v)-np.fabs(w))))
         return L
 
