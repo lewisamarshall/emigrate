@@ -125,7 +125,7 @@ class Migrate(object):
                                           concentrations=concentrations,
                                           pH=pH, ionic_strength=ionic_strength,
                                           voltage=self.V,
-                                          current_density=self.j,
+                                          current_density=self.flux_calculator.j,
                                           )
         if full:
             if t not in self.full_solution.keys():
