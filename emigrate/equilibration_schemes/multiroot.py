@@ -5,9 +5,12 @@ from scipy.optimize import root
 
 def multiroot(polys, last_roots, method='hybr', use_jac=True):
     """A function for calculating the roots of a set of polynomials."""
+    # Find the length of the polynomials
     n = np.arange(polys.shape[0])
+    # Reverse the polynomials
     polys = polys[::-1, :]
 
+    # Calculate the jacobians
     if use_jac:
         p2 = polys[1:, :] * np.arange(1, polys.shape[0])[:, np.newaxis]
         m = np.arange(p2.shape[0])

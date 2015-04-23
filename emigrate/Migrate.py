@@ -175,6 +175,6 @@ class Migrate(object):
         self.t = t
         (self.x, self.concentrations) = self._decompose_state(state)
         dcdt = self.flux_calculator.dcdt(self.x, self.concentrations)
-        dxdt = self.flux_calculator.node_flux()
+        dxdt = self.flux_calculator.node_flux
         dstatedt = self._compose_state(dxdt, dcdt)
         return dstatedt

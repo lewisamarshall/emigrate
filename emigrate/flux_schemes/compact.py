@@ -21,7 +21,8 @@ class Compact(_Flux_Base):
         """Calculate the flux of chemical species."""
         self.set_E()
         total_flux = self.diffusive_flux() + \
-            self.electromigration_flux()
+            self.electromigration_flux() +\
+            self.advection_flux()
         total_flux = self.set_boundary(total_flux)
         return total_flux
 
@@ -47,6 +48,10 @@ class Compact(_Flux_Base):
         electromigration = \
             self.first_derivative(uc * self.E)
         return electromigration
+
+    def advection_flux(self):
+        advection = -self.u*self.first_derivative(self.concentrations)
+        return advection
 
     def conductivity(self):
         """Calculate the conductivty at each location."""

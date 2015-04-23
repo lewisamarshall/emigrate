@@ -29,20 +29,21 @@ class SLIP(_Flux_Base):
 
     def _dcdt(self):
         self.set_derivatives()
+        self.set_node_flux()
         dcdt = (self.electromigration_dcdt() +
                 self.advection_dcdt() +
                 self.diffusion_dcdt()
                 )
         return dcdt
 
-    def node_flux(self):
+    def set_node_flux(self):
         """Calculate the flux of nodes."""
         flux = self.first_derivative(self.node_cost() *
-                                     self.first_derivative(self.x))
+                                     self.xz)
         # flux = self.differ.smooth(flux)
         flux *= self.pointwave
         flux[0, ] = flux[-1, ] = 0.
-        return flux
+        self.node_flux = flux
 
     # Components of dcdt
     def electromigration_dcdt(self):
@@ -60,8 +61,8 @@ class SLIP(_Flux_Base):
         return diffusion
 
     def advection_dcdt(self):
-        advection = ((self.node_flux()-self.u) *
-                     self.first_derivative(self.concentrations) /
+        advection = ((self.node_flux-self.u) *
+                     self.cz /
                      self.xz)
         return advection
 
@@ -86,11 +87,10 @@ class SLIP(_Flux_Base):
         self.alpha = 0.5 * np.maximum(np.fabs(self.characteristic /
                                       self.xz), 0)
 
-
     def set_characteristic(self):
         """Calculate the characteristic speed of paramters."""
         self.characteristic = self.u + self.E * \
-            self.mobility + self.node_flux()
+            self.mobility + self.node_flux
 
     def limiter(self, c):
         """temporary implimentation of a flux limiter."""
@@ -106,8 +106,8 @@ class SLIP(_Flux_Base):
     def node_cost(self):
         """Calculate the cost function of each node."""
         self.set_Kag()
-        deriv = np.abs(self.first_derivative(self.concentrations))
-        cost = deriv / np.tile(np.nanmax(deriv, 1), (len(self.z), 1)).T
+        deriv = np.fabs(self.cz)
+        cost = deriv / np.nanmax(deriv, 1)[:, np.newaxis]
         cost = np.nanmax(cost, 0) + self.Kag
         return cost
 
@@ -119,6 +119,7 @@ class SLIP(_Flux_Base):
     def set_derivatives(self):
         self.xz = self.first_derivative(self.x)
         self.xzz = self.second_derivative(self.x)
+        self.cz = self.first_derivative(self.concentrations)
 
     def set_current(self):
         """Calculate the current based on a fixed voltage drop."""

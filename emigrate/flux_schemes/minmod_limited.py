@@ -35,9 +35,13 @@ class MinmodLimited(_Flux_Base):
         """Calculate the flux of chemical species."""
         self.set_E()
         total_flux = (self.diffusive_flux() +
-                      self.electromigration_flux())
+                      self.electromigration_flux() +
+                      self.advective_flux())
         # total_flux = self.set_boundary(total_flux)
         return total_flux
+
+    def advective_flux(self):
+        return -self.u * self.first_derivative(self.concentrations)
 
     def set_current(self):
         """Calculate the current based on a fixed voltage drop."""
