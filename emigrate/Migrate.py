@@ -4,6 +4,8 @@ import scipy.integrate as integrate
 from collections import OrderedDict
 from .Electrolyte import Electrolyte
 import warnings
+import flux_schemes
+import equilibration_schemes
 # pylint: disable=W0212
 
 
@@ -23,7 +25,8 @@ class Migrate(object):
     j = 0
     pH = None
     ions = None
-    concntrations = None
+    concentrations = None
+    u = 0.
 
     # Solver Parameters
     atol = 1e-12
@@ -35,8 +38,8 @@ class Migrate(object):
     adaptive_grid = False
 
     # Solutions
-    solution = OrderedDict()
-    full_solution = OrderedDict()
+    solution = None
+    full_solution = None
 
     def __init__(self, system, flux_mode='compact', equilibrium_mode='pH'):
         """Initialize with a system from the constructor class."""
@@ -50,6 +53,7 @@ class Migrate(object):
 
         # Set system voltage mode
         self.V = system.voltage
+        self.u = system.u
 
         # Set equilibrium mode.
         self.equilibrum_mode = equilibrium_mode
@@ -58,6 +62,10 @@ class Migrate(object):
         # Set flux mode
         self.flux_mode = flux_mode
         self._set_flux_mode()
+
+        # Create empty solution dictionaries
+        self.solution = OrderedDict()
+        self.full_solution = OrderedDict()
 
     def _prep_domain(self, nodes):
         self.x = np.array(nodes)
@@ -68,39 +76,34 @@ class Migrate(object):
     def _set_equilibrium_mode(self):
         """Import an equilibration object to calculate ion properties."""
         if self.equilibrum_mode == 'fixed':
-            from equilibration_schemes import Fixed
-            self.equlibrator_class = Fixed
+            self.equlibrator = equilibration_schemes.Fixed
         elif self.equilibrum_mode == 'pH':
-            from equilibration_schemes import Variable_pH
-            self.equlibrator_class = Variable_pH
+            self.equlibrator = equilibration_schemes.Variable_pH
         else:
             raise RuntimeError('Available equlibibrators are "fixed" and "pH".'
                                )
 
-        self.equlibrator = self.equlibrator_class(self.ions, self.pH,
-                                                  self.concentrations)
+        self.equlibrator = self.equlibrator(self.ions, self.pH,
+                                            self.concentrations)
         self.equlibrator.equilibrate(self.concentrations)
 
     def _set_flux_mode(self):
         """Import a flux calculator to calculate ion fluxes."""
         if self.flux_mode == 'compact':
-            from flux_schemes import Compact
-            self.flux_calculator_class = Compact
+            self.flux_calculator = flux_schemes.Compact
         elif self.flux_mode == 'compact adaptive':
-            from flux_schemes import CompactAdaptive
-            self.flux_calculator_class = CompactAdaptive
+            self.flux_calculator = flux_schemes.CompactAdaptive
         elif self.flux_mode == 'slip':
-            from flux_schemes import SLIP
-            self.flux_calculator_class = SLIP
+            self.flux_calculator = flux_schemes.SLIP
         elif self.flux_mode == 'minmod':
-            from flux_schemes import MinmodLimited
-            self.flux_calculator_class = MinmodLimited
+            self.flux_calculator = flux_schemes.MinmodLimited
         else:
             raise RuntimeError
-        self.flux_calculator = self.flux_calculator_class(self.N,
-                                                          self.dz,
-                                                          self.V,
-                                                          self.z)
+        self.flux_calculator = self.flux_calculator(self.N,
+                                                    self.dz,
+                                                    self.V,
+                                                    self.z,
+                                                    self.u)
         self.flux_calculator.update_ion_parameters(self.equlibrator)
 
     def _decompose_state(self, state):

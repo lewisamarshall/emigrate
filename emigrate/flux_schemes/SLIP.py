@@ -60,7 +60,7 @@ class SLIP(_Flux_Base):
         return diffusion
 
     def advection_dcdt(self):
-        advection = (self.node_flux() *
+        advection = ((self.node_flux()-self.u) *
                      self.first_derivative(self.concentrations) /
                      self.xz)
         return advection

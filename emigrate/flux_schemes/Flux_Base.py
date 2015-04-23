@@ -9,15 +9,16 @@ class _Flux_Base(object):
     use_adaptive_grid = False
     boundary_mode = 'characteristic'
     differentiation_method = '6th-Order'
-    j = 0
+    j = 0.
     E = None
     V = 0
     x = None
+    u = 0.
     concentrations = None
     smoother = False
     nonnegative = True
 
-    def __init__(self, N, dz, V, z):
+    def __init__(self, N, dz, V, z, u=0.):
         """Initialize the compact flux solver."""
         self.N = N
         self.z = z
@@ -26,6 +27,7 @@ class _Flux_Base(object):
         self.differ = Differentiate(N, dz,
                                     method=self.differentiation_method,
                                     smoother=self.smoother)
+        self.u = u
 
     def first_derivative(self, x_input):
         """Calculate the first derivative with respect to z."""
