@@ -6,6 +6,7 @@ from .Electrolyte import Electrolyte
 import warnings
 import flux_schemes
 import equilibration_schemes
+from Electromigration import Electromigration
 # pylint: disable=W0212
 
 
@@ -38,8 +39,7 @@ class Migrate(object):
     adaptive_grid = False
 
     # Solutions
-    solution = None
-    full_solution = None
+    electromigration = None
 
     #Frame of reference info
     frame = None
@@ -68,8 +68,7 @@ class Migrate(object):
         self._set_flux_mode()
 
         # Create empty solution dictionaries
-        self.solution = OrderedDict()
-        self.full_solution = OrderedDict()
+        self.electromigration = Electromigration(self.ions)
 
     def _prep_domain(self, nodes):
         self.x = np.array(nodes)
@@ -136,18 +135,13 @@ class Migrate(object):
         (x, concentrations) = self._decompose_state(state)
         pH = self.equlibrator.pH
         ionic_strength = self.equlibrator.ionic_strength
-        current_electrolyte = Electrolyte(nodes=x, ions=self.ions,
-                                          concentrations=concentrations,
-                                          pH=pH, ionic_strength=ionic_strength,
-                                          voltage=self.V,
-                                          current_density=self.flux_calculator.j,
-                                          )
-        if full:
-            if t not in self.full_solution.keys():
-                self.full_solution[t] = current_electrolyte
-        else:
-            if t not in self.solution.keys():
-                self.solution[t] = current_electrolyte
+        current_electrolyte = \
+            Electrolyte(nodes=x, ions=self.ions,
+                        concentrations=concentrations,
+                        pH=pH, ionic_strength=ionic_strength,
+                        voltage=self.V, current_density=self.flux_calculator.j,
+                        )
+        self.electromigration.add_electrolyte(t, current_electrolyte, full)
 
     def solve(self, tmax, dt=1, method='dopri5'):
         """Solve for a series of time points using an ODE solver."""

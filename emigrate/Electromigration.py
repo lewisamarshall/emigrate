@@ -4,7 +4,7 @@ import numpy as np
 from Electrolyte import Electrolyte
 
 
-class Electromigration(obj):
+class Electromigration(object):
 
     properties = None
     electrolytes = None
@@ -12,10 +12,10 @@ class Electromigration(obj):
     ions = None
 
     def __init__(self, ions):
-        ions = ions
-        properties = dict()
-        electrolytes = OrderedDict()
-        full_electrolytes = OrderedDict()
+        self.ions = ions
+        self.properties = dict()
+        self.electrolytes = OrderedDict()
+        self.full_electrolytes = OrderedDict()
 
     def add_electrolyte(self, time, electrolyte, full=False):
         if not full:
@@ -27,7 +27,7 @@ class Electromigration(obj):
 
     def write_json(self, file):
         with open(file, 'w') as open_file:
-            json.dump(open_file, self.serialize())
+            json.dump(self.serialize(), open_file)
 
     def load_json(self, file):
         with open(file, 'r') as open_file:
@@ -42,7 +42,7 @@ class Electromigration(obj):
 
         return [(time, electrolyte.serialize())
                 for (time, electrolyte)
-                in self.target.items()]
+                in target.items()]
 
     def serialize(self):
         serial = dict()
