@@ -138,6 +138,19 @@ class Electrolyte(object):
             self.concentrations.append(ion_concentration)
         self.concentrations = np.array(self.concentrations)
 
+    def serialize(self):
+        serial = dict()
+        serial['ions'] = [ion.name for ion in self.ions]
+        serial['nodes'] = self.nodes.to_list()
+        serial['concentrations'] = self.concentrations.to_list()
+        return serial
+
+    def deserialize(self, serial):
+        self.ions = serial['ions']
+        self.nodes = np.array(serial['nodes'])
+        self.concentrations = np.array(serial['concentrations'])
+        return self
+
 if __name__ == '__main__':
     from matplotlib import pyplot as plot
 

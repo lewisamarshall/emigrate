@@ -26,37 +26,44 @@ class Electromigration(obj):
             self.full_electrolytes[time] = electrolyte
 
     def write_json(self, file):
-        save_object = dict()
-        save_object['ions'] = [ion.name for ion in self.ions]
-        save_object['properties'] = self.properties
-        save_object['electrolytes'] = \
-            self._serialize_electrolyte_dict(full=False)
-        save_object['full_electrolytes'] = \
-            self._serialize_electrolyte_dict(full=True)
         with open(file, 'w') as open_file:
-            json.dump(open_file, save_object)
+            json.dump(open_file, self.serialize())
 
     def load_json(self, file):
         with open(file, 'r') as open_file:
             save_object = json.load(open_file)
-        self.peroperties = save_object.properties
-        self.ions = save_object.ions
-        for key, nodes, concentrations in save_object['electrolytes']:
-            self.electrolytes[key] = \
-                Electrolyte(nodes=nodes,
-                            ions=self.ions,
-                            concentrations=np.array(concentrations)
-                            )
+        return self.deserialize(save_object)
 
-    def _serialize_electrolyte_dict(self, full=False):
+    def _serialize_electrolytes(self, full=False):
         if full:
             target = self.full_electrolytes
         else:
             target = self.electrolytes
 
-        return [(time,
-                 electrolyte.nodes.tolist(),
-                 electrolyte.concentrations.tolist()
-                 )
-                for time, electrolyte in
-                self.electrolytes.items()]
+        return [(time, electrolyte.serialize())
+                for (time, electrolyte)
+                in self.target.items()]
+
+    def serialize(self):
+        serial = dict()
+        serial['ions'] = [ion.name for ion in self.ions]
+        serial['properties'] = self.properties
+        serial['electrolytes'] = self._serialize_electrolytes(full=False)
+        serial['full_electrolytes'] = self._serialize_electrolytes(full=True)
+        return serial
+
+    def deserialize(self, serial):
+        self.ions = serial['ions']
+        self.properties = serial['properties']
+        self._deserialize_electrolytes(serial['electrolytes'], full=False)
+        self._deserialize_electrolytes(serial['full_electrolytes'], full=True)
+        return self
+
+    def _deserialize_electrolytes(self, serial_electrolyte, full=False):
+        if full:
+            target = self.full_electrolytes
+        else:
+            target = self.electrolytes
+
+        for time, electrolyte in serial_electrolyte:
+            target[time] = Electrolyte().deserialize(electrolyte)
