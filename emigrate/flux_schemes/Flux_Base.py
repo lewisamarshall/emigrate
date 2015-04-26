@@ -17,6 +17,10 @@ class _Flux_Base(object):
     concentrations = None
     smoother = False
     nonnegative = True
+    frame = None
+    edge = 'right'
+    pH = None
+    I = None
 
     def __init__(self, N, dz, V, z, u=0.):
         """Initialize the compact flux solver."""
@@ -52,6 +56,8 @@ class _Flux_Base(object):
         dcdt = self._dcdt()
         if self.nonnegative is True:
             dcdt = self.impose_nonnegativity(concentrations, dcdt)
+        if self.frame is not None:
+            self._update_reference_frame()
         return dcdt
 
     def impose_nonnegativity(self, concentrations, dcdt):
@@ -62,6 +68,18 @@ class _Flux_Base(object):
         self.mobility = equlibrator.mobility
         self.diffusivity = equlibrator.diffusivity
         self.molar_conductivity = equlibrator.molar_conductivity
+        self.pH = equlibrator.pH
+
+    def _update_reference_frame(self):
+        if self.edge == 'right':
+            E = self.E[-1]
+            pH = self.pH[-1]
+        elif self.edge == 'left':
+            E = self.E[0]
+            pH = self.pH[0]
+        else:
+            raise RuntimeError('Edge must be left or right.')
+        self.u = E * self.frame.effective_mobility(pH)
 
     def _dcdt(self):
         """Calculate the flux of chemical species."""

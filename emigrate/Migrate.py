@@ -41,6 +41,10 @@ class Migrate(object):
     solution = None
     full_solution = None
 
+    #Frame of reference info
+    frame = None
+    edge = 'right'
+
     def __init__(self, system, flux_mode='compact', equilibrium_mode='pH'):
         """Initialize with a system from the constructor class."""
 
@@ -105,6 +109,14 @@ class Migrate(object):
                                                     self.z,
                                                     self.u)
         self.flux_calculator.update_ion_parameters(self.equlibrator)
+
+    def set_reference_frame(self, frame=None, edge='right'):
+        """Set the frame of reference.
+
+        Frame should be an ion. Edge should be right or left.
+        """
+        self.frame = self.flux_calculator.frame = frame
+        self.edge = self.flux_calculator.edge = edge
 
     def _decompose_state(self, state):
         """Decompose the state into X and concentrations."""
