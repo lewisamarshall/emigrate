@@ -1,7 +1,7 @@
 // set plot size
 var margin = {top: 30, right: 20, bottom: 30, left: 100},
-width = 600 - margin.left - margin.right,
-height = 270 - margin.top - margin.bottom;
+width = 900 - margin.left - margin.right,
+height = 450 - margin.top - margin.bottom;
 
 
 // Set the ranges
@@ -74,8 +74,15 @@ var make_axes = function(data2){
 var frame = 0
 var lines = []
 var saved_data = null
+
+var clear_lines = function(){
+    for( i = 0; i<lines.length; i++){
+        lines[i].remove()
+    }
+}
 var plot = function(){
     frame = 0
+    clear_lines()
     var file = document.getElementById("file_input")
                        .value
                        .replace("C:\\fakepath\\", "");

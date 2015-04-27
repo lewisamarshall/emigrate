@@ -11,7 +11,7 @@ var mainWindow = null;
 // Quit when all windows are closed.
 app.on('window-all-closed', function() {
   // if (process.platform != 'darwin')
-  
+
     app.quit();
 });
 
@@ -19,7 +19,7 @@ app.on('window-all-closed', function() {
 // initialization and ready for creating browser windows.
 app.on('ready', function() {
   // Create the browser window.
-  mainWindow = new BrowserWindow({width: 800, height: 600});
+  mainWindow = new BrowserWindow({width: 1000, height: 800});
 
   // and load the index.html of the app.
   mainWindow.loadUrl('file://' + __dirname + '/index.html');
