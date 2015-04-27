@@ -32,6 +32,7 @@ var svg = d3.select("body")
             .append("g")
             .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
 
+
 // Set up color options
 var p=d3.scale.category10();
 
@@ -80,6 +81,51 @@ var clear_lines = function(){
         lines[i].remove()
     }
 }
+
+var legend = function(ions) {
+    var columns = ['ion', 'color']
+    var table = d3.select("body").append("table")
+            thead = table.append("thead"),
+            tbody = table.append("tbody");
+
+    // append the header row
+    thead.append("tr")
+        .selectAll("th")
+        .data(columns)
+        .enter()
+        .append("th")
+            .text(function(column) { return column; });
+
+    // create a row for each object in the data
+    var rows = tbody.selectAll("tr")
+        .data(ions)
+        .enter()
+        .append("tr");
+
+    // create a cell in each row for each column
+    var cells = rows.selectAll("td")
+        .data(function(row) {
+            return columns.map(function(column){
+                if(column === 'ion'){
+                    return {column: column, value: row}
+                }else{
+                    return {column: column, value: ions.indexOf(row)};
+                }
+            });
+        })
+        .enter()
+        .append("td")
+        .attr("style", "font-family: Courier")
+            .html(function(d) {
+                if(typeof(d.value) === 'string'){
+                    return d.value;
+                }else{
+                    d3.select(this).style({"background-color":  p(d.value%10)});
+                }
+                 })
+    return table;
+}
+
 var plot = function(){
     frame = 0
     clear_lines()
@@ -90,6 +136,8 @@ var plot = function(){
     plotter = d3.json(file, function(error, data){
         saved_data = data;
         for(i = 0; i < data.electrolytes[frame][1].concentrations.length; i++){
+
+            // Add axes
             if(i === 0){make_axes(d3.zip(
                 data.electrolytes[frame][1].nodes,
                 data.electrolytes[frame][1].concentrations[i]
@@ -104,7 +152,11 @@ var plot = function(){
                             )))
                             .attr("stroke", p(i%10))
 
-        }});
+
+
+        }
+        my_legend = legend(data.ions, ['name', 'pKa']);
+        });
     };
 
 var next = function(time){
