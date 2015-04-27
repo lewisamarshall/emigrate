@@ -4,11 +4,11 @@
     <title>Emigrate Visualizer</title>
     <script type="text/javascript" src="d3.min.js"></script>
     <style>
-    body { font: 12px Arial;}
+    body { font: 12px Arial;
+           background: linen;
+        }
 
-    path {
-        stroke: steelblue;
-        stroke-width: 2;
+    path {stroke-width: 1.5;
         fill: none;
         }
 
@@ -18,6 +18,7 @@
        stroke: grey;
        stroke-width: 1;
        shape-rendering: crispEdges;
+       }
     }
  </style>
   </head>
@@ -27,5 +28,12 @@
     and Electron <script>document.write(process.versions['electron'])</script>. -->
 
     <script src='concentration_plot.js'></script>
+    <h2>Information: </h2>
+    <p><input id=file_input type=file name=file></input></p>
+    <p><button onclick=plot()>Plot</button></p>
+    <p><button onclick=next(300)>Next</button></p>
+    <p><button onclick=prev(300)>Previous</button></p>
+    <p><input type=checkbox name='hi' , value=hi>Concentration 1</input><p>
+    <p><input type=checkbox name='hi', value=low>Concentration 2</input><p>
   </body>
 </html>
