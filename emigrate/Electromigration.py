@@ -40,12 +40,14 @@ class Electromigration(object):
         else:
             target = self.electrolytes
 
-        return [(time, electrolyte.serialize())
-                for (time, electrolyte)
-                in target.items()]
+        return [electrolyte.serialize()
+                for electrolyte
+                in target.values()]
 
     def serialize(self):
         serial = dict()
+        serial['time'] = self.electrolytes.keys()
+        serial['full_time'] = self.full_electrolytes.keys()
         serial['ions'] = [ion.name for ion in self.ions]
         serial['properties'] = self.properties
         serial['electrolytes'] = self._serialize_electrolytes(full=False)
@@ -55,15 +57,15 @@ class Electromigration(object):
     def deserialize(self, serial):
         self.ions = serial['ions']
         self.properties = serial['properties']
-        self._deserialize_electrolytes(serial['electrolytes'], full=False)
-        self._deserialize_electrolytes(serial['full_electrolytes'], full=True)
+        self._deserialize_electrolytes(serial['electrolytes'], serial['time'], full=False)
+        self._deserialize_electrolytes(serial['full_electrolytes'], serial['full_time'], full=True)
         return self
 
-    def _deserialize_electrolytes(self, serial_electrolyte, full=False):
+    def _deserialize_electrolytes(self, serial_electrolyte, serial_time, full=False):
         if full:
             target = self.full_electrolytes
         else:
             target = self.electrolytes
 
-        for time, electrolyte in serial_electrolyte:
+        for time, electrolyte in zip(serial_time, serial_electrolyte):
             target[time] = Electrolyte().deserialize(electrolyte)

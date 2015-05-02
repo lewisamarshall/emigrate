@@ -62,6 +62,7 @@ class Migrate(object):
         # Set equilibrium mode.
         self.equilibrum_mode = equilibrium_mode
         self._set_equilibrium_mode()
+        self.equlibrator.equilibrate(self.concentrations)
 
         # Set flux mode
         self.flux_mode = flux_mode
@@ -69,6 +70,8 @@ class Migrate(object):
 
         # Create empty solution dictionaries
         self.electromigration = Electromigration(self.ions)
+        self._write_solution(0, self._compose_state(self.x, self.concentrations))
+
 
     def _prep_domain(self, nodes):
         self.x = np.array(nodes)
@@ -88,7 +91,6 @@ class Migrate(object):
 
         self.equlibrator = self.equlibrator(self.ions, self.pH,
                                             self.concentrations)
-        self.equlibrator.equilibrate(self.concentrations)
 
     def _set_flux_mode(self):
         """Import a flux calculator to calculate ion fluxes."""
