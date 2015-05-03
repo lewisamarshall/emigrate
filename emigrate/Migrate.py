@@ -70,7 +70,9 @@ class Migrate(object):
         # Create empty solution dictionaries
         self.electromigration = Electromigration(self.ions)
         self._write_solution(0,
-                             self._compose_state(self.x, self.concentrations))
+                             self._compose_state(self.x,
+                                                 self.concentrations),
+                             full=False)
 
     def _prep_domain(self, nodes):
         self.x = np.array(nodes)

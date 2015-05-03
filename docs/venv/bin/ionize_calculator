@@ -1,0 +1,10 @@
+#!/Users/lewis/Documents/github/emigrate/docs/venv/bin/python2.7
+# EASY-INSTALL-ENTRY-SCRIPT: 'ionize==0.9.0','gui_scripts','ionize_calculator'
+__requires__ = 'ionize==0.9.0'
+import sys
+from pkg_resources import load_entry_point
+
+if __name__ == '__main__':
+    sys.exit(
+        load_entry_point('ionize==0.9.0', 'gui_scripts', 'ionize_calculator')()
+    )
