@@ -25,9 +25,9 @@ class Electromigration(object):
         if time not in self.full_electrolytes.keys():
             self.full_electrolytes[time] = electrolyte
 
-    def write_json(self, file):
+    def write_json(self, file, full=False):
         with open(file, 'w') as open_file:
-            json.dump(self.serialize(), open_file)
+            json.dump(self.serialize(full=False), open_file)
 
     def load_json(self, file):
         with open(file, 'r') as open_file:
@@ -42,14 +42,15 @@ class Electromigration(object):
 
         return [electrolyte.serialize() for electrolyte in target.values()]
 
-    def serialize(self):
+    def serialize(self, full=False):
         serial = dict()
         serial['time'] = self.electrolytes.keys()
-        serial['full_time'] = self.full_electrolytes.keys()
         serial['ions'] = [ion.name for ion in self.ions]
         serial['properties'] = self.properties
         serial['electrolytes'] = self._serialize_electrolytes(full=False)
-        serial['full_electrolytes'] = self._serialize_electrolytes(full=True)
+        if full:
+            serial['full_electrolytes'] = self._serialize_electrolytes(full=True)
+            serial['full_time'] = self.full_electrolytes.keys()
         return serial
 
     def deserialize(self, serial):
