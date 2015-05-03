@@ -16,7 +16,7 @@ class Differentiate(object):
     B2 = None
     M = None
     fM = None
-    epsilon = 1
+    epsilon = 1.
     sparse = True
     factorized = True
     truncate = True
@@ -81,6 +81,7 @@ class Differentiate(object):
             self.fA2 = linalg.factorized(self.A2)
             if self.smoother:
                 self.fM = linalg.factorized(self.M)
+                self.fA2t = linalg.factorized(self.A2[1:-1, 1:-1])
 
     def set_A1(self):
         """Setup for A1."""
@@ -140,12 +141,10 @@ class Differentiate(object):
     def set_M(self):
         """Set up the implicit smoothing matrix."""
         self.M = self.A2 - self.epsilon * self.B2
+        self.M[:, 0] = self.M[:, -1] = 0.
+        self.M[0, 0] = self.M[-1, -1] = 1.
         if self.truncate:
             self.M = self.M[1:-1, 1:-1]
-
-        self.M[0, :] = self.M[-1, :] = 0
-        self.M[0, 0] = 1
-        self.M[-1, -1] = 1
 
     def construct_matrix(self, boundary_functions,
                          internal_function, invert=False):
@@ -171,11 +170,11 @@ class Differentiate(object):
 if __name__ == '__main__':
     from scipy.special import erf
     from matplotlib import pyplot as plot
-    Nt = 30
+    Nt = 50
     z = np.linspace(-1, 1, Nt)
-    test_functions = np.array([erf(z*3), erf(z*2), (erf(z*2) +
-                               .1*np.random.random(z.shape))/(10*z**2+1)])
-    my_diff = Differentiate(Nt, 1, method='dissipative')
+    test_functions = np.array([19*erf(z*3), 25*erf(z*2), 15*(erf(z*2) +
+                               .3*np.random.random(z.shape))/(10*z**2+1)])
+    my_diff = Differentiate(Nt, 1, method='6th-Order')
     # my_diff = Differentiate(Nt, 1, method='dissipative')
     # print my_diff.A1.todense(), '\n'
     # print my_diff.B1.todense()
@@ -189,14 +188,21 @@ if __name__ == '__main__':
         d2 = my_diff.second_derivative(test_functions.T)
 
     if True:
+        print my_diff.fA2
+        print my_diff.factorized
+        print my_diff.smoother
+        print my_diff.fM
+        print test_functions[2, :].shape
         smoothed = my_diff.smooth(test_functions[2, :])
+        print smoothed.shape
 
     if True:
-        plot.plot(z, np.ravel(test_functions[2, :]), label='test-function')
+        for i in range(3):
+            plot.plot(z, np.ravel(test_functions[i, :]), label='test-function')
         # plot.plot(z, np.ravel(d2[:, 0]))
         plot.plot(z, np.ravel(smoothed), label='smoothed')
         # plot.plot(z, np.ravel(d2[:, 1]))
         # plot.plot(z, np.ravel(d1[:, 0]))
         # plot.plot(z, np.ravel(d1[:, 1]))
-        plot.legend()
+        plot.legend(loc="upper left")
         plot.show()

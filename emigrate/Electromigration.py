@@ -40,9 +40,7 @@ class Electromigration(object):
         else:
             target = self.electrolytes
 
-        return [electrolyte.serialize()
-                for electrolyte
-                in target.values()]
+        return [electrolyte.serialize() for electrolyte in target.values()]
 
     def serialize(self):
         serial = dict()

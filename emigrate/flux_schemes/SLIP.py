@@ -2,7 +2,6 @@
 import numpy as np
 from Flux_Base import _Flux_Base
 from Flux_Limiter import Flux_Limiter
-import matplotlib.pyplot as plot
 # pylint: disable = W0232, E1101
 
 
@@ -21,7 +20,7 @@ class SLIP(_Flux_Base):
     NI = 3
     Vthermal = .025
     concentrations = None
-    pointwave = 1e-2
+    pointwave = 1
     smoother = True
     # limiter = Flux_limiter(minmod)
 
