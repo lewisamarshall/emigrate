@@ -143,6 +143,7 @@ class Electrolyte(object):
         serial['ions'] = [ion.name for ion in self.ions]
         serial['nodes'] = self.nodes.tolist()
         serial['concentrations'] = self.concentrations.tolist()
+        serial['pH'] = self.pH.tolist()
         return serial
 
     def deserialize(self, serial):
