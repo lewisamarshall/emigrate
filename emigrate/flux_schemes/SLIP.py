@@ -2,7 +2,7 @@
 import numpy as np
 from Flux_Base import _Flux_Base
 from Flux_Limiter import Flux_Limiter
-from matplotlib.pyplot import plot
+import matplotlib.pyplot as plot
 # pylint: disable = W0232, E1101
 
 
@@ -21,7 +21,7 @@ class SLIP(_Flux_Base):
     NI = 3
     Vthermal = .025
     concentrations = None
-    pointwave = 1e-6
+    pointwave = 1e-2
     smoother = True
     # limiter = Flux_limiter(minmod)
 
@@ -40,7 +40,7 @@ class SLIP(_Flux_Base):
         """Calculate the flux of nodes."""
         flux = self.first_derivative(self.node_cost() *
                                      self.xz)
-        # flux = self.differ.smooth(flux)
+        flux = self.differ.smooth(flux)
         flux *= self.pointwave
         flux[0, ] = flux[-1, ] = 0.
         self.node_flux = flux

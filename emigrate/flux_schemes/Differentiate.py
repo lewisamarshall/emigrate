@@ -16,13 +16,13 @@ class Differentiate(object):
     B2 = None
     M = None
     fM = None
-    epsilon = 1.
+    epsilon = 1
     sparse = True
     factorized = True
-    truncate = False
-    smoother = False
+    truncate = True
+    smoother = True
 
-    def __init__(self, N, dz, method, smoother=False):
+    def __init__(self, N, dz, method, smoother=True):
         """Initialize with a length and step size."""
         self.N = N
         self.dz = dz
@@ -58,8 +58,8 @@ class Differentiate(object):
             if self.factorized is True:
                 if self.truncate:
                     smooth = np.copy(x)
-                    smooth[1:-1, :] = \
-                        self.fM(self.A2[1:-1, 1:-1].dot(x[1:-1, :]))
+                    smooth[1:-1] = \
+                        self.fM(self.A2[1:-1, 1:-1].dot(x[1:-1]))
                 else:
                     smooth = self.fM(self.A2.dot(x))
             else:
@@ -143,6 +143,10 @@ class Differentiate(object):
         if self.truncate:
             self.M = self.M[1:-1, 1:-1]
 
+        self.M[0, :] = self.M[-1, :] = 0
+        self.M[0, 0] = 1
+        self.M[-1, -1] = 1
+
     def construct_matrix(self, boundary_functions,
                          internal_function, invert=False):
         """Construct matrices based on inputs."""
@@ -171,7 +175,7 @@ if __name__ == '__main__':
     z = np.linspace(-1, 1, Nt)
     test_functions = np.array([erf(z*3), erf(z*2), (erf(z*2) +
                                .1*np.random.random(z.shape))/(10*z**2+1)])
-    my_diff = Differentiate(Nt, 1, method='6th-Order')
+    my_diff = Differentiate(Nt, 1, method='dissipative')
     # my_diff = Differentiate(Nt, 1, method='dissipative')
     # print my_diff.A1.todense(), '\n'
     # print my_diff.B1.todense()
@@ -185,12 +189,12 @@ if __name__ == '__main__':
         d2 = my_diff.second_derivative(test_functions.T)
 
     if True:
-        smoothed = my_diff.smooth(test_functions.T)
+        smoothed = my_diff.smooth(test_functions[2, :])
 
     if True:
         plot.plot(z, np.ravel(test_functions[2, :]), label='test-function')
         # plot.plot(z, np.ravel(d2[:, 0]))
-        plot.plot(z, np.ravel(smoothed[:, 2]), label='smoothed')
+        plot.plot(z, np.ravel(smoothed), label='smoothed')
         # plot.plot(z, np.ravel(d2[:, 1]))
         # plot.plot(z, np.ravel(d1[:, 0]))
         # plot.plot(z, np.ravel(d1[:, 1]))
