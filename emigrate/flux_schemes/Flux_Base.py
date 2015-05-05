@@ -21,6 +21,8 @@ class _Flux_Base(object):
     edge = 'right'
     pH = None
     I = None
+    water_conductivity = None
+    water_diffusive_conductivity = None
 
     def __init__(self, N, dz, V, z, u=0.):
         """Initialize the compact flux solver."""
@@ -69,6 +71,8 @@ class _Flux_Base(object):
         self.diffusivity = equlibrator.diffusivity
         self.molar_conductivity = equlibrator.molar_conductivity
         self.pH = equlibrator.pH
+        self.water_conductivity = equlibrator.water_conductivity
+        self.water_diffusive_conductivity = equlibrator.water_diffusive_conductivity
 
     def _update_reference_frame(self):
         if self.edge == 'right':

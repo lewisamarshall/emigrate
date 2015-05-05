@@ -17,7 +17,7 @@ class SLIP(_Flux_Base):
     V = 0
     x = None
     u = 0
-    NI = 3
+    NI = 10
     Vthermal = .025
     concentrations = None
     pointwave = 1
@@ -127,10 +127,21 @@ class SLIP(_Flux_Base):
     def set_E(self):
         """Calculate the electric field at each node."""
         self.set_current()
-        self.E = -self.j/self.conductivity()
+        self.E = -(self.j+self.diffusive_current())/self.conductivity()
 
     def conductivity(self):
         """Calculate the conductivty at each location."""
         conductivity = np.sum(self.molar_conductivity
                               * self.concentrations, 0)
+        conductivity += self.water_conductivity
         return conductivity
+
+    def diffusive_current(self):
+        """Calculate the diffusive current at each location."""
+        diffusive_current = self.first_derivative(
+            np.sum(
+                self.molar_conductivity/self.mobility*
+                self.diffusivity*self.concentrations,
+                0) + self.water_diffusive_conductivity
+                )
+        return diffusive_current

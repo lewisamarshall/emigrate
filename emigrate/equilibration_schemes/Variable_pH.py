@@ -19,7 +19,6 @@ class Variable_pH(Equilibrate_Base):
     PMat = None
     pH = None
     cH = None
-    # z0_matrix = None
     ionization_fraction = None
     absolute_mobility = None
     _Lpm3 = 1000
@@ -28,11 +27,17 @@ class Variable_pH(Equilibrate_Base):
     T = 25
     z0 = None
     index_0 = None
+    F = 9.65E4       # Faraday's const.[C/mol]
+    h_mobility = 362E-9/F
+    oh_mobility = 205E-9/F
+
+    h_diffusivity = h_mobility / 1 * _kB * (T+273.15)
+    oh_diffusivity = oh_mobility / -1 * _kB * (T+273.15)
+    water_conductivity = None
 
     def set_arrays(self):
         """Prepare arrays to solve problems during initialization."""
         self.set_z_index()
-        # self.set_z0_matrix()
         self.set_l_matrix()
         self.set_Q()
         self.set_Pmat()
@@ -45,6 +50,8 @@ class Variable_pH(Equilibrate_Base):
         self.calc_mobility()
         self.calc_diffusivity()
         self.calc_molar_conductivity()
+        self.calc_water_conductivity()
+        self.calc_water_diffusive_conductivity()
 
     def set_z_index(self):
         """Set the valence indices."""
@@ -144,8 +151,13 @@ class Variable_pH(Equilibrate_Base):
 
             # Convert to pH. Use the activity to correct the calculation.
                 self.cH.append(cH)
+
+            # convert to numpy array before ending
+            self.cH = np.array(self.cH)
+
         else:
             self.cH = multiroot(poly, self.cH)
+
 
         self.pH = -np.log10(self.cH)
 
@@ -184,3 +196,14 @@ class Variable_pH(Equilibrate_Base):
         self.ionization_fraction = np.delete(self.ionization_fraction,
                                              self.index_0,
                                              axis=1)
+
+    def calc_water_conductivity(self):
+        self.water_conductivity = \
+            self.cH * self.h_mobility + \
+            self.Kw/self.cH * self.oh_mobility
+
+
+    def calc_water_diffusive_conductivity(self):
+        self.water_diffusive_conductivity = \
+            (self.cH * self.h_diffusivity - \
+            self.Kw/self.cH * self.oh_diffusivity)*self.F
