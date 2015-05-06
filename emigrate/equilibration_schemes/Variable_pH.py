@@ -158,7 +158,6 @@ class Variable_pH(Equilibrate_Base):
         else:
             self.cH = multiroot(poly, self.cH)
 
-
         self.pH = -np.log10(self.cH)
 
     def calc_mobility(self):
