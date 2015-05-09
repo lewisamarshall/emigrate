@@ -45,7 +45,7 @@ class Migrate(object):
     frame = None
     edge = 'right'
 
-    def __init__(self, system, flux_mode='compact', equilibrium_mode='pH'):
+    def __init__(self, system, flux_mode='compact', equilibrium_mode='pH', filename=False):
         """Initialize with a system from the constructor class."""
 
         # Prepare System Domain
@@ -68,7 +68,7 @@ class Migrate(object):
         self._set_flux_mode()
 
         # Create empty solution dictionaries
-        self.electromigration = Electromigration(self.ions)
+        self.electromigration = Electromigration(self.ions, filename)
         self._write_solution(0,
                              self._compose_state(self.x,
                                                  self.concentrations),

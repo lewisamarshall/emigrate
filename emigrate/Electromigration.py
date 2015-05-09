@@ -2,6 +2,7 @@ import json
 from collections import OrderedDict
 import numpy as np
 from Electrolyte import Electrolyte
+import h5py
 
 
 class Electromigration(object):
@@ -10,14 +11,60 @@ class Electromigration(object):
     electrolytes = None
     full_electrolytes = None
     ions = None
+    hdf5 = None
 
-    def __init__(self, ions):
+    def __init__(self, ions, hdf5=False):
         self.ions = ions
-        self.properties = dict()
-        self.electrolytes = OrderedDict()
-        self.full_electrolytes = OrderedDict()
+        if hdf5:
+            self.create_hdf5_structure(hdf5)
+        else:
+            self.properties = dict()
+            self.electrolytes = OrderedDict()
+            self.full_electrolytes = OrderedDict()
 
     def add_electrolyte(self, time, electrolyte, full=False):
+        if self.hdf5:
+            self._add_electrolyte_hdf5(time, electrolyte, full)
+        else:
+            self._add_electrolyte_json(time, electrolyte, full)
+
+    # HDF5 functions
+    #####################################################################
+    def create_hdf5_structure(self, filename):
+        self.hdf5 = h5py.File(filename, 'w')
+        self.electrolytes = self.hdf5.create_group('electrolytes')
+        self.full_electrolytes = self.hdf5.create_group('full_electrolytes')
+        self.hdf5.flush()
+
+    def _add_electrolyte_hdf5(self, time, electrolyte, full=False):
+        if full:
+            target = self.full_electrolytes
+            return None
+        else:
+            target = self.electrolytes
+
+        # Name each electrolyte group with a string representation of a
+        # consecutive integer.
+        i = len(target.keys())+1
+        electrolyte_location = target.create_group(str(i))
+
+        # Set attributes
+        electrolyte_location.attrs['time'] = time
+        electrolyte_location.attrs['current density'] = \
+            electrolyte.current_density
+        electrolyte_location.attrs['voltage'] = electrolyte.voltage
+        electrolyte.write_to_hdf5(electrolyte_location)
+
+        self.hdf5.flush()
+
+    def __exit__(self):
+        # Close the hdf5 item on exit if it exists.
+        if self.hdf5:
+            self.hdf5.close()
+
+    # JSON functions:
+    #####################################################################
+    def _add_electrolyte_json(self, time, electrolyte, full=False):
         if not full:
             if time not in self.electrolytes.keys():
                 self.electrolytes[time] = electrolyte

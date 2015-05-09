@@ -73,7 +73,7 @@ class Electrolyte(object):
 
     def construct(self, solutions, lengths, n_nodes=100,
                   interface_length=1e-4, voltage=0, current_density=0,
-                  domain_mode='centered', bulk_flow = 0.):
+                  domain_mode='centered', bulk_flow=0.):
         """Construct electrophoretic system based on a set of solutions."""
         self.voltage = voltage
         self.current_density = current_density
@@ -151,6 +151,11 @@ class Electrolyte(object):
         self.nodes = np.array(serial['nodes'])
         self.concentrations = np.array(serial['concentrations'])
         return self
+
+    def write_to_hdf5(self, location):
+        location.create_dataset('concentrations', data=self.concentrations, compression="gzip", dtype='f4')
+        location.create_dataset('nodes', data=self.nodes, compression="gzip", dtype='f4')
+        # location.create_dataset('')
 
 if __name__ == '__main__':
     from matplotlib import pyplot as plot
