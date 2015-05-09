@@ -1,6 +1,7 @@
 """An electrophoresis solver."""
 import numpy as np
 import scipy.integrate as integrate
+import scipy.interpolate
 from collections import OrderedDict
 from .Electrolyte import Electrolyte
 import warnings
@@ -147,8 +148,12 @@ class Migrate(object):
                         )
         self.electromigration.add_electrolyte(t, current_electrolyte, full)
 
-    def solve(self, tmax, dt=1, method='dopri5'):
+    def solve(self, tmax, dt=1, method='dopri5', precondition=False):
         """Solve for a series of time points using an ODE solver."""
+
+        if precondition:
+            self.precondition()
+
         self.solver = solver = integrate.ode(self._objective)
 
         solver.set_integrator(method, atol=self.atol, rtol=self.rtol)
@@ -172,6 +177,32 @@ class Migrate(object):
 
         if not solver.successful():
             print 'solver failed at time', solver.t
+
+    def precondition(self):
+        self.flux_calculator.dcdt(self.x, self.concentrations)
+        cost = self.flux_calculator.node_cost()
+        cost = self.flux_calculator.differ.smooth(cost)
+        cost[-1] = np.median(cost)
+        new_x = self._get_new_x(cost)
+
+        interpolator = \
+            scipy.interpolate.interp1d(self.x,
+                                       self.concentrations,
+                                       kind='cubic')
+
+        new_concentrations = interpolator(new_x)
+        self.x = new_x
+        self.concentrations = new_concentrations
+
+        self.equlibrator.cH = self.equlibrator.pH = None
+        self.equlibrator.equilibrate(self.concentrations)
+        self.flux_calculator.update_ion_parameters(self.equlibrator)
+
+    def _get_new_x(self, cost):
+        new_x = np.cumsum(1/cost)
+        new_x -= new_x[0]
+        new_x *= max(self.x)/new_x[-1]
+        return new_x
 
     def _solout(self, t, state):
         """Perform actions when a successful solution step is found."""
