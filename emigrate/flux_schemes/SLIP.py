@@ -28,6 +28,7 @@ class SLIP(_Flux_Base):
 
     def _dcdt(self):
         self.set_derivatives()
+        self.set_E()
         self.set_node_flux()
         dcdt = (self.electromigration_dcdt() +
                 self.advection_dcdt() +
@@ -67,7 +68,6 @@ class SLIP(_Flux_Base):
 
     def electromigration_flux(self):
         """Calculate flux due to electromigration."""
-        self.set_E()
         uc = self.mobility * self.concentrations
         electromigration = uc * self.E
         return electromigration
@@ -126,8 +126,15 @@ class SLIP(_Flux_Base):
 
     def set_E(self):
         """Calculate the electric field at each node."""
-        self.set_current()
-        self.E = -(self.j+self.diffusive_current())/self.conductivity()
+        if self.mode is 'voltage':
+            self.set_current()
+            self.E = -(self.j+self.diffusive_current())/self.conductivity()
+        elif self.mode is 'current':
+            self.j = self.current_density
+            self.E = -(self.j+self.diffusive_current())/self.conductivity()
+            self.V = np.sum((self.E[:-1]+self.E[1:])/ 2 * np.diff(self.x))
+        else:
+            raise RuntimeError()
 
     def conductivity(self):
         """Calculate the conductivty at each location."""

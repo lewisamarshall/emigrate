@@ -1,5 +1,6 @@
 from Differentiate import Differentiate
 import numpy as np
+import warnings
 
 
 class _Flux_Base(object):
@@ -25,6 +26,7 @@ class _Flux_Base(object):
     I = None
     water_conductivity = None
     water_diffusive_conductivity = None
+    mode = 'voltage'
 
     def __init__(self, system):
         """Initialize the compact flux solver."""
@@ -34,6 +36,13 @@ class _Flux_Base(object):
 
         # Prepare the voltage/current and bulk flow mode from the system.
         self.V = system.voltage
+        self.current_density = system.current_density
+        if self.V:
+            self.mode = 'voltage'
+            if self.current_density:
+                warnings.warn('System has both current and voltage. Using voltage.')
+        else:
+            self.mode = 'current'
 
         self.u = system.u
 

@@ -63,6 +63,7 @@ class Migrate(object):
         # Set flux mode
         self.flux_mode = flux_mode
         self._set_flux_mode()
+        self.flux_calculator.update_ion_parameters(self.equilibrator)
 
         self.N = self.flux_calculator.N
 
@@ -164,6 +165,9 @@ class Migrate(object):
             print 'solver failed at time', solver.t
 
     def precondition(self):
+        self.flux_calculator.x = self.x
+        self.flux_calculator.concentrations = self.concentrations
+        self.flux_calculator.set_E()
         self.flux_calculator.dcdt(self.x, self.concentrations)
         cost = self.flux_calculator.node_cost()
         cost = self.flux_calculator.differ.smooth(cost)
