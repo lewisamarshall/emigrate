@@ -14,6 +14,8 @@ class _Flux_Base(object):
     V = 0
     x = None
     u = 0.
+    area = None
+    _area = 1.
     concentrations = None
     smoother = False
     nonnegative = True
@@ -24,16 +26,31 @@ class _Flux_Base(object):
     water_conductivity = None
     water_diffusive_conductivity = None
 
-    def __init__(self, N, dz, V, z, u=0.):
+    def __init__(self, system):
         """Initialize the compact flux solver."""
-        self.N = N
-        self.z = z
-        self.dz = dz
-        self.V = V
-        self.differ = Differentiate(N, dz,
+
+        # Prepare the grid points from the system nodes
+        self._prep_domain(system.nodes)
+
+        # Prepare the voltage/current and bulk flow mode from the system.
+        self.V = system.voltage
+
+        self.u = system.u
+
+        # use system area if it exists, otherwise default to _area
+        self.area = system.area
+        self._area = self.area or self._area
+
+        # Create the differentiation system.
+        self.differ = Differentiate(self.N, self.dz,
                                     method=self.differentiation_method,
                                     smoother=self.smoother)
-        self.u = u
+
+    def _prep_domain(self, nodes):
+        self.x = np.array(nodes)
+        self.z = np.linspace(min(self.x), max(self.x), len(self.x))
+        self.N = self.x.size
+        self.dz = self.z[1]-self.z[0]
 
     def first_derivative(self, x_input):
         """Calculate the first derivative with respect to z."""

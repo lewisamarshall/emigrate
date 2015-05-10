@@ -13,52 +13,48 @@ from Electromigration import Electromigration
 
 class Migrate(object):
 
-    """A class for performing electromigration calculations."""
+    """A class for performing electromigration calculations.
+
+    Args:
+        system, filename=False, precondition=False
+        flux_mode='compact', equilibrium_mode='pH'
+
+    System should be an Electrolyte system that defines the initial condition.
+
+    Filename should be for an hdf5 file to use as the backend for the result.
+    If not filename is specified, the solution will be stored in memory.
+    """
 
     import constants
 
     # Migrate State
     t = 0.
-    V = None
-    E = None
-    dz = None
-    z = None
     x = None
-    j = 0
-    pH = None
-    ions = None
     concentrations = None
-    u = 0.
+    ions = None
 
     # Solver Parameters
     atol = 1e-12
     rtol = 1e-6
 
     # Modules
-    equlibrator = None
+    equilibrator = None
     flux_calculator = None
     adaptive_grid = False
 
     # Solutions
     electromigration = None
 
-    #Frame of reference info
-    frame = None
-    edge = 'right'
-
-    def __init__(self, system, flux_mode='compact', equilibrium_mode='pH', filename=False):
+    def __init__(self, system, filename=False, precondition=False,
+                 flux_mode='compact', equilibrium_mode='pH'):
         """Initialize with a system from the constructor class."""
 
-        # Prepare System Domain
-        self._prep_domain(system.nodes)
+        self.system = system
 
         # Prepare ions
-        self.ions = system.ions
-        self.concentrations = np.array(system.concentrations)
-
-        # Set system voltage mode
-        self.V = system.voltage
-        self.u = system.u
+        self.ions = self.system.ions
+        self.x = np.array(system.nodes)
+        self.concentrations = np.array(self.system.concentrations)
 
         # Set equilibrium mode.
         self.equilibrum_mode = equilibrium_mode
@@ -68,32 +64,31 @@ class Migrate(object):
         self.flux_mode = flux_mode
         self._set_flux_mode()
 
+        self.N = self.flux_calculator.N
+
+        # Precondition if required.
+        if precondition:
+            self.precondition()
+
         # Create empty solution dictionaries
         self.electromigration = Electromigration(self.ions, filename)
-        self._write_solution(0,
-                             self._compose_state(self.x,
-                                                 self.concentrations),
+        self._write_solution(0, self._compose_state(self.x,
+                                                    self.concentrations),
                              full=False)
-
-    def _prep_domain(self, nodes):
-        self.x = np.array(nodes)
-        self.z = np.linspace(min(self.x), max(self.x), len(self.x))
-        self.N = self.x.size
-        self.dz = self.z[1]-self.z[0]
 
     def _set_equilibrium_mode(self):
         """Import an equilibration object to calculate ion properties."""
         if self.equilibrum_mode == 'fixed':
-            self.equlibrator = equilibration_schemes.Fixed
+            self.equilibrator = equilibration_schemes.Fixed
         elif self.equilibrum_mode == 'pH':
-            self.equlibrator = equilibration_schemes.Variable_pH
+            self.equilibrator = equilibration_schemes.Variable_pH
         else:
             raise RuntimeError('Available equlibibrators are "fixed" and "pH".'
                                )
 
-        self.equlibrator = self.equlibrator(self.ions, self.pH,
-                                            self.concentrations)
-        self.equlibrator.equilibrate(self.concentrations)
+        self.equilibrator = self.equilibrator(self.ions, self.system.pH,
+                                              self.concentrations)
+        self.equilibrator.equilibrate(self.concentrations)
 
     def _set_flux_mode(self):
         """Import a flux calculator to calculate ion fluxes."""
@@ -107,20 +102,16 @@ class Migrate(object):
             self.flux_calculator = flux_schemes.MinmodLimited
         else:
             raise RuntimeError
-        self.flux_calculator = self.flux_calculator(self.N,
-                                                    self.dz,
-                                                    self.V,
-                                                    self.z,
-                                                    self.u)
-        self.flux_calculator.update_ion_parameters(self.equlibrator)
+        self.flux_calculator = self.flux_calculator(self.system)
+        self.flux_calculator.update_ion_parameters(self.equilibrator)
 
     def set_reference_frame(self, frame=None, edge='right'):
         """Set the frame of reference.
 
         Frame should be an ion. Edge should be right or left.
         """
-        self.frame = self.flux_calculator.frame = frame
-        self.edge = self.flux_calculator.edge = edge
+        self.flux_calculator.frame = frame
+        self.flux_calculator.edge = edge
 
     def _decompose_state(self, state):
         """Decompose the state into X and concentrations."""
@@ -138,22 +129,18 @@ class Migrate(object):
     def _write_solution(self, t, state, full=True):
         """Write the current state to solutions."""
         (x, concentrations) = self._decompose_state(state)
-        pH = self.equlibrator.pH
-        ionic_strength = self.equlibrator.ionic_strength
+        pH = self.equilibrator.pH
+        ionic_strength = self.equilibrator.ionic_strength
         current_electrolyte = \
             Electrolyte(nodes=x, ions=self.ions,
                         concentrations=concentrations,
                         pH=pH, ionic_strength=ionic_strength,
-                        voltage=self.V, current_density=self.flux_calculator.j,
+                        voltage=self.flux_calculator.V, current_density=self.flux_calculator.j,
                         )
         self.electromigration.add_electrolyte(t, current_electrolyte, full)
 
-    def solve(self, tmax, dt=1, method='dopri5', precondition=False):
+    def solve(self, tmax, dt=1, method='dopri5'):
         """Solve for a series of time points using an ODE solver."""
-
-        if precondition:
-            self.precondition()
-
         self.solver = solver = integrate.ode(self._objective)
 
         solver.set_integrator(method, atol=self.atol, rtol=self.rtol)
@@ -168,9 +155,7 @@ class Migrate(object):
                                                      ))
 
         while solver.successful() and solver.t < tmax:
-            tnew = solver.t + dt
-            if tnew > tmax:
-                tnew = tmax
+            tnew = min(solver.t + dt, tmax)
             solver.integrate(tnew)
             self._write_solution(solver.t, solver.y, full=False)
         (self.x, self.concentrations) = self._decompose_state(solver.y)
@@ -194,9 +179,9 @@ class Migrate(object):
         self.x = new_x
         self.concentrations = new_concentrations
 
-        self.equlibrator.cH = self.equlibrator.pH = None
-        self.equlibrator.equilibrate(self.concentrations)
-        self.flux_calculator.update_ion_parameters(self.equlibrator)
+        self.equilibrator.cH = self.equilibrator.pH = None
+        self.equilibrator.equilibrate(self.concentrations)
+        self.flux_calculator.update_ion_parameters(self.equilibrator)
 
     def _get_new_x(self, cost):
         new_x = np.cumsum(1/cost)
@@ -207,8 +192,8 @@ class Migrate(object):
     def _solout(self, t, state):
         """Perform actions when a successful solution step is found."""
         (self.x, self.concentrations) = self._decompose_state(state)
-        self.equlibrator.equilibrate(self.concentrations)
-        self.flux_calculator.update_ion_parameters(self.equlibrator)
+        self.equilibrator.equilibrate(self.concentrations)
+        self.flux_calculator.update_ion_parameters(self.equilibrator)
         self._write_solution(t, state, full=True)
 
     def _objective(self, t, state):

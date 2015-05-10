@@ -54,7 +54,7 @@ class Electrolyte(object):
     voltage = 0
     current_density = 0
     # current = None
-    # area = None
+    area = None
     # pressure = 0
     # bulk_flow = 0
 
