@@ -150,6 +150,7 @@ class Migrate(object):
                         concentrations=concentrations,
                         pH=pH, ionic_strength=ionic_strength,
                         voltage=self.flux_calculator.V, current_density=self.flux_calculator.j,
+                        area = self.area
                         )
         self.electromigration.add_electrolyte(t, current_electrolyte, full)
 
@@ -177,6 +178,7 @@ class Migrate(object):
             print 'solver failed at time', solver.t
 
     def precondition(self):
+        """Precondition the system to place most grid points at regions of change."""
         # set up the interpolator to get the new parameters
         concentration_interpolator = \
             scipy.interpolate.interp1d(self.x,
@@ -199,7 +201,7 @@ class Migrate(object):
         cost[-1] = np.median(cost)
 
         # get the new grid parameters
-        self.x = self._get_new_x(cost)
+        self.x = self._precondition_x(cost)
         self.concentrations = concentration_interpolator(self.x)
         if self.area_variation:
             self.area = area_interpolator(self.x)
@@ -209,7 +211,8 @@ class Migrate(object):
         self.equilibrator.equilibrate(self.concentrations)
         self.flux_calculator.update_ion_parameters(self.equilibrator)
 
-    def _get_new_x(self, cost):
+    def _precondition_x(self, cost):
+        """Precondition the grid based on a cost."""
         new_x = np.cumsum(1/cost)
         new_x -= new_x[0]
         new_x *= max(self.x)/new_x[-1]
@@ -228,7 +231,7 @@ class Migrate(object):
         self.t = t
         self._decompose_state(state)
 
-        #Update the flux calculator and get the relevant parameters
+        # Update the flux calculator and get the relevant parameters
         self.flux_calculator.update(self.x, self.area, self.concentrations)
         dcdt = self.flux_calculator.dcdt
         dxdt = self.flux_calculator.node_flux

@@ -70,7 +70,8 @@ class Electrolyte(object):
         self.voltage = voltage
         self.bulk_flow = bulk_flow
         self.current_density = current_density
-        self.area = area or self.area
+        if area is not None:
+            self.area = area
 
     def construct(self, solutions, lengths, n_nodes=100,
                   interface_length=1e-4, voltage=0, current_density=0,
@@ -78,15 +79,15 @@ class Electrolyte(object):
         """Construct electrophoretic system based on a set of solutions."""
         self.voltage = voltage
         self.current_density = current_density
-        self.current = self.current_density * self.area
         self.create_ions(solutions)
         self.bulk_flow = bulk_flow
 
         domain_length = sum(lengths)
         self.create_domain(n_nodes, domain_length, domain_mode)
         self.create_concentrations(solutions, lengths, interface_length)
-        if self.area is not None:
+        if area is not None:
             self.area = area
+            self.current = self.current_density * self.area
         return self
 
     def create_domain(self, n_nodes=100, domain_length=1e-2,

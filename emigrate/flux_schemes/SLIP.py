@@ -28,11 +28,12 @@ class SLIP(_Flux_Base):
                      self.advection_dcdt() +
                      self.diffusion_dcdt()
                      )/self._area
+        self.dcdt[:,0] = self.dcdt[:, -1] = 0
 
     def set_area_flux(self):
         if self.area_variation:
             self.area_flux = (self.node_flux-self.frame_velocity) * self.ax
-            self.area_flux[0] = self.area_flux[-1] = 0.
+            # self.area_flux[0] = self.area_flux[-1] = 0.
         else:
             self.area_flux = 0
 
@@ -56,12 +57,12 @@ class SLIP(_Flux_Base):
     def diffusion_dcdt(self):
         """Calculate flux due to diffusion."""
         cD = self.diffusivity * self.concentrations
-        diffusion = (self.second_derivative(cD) -
-                     self.first_derivative(cD) * \
-                     self.xzz/self.xz)/self.xz**2
-        # cDz = self.first_derivative(cD)
-        # diffusion = (self.first_derivative(self._area*cDz) -
-        #              self._area * cDz * self.xzz/self.xz)/self.xz**2
+        # diffusion = (self.second_derivative(cD) -
+        #              self.first_derivative(cD) * \
+        #              self.xzz/self.xz)/self.xz**2 * self._area
+        cDz = self.first_derivative(cD)
+        diffusion = (self.first_derivative(self._area*cDz) -
+                     self._area * cDz * self.xzz/self.xz)/self.xz**2
         return diffusion
 
     def advection_dcdt(self):
