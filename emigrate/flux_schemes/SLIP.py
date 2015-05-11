@@ -9,32 +9,32 @@ class SLIP(_Flux_Base):
 
     """A compact flux solver with numerical dissipation and adaptive grid."""
 
-    use_adaptive_grid = True
     boundary_mode = 'characteristic'
     differentiation_method = 'dissipative'
-    j = 0
-    E = None
-    V = 0
-    x = None
-    u = 0
     NI = 10
     Vthermal = .025
-    concentrations = None
     pointwave = 1
     smoother = True
+    adaptive_grid = True
+    area_variation = False
     # limiter = Flux_limiter(minmod)
 
-    # Returnable quantities
-
-    def _dcdt(self):
+    def _update(self):
         self.set_derivatives()
         self.set_E()
         self.set_node_flux()
-        dcdt = (self.electromigration_dcdt() +
-                self.advection_dcdt() +
-                self.diffusion_dcdt()
-                )
-        return dcdt
+        self.set_area_flux()
+        self.dcdt = (self.electromigration_dcdt() +
+                     self.advection_dcdt() +
+                     self.diffusion_dcdt()
+                     )/self._area
+
+    def set_area_flux(self):
+        if self.area_variation:
+            self.area_flux = (self.node_flux-self.frame_velocity) * self.ax
+            self.area_flux[0] = self.area_flux[-1] = 0.
+        else:
+            self.area_flux = 0
 
     def set_node_flux(self):
         """Calculate the flux of nodes."""
@@ -57,18 +57,23 @@ class SLIP(_Flux_Base):
         """Calculate flux due to diffusion."""
         cD = self.diffusivity * self.concentrations
         diffusion = (self.second_derivative(cD) -
-                     self.first_derivative(cD)*self.xzz/self.xz)/self.xz**2
+                     self.first_derivative(cD) * \
+                     self.xzz/self.xz)/self.xz**2
+        # cDz = self.first_derivative(cD)
+        # diffusion = (self.first_derivative(self._area*cDz) -
+        #              self._area * cDz * self.xzz/self.xz)/self.xz**2
         return diffusion
 
     def advection_dcdt(self):
-        advection = ((self.node_flux-self.u) *
-                     self.cz /
-                     self.xz)
+        advection_speed = (self.node_flux-(self.bulk_flow + self.frame_velocity))
+        advection = advection_speed * self.cz / self.xz * self._area +\
+            advection_speed * self.concentrations * self.ax
+
         return advection
 
     def electromigration_flux(self):
         """Calculate flux due to electromigration."""
-        uc = self.mobility * self.concentrations
+        uc = self.mobility * self.concentrations * self._area
         electromigration = uc * self.E
         return electromigration
 
@@ -88,7 +93,7 @@ class SLIP(_Flux_Base):
 
     def set_characteristic(self):
         """Calculate the characteristic speed of paramters."""
-        self.characteristic = self.u + self.E * \
+        self.characteristic = (self.bulk_flow+self.frame_velocity) + self.E * \
             self.mobility + self.node_flux
 
     def limiter(self, c):
@@ -119,10 +124,16 @@ class SLIP(_Flux_Base):
         self.xz = self.first_derivative(self.x)
         self.xzz = self.second_derivative(self.x)
         self.cz = self.first_derivative(self.concentrations)
+        if self._area.size > 1:
+            self.az = self.first_derivative(self._area)
+            self.ax = self.az/self.xz
+        else:
+            self.az = self.ax = 0.
 
     def set_current(self):
         """Calculate the current based on a fixed voltage drop."""
-        self.j = self.V/sum(self.dz / self.conductivity())
+        self.current = self.V/sum(self.dz / self.conductivity()/self._area)
+        self.j = self.current/self._area
 
     def set_E(self):
         """Calculate the electric field at each node."""
@@ -130,7 +141,7 @@ class SLIP(_Flux_Base):
             self.set_current()
             self.E = -(self.j+self.diffusive_current())/self.conductivity()
         elif self.mode is 'current':
-            self.j = self.current_density
+            self.j = self.current/self._area
             self.E = -(self.j+self.diffusive_current())/self.conductivity()
             self.V = np.sum((self.E[:-1]+self.E[1:])/ 2 * np.diff(self.x))
         else:

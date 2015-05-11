@@ -32,6 +32,7 @@ class Migrate(object):
     x = None
     concentrations = None
     ions = None
+    area = None
 
     # Solver Parameters
     atol = 1e-12
@@ -40,7 +41,10 @@ class Migrate(object):
     # Modules
     equilibrator = None
     flux_calculator = None
+
+    # Which parameters to monitor
     adaptive_grid = False
+    area_variation = False
 
     # Solutions
     electromigration = None
@@ -51,10 +55,11 @@ class Migrate(object):
 
         self.system = system
 
-        # Prepare ions
+        # Prepare state
         self.ions = self.system.ions
         self.x = np.array(system.nodes)
         self.concentrations = np.array(self.system.concentrations)
+        self.area = system.area
 
         # Set equilibrium mode.
         self.equilibrum_mode = equilibrium_mode
@@ -65,16 +70,18 @@ class Migrate(object):
         self._set_flux_mode()
         self.flux_calculator.update_ion_parameters(self.equilibrator)
 
+        # Get information from flux calculator
         self.N = self.flux_calculator.N
+        self.adaptive_grid = self.flux_calculator.adaptive_grid
+        self.area_variation = self.flux_calculator.area_variation
 
-        # Precondition if required.
+        # Precondition if requested.
         if precondition:
             self.precondition()
 
         # Create empty solution dictionaries
         self.electromigration = Electromigration(self.ions, filename)
-        self._write_solution(0, self._compose_state(self.x,
-                                                    self.concentrations),
+        self._write_solution(0, self.x, self.area, self.concentrations,
                              full=False)
 
     def _set_equilibrium_mode(self):
@@ -116,20 +123,26 @@ class Migrate(object):
 
     def _decompose_state(self, state):
         """Decompose the state into X and concentrations."""
-        x = state[:self.N]
-        concentrations = state[self.N:].reshape(self.concentrations.shape)
-        return (x, concentrations)
+        self.x = state[:self.N]
+        if self.area_variation:
+            self.area = state[self.N:self.N*2]
+            self.concentrations = state[self.N*2:].reshape(self.concentrations.shape)
+        else:
+            self.concentrations = state[self.N:].reshape(self.concentrations.shape)
 
-    def _compose_state(self, x, concentrations):
+    def _compose_state(self, x, area, concentrations):
         """Compose X and concentrations into a state."""
         x = x.flatten()
         concentrations = concentrations.flatten()
-        state = np.concatenate((x, concentrations))
+        if self.area_variation:
+            area = area.flatten()
+            state = np.concatenate((x, area, concentrations))
+        else:
+            state = np.concatenate((x, concentrations))
         return state
 
-    def _write_solution(self, t, state, full=True):
+    def _write_solution(self, t, x, area, concentrations, full=True):
         """Write the current state to solutions."""
-        (x, concentrations) = self._decompose_state(state)
         pH = self.equilibrator.pH
         ionic_strength = self.equilibrator.ionic_strength
         current_electrolyte = \
@@ -151,38 +164,47 @@ class Migrate(object):
         else:
             warnings.warn("Solver doesn't support solout.")
 
-        solver.set_initial_value(self._compose_state(self.x,
-                                                     self.concentrations
-                                                     ))
+        solver.set_initial_value(self._compose_state(self.x, self.area, self.concentrations))
 
         while solver.successful() and solver.t < tmax:
             tnew = min(solver.t + dt, tmax)
             solver.integrate(tnew)
-            self._write_solution(solver.t, solver.y, full=False)
-        (self.x, self.concentrations) = self._decompose_state(solver.y)
+            self._decompose_state(solver.y)
+            self._write_solution(solver.t, self.x, self.area, self.concentrations, full=False)
+        self._decompose_state(solver.y)
 
         if not solver.successful():
             print 'solver failed at time', solver.t
 
     def precondition(self):
-        self.flux_calculator.x = self.x
-        self.flux_calculator.concentrations = self.concentrations
-        self.flux_calculator.set_E()
-        self.flux_calculator.dcdt(self.x, self.concentrations)
-        cost = self.flux_calculator.node_cost()
-        cost = self.flux_calculator.differ.smooth(cost)
-        cost[-1] = np.median(cost)
-        new_x = self._get_new_x(cost)
-
-        interpolator = \
+        # set up the interpolator to get the new parameters
+        concentration_interpolator = \
             scipy.interpolate.interp1d(self.x,
                                        self.concentrations,
                                        kind='cubic')
+        if self.area_variation:
+            area_interpolator = \
+                scipy.interpolate.interp1d(self.x,
+                                           self.area,
+                                           kind='cubic')
 
-        new_concentrations = interpolator(new_x)
-        self.x = new_x
-        self.concentrations = new_concentrations
+        # Update the flux calculator
+        self.flux_calculator.update(self.x, self.area, self.concentrations)
 
+        # Get the node cost from the flux calculator
+        cost = self.flux_calculator.node_cost()
+        cost = self.flux_calculator.differ.smooth(cost)
+
+        # The last cost is poorly calculated, so set it to an intermediate value
+        cost[-1] = np.median(cost)
+
+        # get the new grid parameters
+        self.x = self._get_new_x(cost)
+        self.concentrations = concentration_interpolator(self.x)
+        if self.area_variation:
+            self.area = area_interpolator(self.x)
+
+        # equilibrate the new system.
         self.equilibrator.cH = self.equilibrator.pH = None
         self.equilibrator.equilibrate(self.concentrations)
         self.flux_calculator.update_ion_parameters(self.equilibrator)
@@ -195,16 +217,23 @@ class Migrate(object):
 
     def _solout(self, t, state):
         """Perform actions when a successful solution step is found."""
-        (self.x, self.concentrations) = self._decompose_state(state)
+        self._decompose_state(state)
         self.equilibrator.equilibrate(self.concentrations)
         self.flux_calculator.update_ion_parameters(self.equilibrator)
-        self._write_solution(t, state, full=True)
+        self._write_solution(t, self.x, self.area, self.concentrations, full=True)
 
     def _objective(self, t, state):
         """The objective function of the solver."""
+        # Update local parameters
         self.t = t
-        (self.x, self.concentrations) = self._decompose_state(state)
-        dcdt = self.flux_calculator.dcdt(self.x, self.concentrations)
+        self._decompose_state(state)
+
+        #Update the flux calculator and get the relevant parameters
+        self.flux_calculator.update(self.x, self.area, self.concentrations)
+        dcdt = self.flux_calculator.dcdt
         dxdt = self.flux_calculator.node_flux
-        dstatedt = self._compose_state(dxdt, dcdt)
+        dadt = self.flux_calculator.area_flux
+
+        # Compose them and return to the solver
+        dstatedt = self._compose_state(dxdt, dadt, dcdt)
         return dstatedt

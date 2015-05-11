@@ -53,14 +53,14 @@ class Electrolyte(object):
     ionic_strength = None
     voltage = 0
     current_density = 0
-    # current = None
-    area = None
+    current = 0.
+    area = 1.
     # pressure = 0
-    # bulk_flow = 0
+    bulk_flow = 0
 
     def __init__(self, nodes=None, ions=None, concentrations=None,
-                 pH=None, ionic_strength=None,
-                 voltage=None, current_density=None, bulk_flow=0.):
+                 pH=None, ionic_strength=None, voltage=None,
+                 current_density=None, current=None, bulk_flow=0., area=None):
         """Initialize a Electrolyte object."""
         self.nodes = nodes
         self.ions = ions
@@ -68,21 +68,25 @@ class Electrolyte(object):
         self.pH = pH
         self.ionic_strength = ionic_strength
         self.voltage = voltage
-        self.u = bulk_flow
+        self.bulk_flow = bulk_flow
         self.current_density = current_density
+        self.area = area or self.area
 
     def construct(self, solutions, lengths, n_nodes=100,
                   interface_length=1e-4, voltage=0, current_density=0,
-                  domain_mode='centered', bulk_flow=0.):
+                  domain_mode='centered', bulk_flow=0., area=None):
         """Construct electrophoretic system based on a set of solutions."""
         self.voltage = voltage
         self.current_density = current_density
+        self.current = self.current_density * self.area
         self.create_ions(solutions)
-        self.u = bulk_flow
+        self.bulk_flow = bulk_flow
 
         domain_length = sum(lengths)
         self.create_domain(n_nodes, domain_length, domain_mode)
         self.create_concentrations(solutions, lengths, interface_length)
+        if self.area is not None:
+            self.area = area
         return self
 
     def create_domain(self, n_nodes=100, domain_length=1e-2,

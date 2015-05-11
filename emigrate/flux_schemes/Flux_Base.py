@@ -7,26 +7,44 @@ class _Flux_Base(object):
 
     """A base class for the flux modules used by emigrate."""
 
-    use_adaptive_grid = False
-    boundary_mode = 'characteristic'
+    # Information to communicate to Migrate
+    area_variation = False
+    adaptive_grid = False
+
+    # Differentiation information
     differentiation_method = '6th-Order'
+    smoother = False
+
+    # Boundary condition information
+    boundary_mode = 'characteristic'
+    nonnegative = True
+
+    # Field info
+    mode = 'voltage'
     j = 0.
+    current = 0.
     E = None
     V = 0
+
+    # Dependant state information
     x = None
-    u = 0.
+    concentrations = None
     area = None
     _area = 1.
-    concentrations = None
-    smoother = False
-    nonnegative = True
+
+    bulk_flow = 0.
+
+    # Reference Frame
     frame = None
     edge = 'right'
+    frame_velocity = 0
+
+    # Equilibrator properties
     pH = None
     I = None
     water_conductivity = None
     water_diffusive_conductivity = None
-    mode = 'voltage'
+    # equilibrator = None
 
     def __init__(self, system):
         """Initialize the compact flux solver."""
@@ -37,18 +55,25 @@ class _Flux_Base(object):
         # Prepare the voltage/current and bulk flow mode from the system.
         self.V = system.voltage
         self.current_density = system.current_density
+        self.current = system.current
         if self.V:
             self.mode = 'voltage'
             if self.current_density:
-                warnings.warn('System has both current and voltage. Using voltage.')
+                warnings.warn(
+                    'System has both current and voltage. Using voltage.'
+                    )
         else:
             self.mode = 'current'
 
-        self.u = system.u
+        self.bulk_flow = system.bulk_flow
 
         # use system area if it exists, otherwise default to _area
         self.area = system.area
-        self._area = self.area or self._area
+        if self.area is not None:
+            self._area = self.area
+        self._area = np.array(self._area)
+        if self._area.size > 1:
+            self.area_variation = True
 
         # Create the differentiation system.
         self.differ = Differentiate(self.N, self.dz,
@@ -72,33 +97,38 @@ class _Flux_Base(object):
     def set_boundary(self, flux):
         """Set the boundary condition at the domain edges."""
         if self.boundary_mode == 'fixed':
-            flux[:, 0] *= 0
-            flux[:, -1] *= 0
+            flux[:, 0] = flux[:, -1] = 0.
         elif self.boundary_mode == 'characteristic':
             pass
         return flux
 
-    def dcdt(self, x, concentrations):
+    def update(self, x, area, concentrations):
         self.x = x
+        self.area = area
         self.concentrations = concentrations
-        dcdt = self._dcdt()
+        self._update()
+
+        # Impose nonnegativity constraint.
         if self.nonnegative is True:
-            dcdt = self.impose_nonnegativity(concentrations, dcdt)
+            self.dcdt = self._impose_nonnegativity(concentrations, self.dcdt)
+
+        # Update the reference frame for the next time step.
         if self.frame is not None:
             self._update_reference_frame()
+
+    def _impose_nonnegativity(self, concentrations, dcdt):
+        dcdt = np.where(np.greater(concentrations, 0),
+                        dcdt, np.maximum(0, dcdt))
         return dcdt
 
-    def impose_nonnegativity(self, concentrations, dcdt):
-        dcdt = np.where(np.greater(concentrations, 0), dcdt, np.maximum(0, dcdt))
-        return dcdt
-
-    def update_ion_parameters(self, equlibrator):
-        self.mobility = equlibrator.mobility
-        self.diffusivity = equlibrator.diffusivity
-        self.molar_conductivity = equlibrator.molar_conductivity
-        self.pH = equlibrator.pH
-        self.water_conductivity = equlibrator.water_conductivity
-        self.water_diffusive_conductivity = equlibrator.water_diffusive_conductivity
+    def update_ion_parameters(self, equilibrator):
+        self.mobility = equilibrator.mobility
+        self.diffusivity = equilibrator.diffusivity
+        self.molar_conductivity = equilibrator.molar_conductivity
+        self.pH = equilibrator.pH
+        self.water_conductivity = equilibrator.water_conductivity
+        self.water_diffusive_conductivity = \
+            equilibrator.water_diffusive_conductivity
 
     def _update_reference_frame(self):
         if self.edge == 'right':
@@ -109,8 +139,8 @@ class _Flux_Base(object):
             pH = self.pH[0]
         else:
             raise RuntimeError('Edge must be left or right.')
-        self.u = E * self.frame.effective_mobility(pH)
+        self.frame_velocity = E * self.frame.effective_mobility(pH)
 
-    def _dcdt(self):
+    def _update(self):
         """Calculate the flux of chemical species."""
-        return self.concentrations * 0.
+        self.dcdt = self.concentrations * 0.
