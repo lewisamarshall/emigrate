@@ -13,14 +13,28 @@ class Electromigration(object):
     ions = None
     hdf5 = None
 
-    def __init__(self, ions, hdf5=False):
+    def __init__(self, ions=None, hdf5=False, load=False):
         self.ions = ions
         if hdf5:
-            self.create_hdf5_structure(hdf5)
+            if load:
+                self.load_hdf(hdf5)
+            else:
+                self.create_hdf5_structure(hdf5)
         else:
             self.properties = dict()
             self.electrolytes = OrderedDict()
             self.full_electrolytes = OrderedDict()
+
+    def __getitem__(self, frame):
+        if self.hdf5:
+            frame = str(frame)
+            return Electrolyte(self.electrolytes[frame])
+        else:
+            return self.electrolytes.values()[frame]
+
+    # def __iter__(self):
+    #     for e in self.electrolytes.values():
+    #         yield e
 
     def add_electrolyte(self, time, electrolyte, full=False):
         if self.hdf5:
@@ -35,6 +49,11 @@ class Electromigration(object):
         self.electrolytes = self.hdf5.create_group('electrolytes')
         self.full_electrolytes = self.hdf5.create_group('full_electrolytes')
         self.hdf5.flush()
+
+    def load_hdf(self, filename):
+        self.hdf5 = h5py.File(filename, 'r')
+        self.electrolytes = self.hdf5['electrolytes']
+        self.full_electrolytes = self.hdf5['full_electrolytes']
 
     def _add_electrolyte_hdf5(self, time, electrolyte, full=False):
         if full:
@@ -115,3 +134,10 @@ class Electromigration(object):
 
         for time, electrolyte in zip(serial_time, serial_electrolyte):
             target[time] = Electrolyte().deserialize(electrolyte)
+
+if __name__ == '__main__':
+    file = '/Users/lewis/Documents/github/emigrate/test.hdf5'
+    e = Electromigration(hdf5=file, load=True)
+    print e[1].concentrations.shape
+    print e[1].nodes.shape
+    print e[2].serialize()

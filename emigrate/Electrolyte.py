@@ -2,6 +2,7 @@
 import numpy as np
 from scipy.special import erf
 import ionize
+import json
 
 
 class Electrolyte(object):
@@ -62,16 +63,20 @@ class Electrolyte(object):
                  pH=None, ionic_strength=None, voltage=None,
                  current_density=None, current=None, bulk_flow=0., area=None):
         """Initialize a Electrolyte object."""
-        self.nodes = nodes
-        self.ions = ions
-        self.concentrations = concentrations
-        self.pH = pH
-        self.ionic_strength = ionic_strength
-        self.voltage = voltage
-        self.bulk_flow = bulk_flow
-        self.current_density = current_density
-        if area is not None:
-            self.area = area
+
+        try:
+            self.read_hdf5(nodes)
+        except:
+            self.nodes = nodes
+            self.ions = ions
+            self.concentrations = concentrations
+            self.pH = pH
+            self.ionic_strength = ionic_strength
+            self.voltage = voltage
+            self.bulk_flow = bulk_flow
+            self.current_density = current_density
+            if area is not None:
+                self.area = area
 
     def construct(self, solutions, lengths, n_nodes=100,
                   interface_length=1e-4, voltage=0, current_density=0,
@@ -143,12 +148,15 @@ class Electrolyte(object):
             self.concentrations.append(ion_concentration)
         self.concentrations = np.array(self.concentrations)
 
-    def serialize(self):
+    def serialize(self, to_json=False):
         serial = dict()
         serial['ions'] = [ion.name for ion in self.ions]
         serial['nodes'] = self.nodes.tolist()
         serial['concentrations'] = self.concentrations.tolist()
-        serial['pH'] = self.pH.tolist()
+        if self.pH:
+            serial['pH'] = self.pH.tolist()
+        if json:
+            serial = json.dumps(serial)
         return serial
 
     def deserialize(self, serial):
@@ -162,6 +170,12 @@ class Electrolyte(object):
         location.create_dataset('nodes', data=self.nodes, compression="gzip", dtype='f4')
         # location.create_dataset('')
 
+    def read_hdf5(self, location):
+        self.concentrations = np.array(location['concentrations'])
+        self.nodes = np.array(location['nodes'])
+        self.ions = []
+
+
 if __name__ == '__main__':
     from matplotlib import pyplot as plot
 
@@ -169,16 +183,12 @@ if __name__ == '__main__':
     my_solutions = [ionize.Solution(['hydrochloric acid', tris], [.05, .1]),
                     ionize.Solution(['caproic acid', tris], [.05, .1])
                     ]
-    system = Constructor(domain_length=0.1,
-                         nodes=50,
-                         interface_length=.05,
-                         solutions=my_solutions,
-                         V=500, I=None,
-                         domain_mode='centered'
-                         )
-    print system.domain
-    print system.ions
-    print system.concentrations
-    for i in range(3):
-        plot.plot(system.domain, system.concentrations[i, :])
-    plot.show()
+    system = Electrolyte().construct(lengths=[0.1]*2,
+                         solutions=my_solutions)
+    print len(system.serialize(True))
+    # # print system.domain
+    # print system.ions
+    # print system.concentrations
+    # for i in range(3):
+    #     plot.plot(system.domain, system.concentrations[i, :])
+    # plot.show()

@@ -57,19 +57,19 @@ class SLIP(_Flux_Base):
     def diffusion_dcdt(self):
         """Calculate flux due to diffusion."""
         cD = self.diffusivity * self.concentrations
-        # diffusion = (self.second_derivative(cD) -
-        #              self.first_derivative(cD) * \
-        #              self.xzz/self.xz)/self.xz**2 * self._area
-        cDz = self.first_derivative(cD)
-        diffusion = (self.first_derivative(self._area*cDz) -
-                     self._area * cDz * self.xzz/self.xz)/self.xz**2
+        diffusion = (self.second_derivative(cD) -
+                     self.first_derivative(cD) * \
+                     self.xzz/self.xz)/self.xz**2 * self._area
+        # cDz = self.first_derivative(cD)
+        # diffusion = (self.first_derivative(self._area*cDz) -
+        #              self._area * cDz * self.xzz/self.xz)/self.xz**2
         return diffusion
 
     def advection_dcdt(self):
         advection_speed = (self.node_flux-(self.bulk_flow + self.frame_velocity))
         advection = advection_speed * self.cz / self.xz * self._area +\
             advection_speed * self.concentrations * self.ax
-
+        # advection = self.first_derivative(advection_speed * self.concentrations * self._area)
         return advection
 
     def electromigration_flux(self):
