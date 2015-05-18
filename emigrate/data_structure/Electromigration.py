@@ -42,7 +42,7 @@ class Electromigration(object):
     def _update_ions(self):
         if self.ions is None:
             self._ions = self.hdf5['ions']
-            self.ions = self._ions.tolist()
+            self.ions = self._ions
         else:
             if self.hdf5 and 'w' in self.mode:
                 self._ions = self.hdf5.create_dataset('ions',
@@ -56,7 +56,7 @@ class Electromigration(object):
         if self.hdf5:
             frame = str(frame)
             data = dict(self.electrolytes[frame])
-            data['ions'] = self.ions
+            data['ions'] = np.array(self.ions).tolist()
             return Electrolyte(data)
         else:
             return self.electrolytes.values()[frame]
@@ -129,10 +129,10 @@ class Electromigration(object):
 if __name__ == '__main__':
     file = '/Users/lewis/Documents/github/emigrate/test.hdf5'
     ions = [str(i) for i in range(5)]
-    e = Electromigration(ions, filename=file, mode='r')
+    e = Electromigration(filename=file, mode='r')
     # print e[1].concentrations.shape
     # print e[1].nodes.shape
     # print e[2].concentrations
     # print e[3].serialize()
     for idx, electrolyte in enumerate(e):
-        print electrolyte
+        print electrolyte.pH

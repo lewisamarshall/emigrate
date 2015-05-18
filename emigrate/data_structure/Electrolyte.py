@@ -48,7 +48,7 @@ class Electrolyte(object):
         self.ions = constructor['ions']
         for key, value in constructor.items():
             if key in self.__class__.__dict__.keys():
-                if key in ['nodes']:
+                if key in ['nodes', 'pH']:
                     value = np.array(value)
                 elif key == 'concentrations':
                     if isinstance(value, dict):
@@ -73,7 +73,10 @@ class Electrolyte(object):
                                         )
                                     }
         serial['concentrations']['x'] = serial['nodes']
-
+        try:
+            serial['pH'] = serial['pH'].tolist()
+        except:
+            pass
         return serial
 
     def construct(self, constructor_input):
