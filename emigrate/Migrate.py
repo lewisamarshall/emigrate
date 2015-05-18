@@ -3,11 +3,11 @@ import numpy as np
 import scipy.integrate as integrate
 import scipy.interpolate
 from collections import OrderedDict
-from .Electrolyte import Electrolyte
+from .data_structure import Electrolyte
 import warnings
 import flux_schemes
 import equilibration_schemes
-from Electromigration import Electromigration
+from .data_structure import Electromigration
 # pylint: disable=W0212
 
 
@@ -57,6 +57,7 @@ class Migrate(object):
 
         # Prepare state
         self.ions = self.system.ions
+        self._ion_names = [ion.name for ion in self.ions]
         self.x = np.array(system.nodes)
         self.concentrations = np.array(self.system.concentrations)
         self.area = system.area
@@ -80,9 +81,8 @@ class Migrate(object):
             self.precondition()
 
         # Create empty solution dictionaries
-        self.electromigration = Electromigration(self.ions, filename)
-        self._write_solution(0, self.x, self.area, self.concentrations,
-                             full=False)
+        self.electromigration = Electromigration(self._ion_names, filename, mode='w')
+        self._write_solution(0, self.x, self.area, self.concentrations)
 
     def _set_equilibrium_mode(self):
         """Import an equilibration object to calculate ion properties."""
@@ -141,18 +141,18 @@ class Migrate(object):
             state = np.concatenate((x, concentrations))
         return state
 
-    def _write_solution(self, t, x, area, concentrations, full=True):
+    def _write_solution(self, t, x, area, concentrations):
         """Write the current state to solutions."""
         pH = self.equilibrator.pH
         ionic_strength = self.equilibrator.ionic_strength
         current_electrolyte = \
-            Electrolyte(nodes=x, ions=self.ions,
+            Electrolyte(dict(nodes=x, ions=self.ions,
                         concentrations=concentrations,
                         pH=pH, ionic_strength=ionic_strength,
                         voltage=self.flux_calculator.V, current_density=self.flux_calculator.j,
-                        area = self.area
+                        area = self.area)
                         )
-        self.electromigration.add_electrolyte(t, current_electrolyte, full)
+        self.electromigration.add_electrolyte(t, current_electrolyte)
 
     def solve(self, tmax, dt=1, method='dopri5'):
         """Solve for a series of time points using an ODE solver."""
@@ -171,7 +171,7 @@ class Migrate(object):
             tnew = min(solver.t + dt, tmax)
             solver.integrate(tnew)
             self._decompose_state(solver.y)
-            self._write_solution(solver.t, self.x, self.area, self.concentrations, full=False)
+            self._write_solution(solver.t, self.x, self.area, self.concentrations)
         self._decompose_state(solver.y)
 
         if not solver.successful():
@@ -223,7 +223,6 @@ class Migrate(object):
         self._decompose_state(state)
         self.equilibrator.equilibrate(self.concentrations)
         self.flux_calculator.update_ion_parameters(self.equilibrator)
-        self._write_solution(t, self.x, self.area, self.concentrations, full=True)
 
     def _objective(self, t, state):
         """The objective function of the solver."""

@@ -28,7 +28,7 @@ class SLIP(_Flux_Base):
                      self.advection_dcdt() +
                      self.diffusion_dcdt()
                      )/self._area
-        self.dcdt[:,0] = self.dcdt[:, -1] = 0
+        self.dcdt[:, 0] = self.dcdt[:, -1] = 0
 
     def set_area_flux(self):
         if self.area_variation:

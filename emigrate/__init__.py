@@ -6,5 +6,4 @@ Class Migrate solves the system.
 """
 import ionize
 from Migrate import Migrate
-from Electrolyte import Electrolyte
-from Electromigration import Electromigration
+from .data_structure import Electrolyte, Electromigration
