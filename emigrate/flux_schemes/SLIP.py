@@ -58,7 +58,7 @@ class SLIP(_Flux_Base):
         """Calculate flux due to diffusion."""
         cD = self.diffusivity * self.concentrations
         diffusion = (self.second_derivative(cD) -
-                     self.first_derivative(cD) * \
+                     self.first_derivative(cD) *
                      self.xzz/self.xz)/self.xz**2 * self._area
         # cDz = self.first_derivative(cD)
         # diffusion = (self.first_derivative(self._area*cDz) -
@@ -66,10 +66,12 @@ class SLIP(_Flux_Base):
         return diffusion
 
     def advection_dcdt(self):
-        advection_speed = (self.node_flux-(self.bulk_flow + self.frame_velocity))
+        advection_speed = (self.node_flux -
+                           (self.bulk_flow + self.frame_velocity))
         advection = advection_speed * self.cz / self.xz * self._area +\
             advection_speed * self.concentrations * self.ax
-        # advection = self.first_derivative(advection_speed * self.concentrations * self._area)
+        # advection = self.first_derivative(advection_speed *
+        # self.concentrations * self._area)
         return advection
 
     def electromigration_flux(self):
@@ -144,7 +146,7 @@ class SLIP(_Flux_Base):
         elif self.mode is 'current':
             self.j = self.current/self._area
             self.E = -(self.j+self.diffusive_current())/self.conductivity()
-            self.V = np.sum((self.E[:-1]+self.E[1:])/ 2 * np.diff(self.x))
+            self.V = np.sum((self.E[:-1]+self.E[1:]) / 2 * np.diff(self.x))
         else:
             raise RuntimeError()
 
@@ -158,9 +160,8 @@ class SLIP(_Flux_Base):
     def diffusive_current(self):
         """Calculate the diffusive current at each location."""
         diffusive_current = self.first_derivative(
-            np.sum(
-                self.molar_conductivity/self.mobility*
-                self.diffusivity*self.concentrations,
-                0) + self.water_diffusive_conductivity
-                )
+            np.sum(self.molar_conductivity/self.mobility *
+                   self.diffusivity*self.concentrations,
+                   0) + self.water_diffusive_conductivity
+            )
         return diffusive_current

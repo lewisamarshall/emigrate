@@ -140,11 +140,12 @@ class Differentiate(object):
 
     def set_M(self):
         """Set up the implicit smoothing matrix."""
-        self.M = self.A2 - self.epsilon * self.B2
+        self.M = sp.lil_matrix(self.A2 - self.epsilon * self.B2)
         self.M[:, 0] = self.M[:, -1] = 0.
         self.M[0, 0] = self.M[-1, -1] = 1.
         if self.truncate:
             self.M = self.M[1:-1, 1:-1]
+        self.M = sp.csc_matrix(self.M)
 
     def construct_matrix(self, boundary_functions,
                          internal_function, invert=False):

@@ -89,6 +89,7 @@ class Electrolyte(object):
                        'interface_length': 1e-4,
                        'voltage': 0,
                        'current_density': 0,
+                       'current': 0,
                        'domain_mode': 'left',
                        'bulk_flow': 0.,
                        'area': None,
@@ -99,6 +100,8 @@ class Electrolyte(object):
         self._create_ions(constructor)
         self._create_domain(constructor)
         self._create_concentrations(constructor)
+        for feature in ['current', 'current_density', 'voltage']:
+            self.__dict__[feature] = constructor[feature]
 
     def _create_domain(self, constructor):
         """Initially place grid points in the domain."""
@@ -158,7 +161,18 @@ class Electrolyte(object):
         self.concentrations = np.array(self.concentrations)
 
     def _resolve_current(self):
-        pass
+        if self.current:
+            cd = self.current/self.area
+            if self.current_density and not self.current_density == cd:
+                warnings.warn('Current and current density do not match. '
+                              + 'Correcting current density.')
+            self.current_density = cd
+        elif self.current_density:
+            self.current = self.area * self.current_density
+
+    def open_file(self, filename):
+        with open(filename, 'r') as file:
+            raise NotImplementedError
 
 
 if __name__ == '__main__':
