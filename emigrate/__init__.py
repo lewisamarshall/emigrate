@@ -4,6 +4,6 @@ Class Constructor constructs an electrophoresis system.
 
 Class Migrate solves the system.
 """
-import ionize
 from Migrate import Migrate
 from .data_structure import Electrolyte, Electromigration
+import cli
