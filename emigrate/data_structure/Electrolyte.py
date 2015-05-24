@@ -132,7 +132,7 @@ class Electrolyte(object):
         self.ions = list(set(self.ions))
 
         # Replace strings with ion objects.
-        self.ions = ionize.Solution(self.ions, [0]*len(self.ions)).ions
+        self.ions = ionize.Solution(self.ions, [0.1]*len(self.ions)).ions
 
     def _create_concentrations(self, constructor):
         self.concentrations = []

@@ -27,7 +27,7 @@ class SLIP(_Flux_Base):
         self.dcdt = (self.electromigration_dcdt() +
                      self.advection_dcdt() +
                      self.diffusion_dcdt()
-                     )/self._area
+                     )
         self.dcdt[:, 0] = self.dcdt[:, -1] = 0
 
     def set_area_flux(self):
@@ -59,24 +59,18 @@ class SLIP(_Flux_Base):
         cD = self.diffusivity * self.concentrations
         diffusion = (self.second_derivative(cD) -
                      self.first_derivative(cD) *
-                     self.xzz/self.xz)/self.xz**2 * self._area
-        # cDz = self.first_derivative(cD)
-        # diffusion = (self.first_derivative(self._area*cDz) -
-        #              self._area * cDz * self.xzz/self.xz)/self.xz**2
+                     self.xzz/self.xz)/self.xz**2
         return diffusion
 
     def advection_dcdt(self):
         advection_speed = (self.node_flux -
-                           (self.bulk_flow + self.frame_velocity))
-        advection = advection_speed * self.cz / self.xz * self._area +\
-            advection_speed * self.concentrations * self.ax
-        # advection = self.first_derivative(advection_speed *
-        # self.concentrations * self._area)
+                           (self.bulk_flow - self.frame_velocity))
+        advection = advection_speed * self.cz / self.xz
         return advection
 
     def electromigration_flux(self):
         """Calculate flux due to electromigration."""
-        uc = self.mobility * self.concentrations * self._area
+        uc = self.mobility * self.concentrations
         electromigration = uc * self.E
         return electromigration
 
@@ -96,7 +90,7 @@ class SLIP(_Flux_Base):
 
     def set_characteristic(self):
         """Calculate the characteristic speed of paramters."""
-        self.characteristic = (self.bulk_flow+self.frame_velocity) + self.E * \
+        self.characteristic = (self.bulk_flow-self.frame_velocity) + self.E * \
             self.mobility + self.node_flux
 
     def limiter(self, c):
