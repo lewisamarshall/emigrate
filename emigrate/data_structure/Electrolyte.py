@@ -77,6 +77,9 @@ class Electrolyte(object):
             serial['pH'] = serial['pH'].tolist()
         except:
             pass
+        serial['properties'] = {'pH':serial['pH']}
+        serial['properties']['x'] = serial['nodes']
+
         return serial
 
     def construct(self, constructor_input):
