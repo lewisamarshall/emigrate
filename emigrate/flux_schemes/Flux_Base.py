@@ -94,19 +94,24 @@ class _Flux_Base(object):
         """Calculate the second derivative with respect to z."""
         return self.differ.second_derivative(x_input.T).T
 
-    def set_boundary(self, flux):
+    def set_boundary(self):
         """Set the boundary condition at the domain edges."""
         if self.boundary_mode == 'fixed':
-            flux[:, 0] = flux[:, -1] = 0.
+            self.dcdt[:, 0] = self.dcdt[:, -1] = 0.
         elif self.boundary_mode == 'characteristic':
-            pass
-        return flux
+            self.dcdt[:, 0] = self.boundary_characteristic('left')
+            self.dcdt[:, -1] = self.boundary_characteristic('right')
+
+    from boundary_characteristic import (boundary_characteristic,
+                                         _get_characteristic_matricies,
+                                         _a_matrix)
 
     def update(self, x, area, concentrations):
         self.x = x
         self.area = area
         self.concentrations = concentrations
         self._update()
+        self.set_boundary()
 
         # Impose nonnegativity constraint.
         if self.nonnegative is True:
