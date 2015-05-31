@@ -160,6 +160,11 @@ class Variable_pH(Equilibrate_Base):
 
         self.pH = -np.log10(self.cH)
 
+        if any(np.isnan(self.pH)):
+            print 'pH:', self.pH
+            print 'cH:', self.cH
+            raise RuntimeError("Couldn't find correct pH.")
+
     def calc_mobility(self):
         """Calculate effective mobility."""
         self.mobility = np.sum(self.ionization_fraction *

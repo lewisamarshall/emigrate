@@ -91,7 +91,7 @@ class SLIP(_Flux_Base):
     def set_characteristic(self):
         """Calculate the characteristic speed of paramters."""
         self.characteristic = (self.bulk_flow-self.frame_velocity) + self.E * \
-            self.mobility + self.node_flux
+            self.mobility - self.node_flux
 
     def limiter(self, c):
         """temporary implimentation of a flux limiter."""
