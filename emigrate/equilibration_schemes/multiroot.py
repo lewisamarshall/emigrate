@@ -5,8 +5,21 @@ import warnings
 
 
 def multiroot(polys, last_roots, method='hybr', use_jac=True,
-              enforce_positive=True):
+              enforce_positive=True, max_nodes=50):
     """A function for calculating the roots of a set of polynomials."""
+
+    # If the matrix is too big, subdivide
+    if polys.shape[1] > max_nodes:
+        splits = -(-polys.shape[1]//max_nodes)
+        split_size = polys.shape[1]//splits
+        split_indices = [i * split_size for i in range(1, splits)]
+        return np.concatenate(
+            [multiroot(p, l) for p, l
+             in zip(np.hsplit(polys, split_indices),
+                    np.hsplit(last_roots, split_indices)
+                    )
+             ]
+        )
 
     # Choose the offset to be half the length of the polynomial
     # This helps deal with floating point overflows
@@ -32,7 +45,8 @@ def multiroot(polys, last_roots, method='hybr', use_jac=True,
         xn = x ** n[:, np.newaxis]
         return np.sum(polys * xn, 0)
 
-    new_roots = root(polyval, last_roots, jac=jac, method=method)
+    new_roots = root(polyval, last_roots, jac=jac, method=method,
+                     options={'band': (0, 0), 'col_deriv': True})
 
     if not new_roots.success:
         warnings.warn(new_roots.message)

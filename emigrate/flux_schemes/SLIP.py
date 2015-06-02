@@ -9,7 +9,7 @@ class SLIP(_Flux_Base):
 
     """A compact flux solver with numerical dissipation and adaptive grid."""
 
-    boundary_mode = 'characteristic'
+    boundary_mode = 'fixed'
     differentiation_method = 'dissipative'
     NI = 10
     Vthermal = .025

@@ -19,7 +19,7 @@ class Differentiate(object):
     epsilon = 1.
     sparse = True
     factorized = True
-    truncate = True
+    truncate = False
     smoother = True
 
     def __init__(self, N, dz, method, smoother=True):
