@@ -25,11 +25,6 @@ Tutorial
 Want to use **emigrate**? Read the [tutorial][tutorial], written with iPython
 Notebook.
 
-Examples
---------
-Want to see some examples of **emigrate** in action? Take a look at the
-[examples][examples], displayed with iPython Notebook.
-
 emigrate Components
 -----------------
 **emigrate** is composed of three main components:
@@ -45,5 +40,4 @@ The **Migrate** class is used to solve the migration equations as a set of ODEs.
 [peakmaster]: http://web.natur.cuni.cz/gas/ "Peakmaster"
 [Spresso]: http://stanfordspresso.blogspot.com/ "Spresso"
 [STEEP]: http://microfluidics.stanford.edu/download/ "STEEP"
-[tutorial]: http://nbviewer.ipython.org/github/lewisamarshall/emigrate/blob/master/Tutorial.ipynb  "emigrate Tutorial"
-[examples]: http://nbviewer.ipython.org/github/lewisamarshall/emigrate/blob/master/examples.ipynb  "emigrate Examples"
+[tutorial]: ./tutorial.ipynb  "emigrate Tutorial"
