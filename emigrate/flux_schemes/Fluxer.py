@@ -3,13 +3,9 @@ import numpy as np
 import warnings
 
 
-class _Flux_Base(object):
+class Fluxer(object):
 
     """A base class for the flux modules used by emigrate."""
-
-    # Information to communicate to Migrate
-    area_variation = False
-    adaptive_grid = False
 
     # Differentiation information
     differentiation_method = '6th-Order'
@@ -149,3 +145,9 @@ class _Flux_Base(object):
     def _update(self):
         """Calculate the flux of chemical species."""
         self.dcdt = self.concentrations * 0.
+
+    def pack(self, frame):
+        pass
+
+    def unpack(self, packed, frame):
+        pass

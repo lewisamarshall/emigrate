@@ -4,7 +4,7 @@ import ionize
 import warnings
 
 
-class Electrolyte(object):
+class Frame(object):
 
     """Represent an electrophoresis system."""
 
@@ -77,7 +77,7 @@ class Electrolyte(object):
             serial['pH'] = serial['pH'].tolist()
         except:
             pass
-        serial['properties'] = {'pH':serial['pH']}
+        serial['properties'] = {'pH': serial['pH']}
         serial['properties']['x'] = serial['nodes']
 
         return serial

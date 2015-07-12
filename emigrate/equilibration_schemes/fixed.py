@@ -1,14 +1,17 @@
 """An equilibration class for fixed pH problems."""
 import numpy as np
-from Equilibrate_Base import Equilibrate_Base
+from Equilibrator import Equilibrator
 # pylint: disable = W0232, E1101, W0201
 
 
-class Fixed(Equilibrate_Base):
+class Fixed(Equilibrator):
 
     """An equilibration class for fixed pH problems."""
 
-    def calc_equilibrium(self):
+    pH = 7
+    cH = 10**(-pH)
+
+    def _equilibrate(self):
         """Calculate the equilibrium properties."""
         self.calc_diffusivity()
         self.calc_mobility()

@@ -1,11 +1,11 @@
 """Define the SLIP flux solver."""
 import numpy as np
-from Flux_Base import _Flux_Base
+from Fluxer import Fluxer
 from Flux_Limiter import Flux_Limiter
 # pylint: disable = W0232, E1101
 
 
-class SLIP(_Flux_Base):
+class SLIP(Fluxer):
 
     """A compact flux solver with numerical dissipation and adaptive grid."""
 

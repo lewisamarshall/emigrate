@@ -1,3 +1,11 @@
-from Equilibrate_Base import Equilibrate_Base
-from fixed import Fixed
-from Variable_pH import Variable_pH
+from Equilibrator import Equilibrator
+from Fixed import Fixed
+from VariablepH import VariablepH
+
+equilibrators = {None: Equilibrator,
+                 'fixed': Fixed,
+                 'pH': VariablepH,
+                 }
+
+if __name__ == '__main__':
+    print equilibrators

@@ -1,76 +1,109 @@
-"""A function for calculating the roots of a set of polynomials."""
+"""A module for calculating the roots of a set of polynomials."""
 import numpy as np
-from scipy.optimize import root
+from scipy import optimize
 import warnings
 
 
-def multiroot(polys, last_roots, method='hybr', use_jac=True,
-              enforce_positive=True, max_nodes=50):
-    """A function for calculating the roots of a set of polynomials."""
+class Multiroot(object):
+    """A class for fast roots-finding for an array of polynomials."""
+    def __init__(self, method='hybr', use_jac=True,
+                 enforce_positive=True, max_nodes=50):
+        self.method = method
+        self.use_jac = use_jac
+        self.enforce_positive = enforce_positive
+        self.max_nodes = max_nodes
 
-    # If the matrix is too big, subdivide
-    if polys.shape[1] > max_nodes:
-        splits = -(-polys.shape[1]//max_nodes)
+    def __call__(self, polys, guess=None):
+        if guess is None:
+            return self._analytical_solve(polys)
+        elif polys.shape[1] > self.max_nodes:
+            return self._split_solve(polys, guess)
+        else:
+            return self._solve(polys, guess)
+
+    def _split_solve(self, polys, guess):
+        # Calculate split indices
+        splits = -(-polys.shape[1]//self.max_nodes)
         split_size = polys.shape[1]//splits
         split_indices = [i * split_size for i in range(1, splits)]
-        return np.concatenate(
-            [multiroot(p, l) for p, l
-             in zip(np.hsplit(polys, split_indices),
-                    np.hsplit(last_roots, split_indices)
-                    )
-             ]
-        )
 
-    # Choose the offset to be half the length of the polynomial
-    # This helps deal with floating point overflows
-    offset = polys.shape[0]//2
+        # Split the domain into sections
+        split_polys = np.hsplit(polys, split_indices)
+        split_guess = np.hsplit(guess, split_indices)
 
-    # Find the length of the polynomials
-    n = np.arange(polys.shape[0])-offset
-    # Reverse the polynomials
-    polys = polys[::-1, :]
+        # Calculate the section results and cat.
+        split_roots = [self._solve(sub_poly, sub_guess)
+                       for sub_poly, sub_guess
+                       in zip(split_polys, split_guess)
+                       ]
+        return np.concatenate(split_roots)
 
-    # Calculate the jacobians
-    if use_jac:
-        p2 = polys[:, :] * np.arange(-offset, polys.shape[0]-offset)[:, np.newaxis]
-        m = np.arange(p2.shape[0])-offset-1
+    def _solve(self, polys, guess):
+        roots = self._optimize_solve(polys, guess)
+        return self._ensure_positive(roots, polys)
 
-        def jac(x):
-            xn = x ** m[:, np.newaxis]
-            return np.diag(np.sum(p2 * xn, 0))
-    else:
-        jac = None
+    def _optimize_solve(self, polys, guess):
+        # Find the length of the polynomials
+        offset = polys.shape[0]//2
+        n = np.arange(polys.shape[0], 0., -1.)-offset
 
-    def polyval(x):
-        xn = x ** n[:, np.newaxis]
-        return np.sum(polys * xn, 0)
+        if self.use_jac:
+            p2 = polys[:, :] * np.arange(polys.shape[0]-offset,
+                                         -offset,
+                                         -1)[:, np.newaxis]
+            m = np.arange(p2.shape[0], 0., -1)-offset-1
 
-    new_roots = root(polyval, last_roots, jac=jac, method=method,
-                     options={'band': (0, 0), 'col_deriv': True})
+            def jac(x):
+                xn = x ** m[:, np.newaxis]
+                return np.diag(np.sum(p2 * xn, 0))
+        else:
+            jac = None
 
-    if not new_roots.success:
-        warnings.warn(new_roots.message)
-        # raise RuntimeError('Root finder failed. ')
+        def polyval(x):
+            xn = x ** n[:, np.newaxis]
+            return np.sum(polys * xn, 0)
 
-    x = new_roots.x
+        roots = optimize.root(polyval, guess,
+                              jac=jac, method=self.method,
+                              options={'band': (0, 0),
+                                       'col_deriv': True
+                                       }
+                              )
 
-    if enforce_positive is True:
-        negative_roots = x<0
-        if np.any(negative_roots):
-            for idx, value in enumerate(negative_roots):
-                if value:
-                    x[idx] = real_positive_root(polys[::-1, idx])
+        if not roots.success:
+            warnings.warn(roots.message)
 
-    return x
+        return roots.x
 
+    def _analytical_solve(self, polys):
+        return np.apply_along_axis(self._1d_analytical_solve,
+                                   axis=0, arr=polys)
 
-def real_positive_root(poly):
-    cH = np.roots(poly)
+    def _1d_analytical_solve(self, subpoly):
+        root = np.roots(subpoly)
+        root = [r for r in root if r.real > 0 and r.imag == 0]
+        if root:
+            if len(root) != 1:
+                warnings.warn("Multiple roots found.")
+            return float(root[0].real)
+        else:
+            raise RuntimeError("Failed to find pH.")
 
-    cH = [c for c in cH if c.real > 0 and c.imag == 0]
-    if cH:
-        if len(cH) != 1:
-            warnings.warn("Multiple roots found.")
-        return float(cH[0].real)
-    else:
-        raise RuntimeError("Failed to find pH.")
+    def _ensure_positive(self, roots, polys):
+        if self.enforce_positive:
+            negative_roots = roots < 0
+            if np.any(negative_roots):
+                for idx, value in enumerate(negative_roots):
+                    if value:
+                        roots[idx] = self._1d_analytical_solve(polys[:, idx])
+        return roots
+
+if __name__ == '__main__':
+    array = np.array([[1, 1, 3, -10],
+                      [1, 8, 4, -12],
+                      ])
+    array = array.transpose()
+    array = np.concatenate([array]*1000, axis=1)
+    multiroot = Multiroot()
+    guess = multiroot(array)
+    print multiroot(array, guess-1)

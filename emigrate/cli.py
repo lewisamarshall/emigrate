@@ -1,6 +1,7 @@
 # import emigrate
-from Migrate import Migrate
-from data_structure import Electrolyte, Electromigration
+from Solver import Solver
+from Frame import Frame
+from FrameSeries import FrameSeries
 
 import sys
 import json
@@ -8,26 +9,26 @@ import json
 
 class CLI(object):
 
-    electromigration = None
+    frames = None
 
     def __init__(self):
         self.listener()
         return None
 
     def open(self, file):
-        if self.electromigration:
+        if self.frames:
             self.close()
-        self.electromigration = Electromigration(filename=file, mode='r')
+        self.frames = FrameSeries(filename=file, mode='r')
 
     def close(self):
-        if self.electromigration:
-            self.electromigration.hdf5.close()
-            self.electromigration = None
+        if self.frames:
+            self.frames.hdf5.close()
+            self.frames = None
 
     def frame(self, frame):
-        serial = self.electromigration[frame].serialize()
+        serial = self.frames[frame].serialize()
         serial['n_electrolytes'] = \
-            len(self.electromigration.electrolytes.keys())
+            len(self.frames.frames.keys())
         print json.dumps(serial)
         sys.stdout.flush()
 

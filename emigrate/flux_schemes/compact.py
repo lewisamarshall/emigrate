@@ -1,10 +1,10 @@
 """Define the Compact flux solver."""
 import numpy as np
-from Flux_Base import _Flux_Base
+from Fluxer import Fluxer
 # pylint: disable = W0232, E1101
 
 
-class Compact(_Flux_Base):
+class Compact(Fluxer):
 
     """A compact flux solver with no numerical dissipation or adaptive gird."""
 

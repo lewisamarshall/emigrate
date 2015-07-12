@@ -1,9 +1,14 @@
 """Emigrate: An electrophoresis solver.
 
-Class Constructor constructs an electrophoresis system.
+Class Frame constructs an electrophoresis system.
 
-Class Migrate solves the system.
+Class Solver solves the system.
+
+Class FrameSeries creates an on-disk representation of the solution.
+
+CLI is a command line interface for the solver.
 """
-from Migrate import Migrate
-from .data_structure import Electrolyte, Electromigration
-import cli
+from Solver import Solver
+from Frame import Frame
+from FrameSeries import FrameSeries
+from CLI import CLI

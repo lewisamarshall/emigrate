@@ -1,11 +1,11 @@
 """Define the SLIP flux solver."""
 import numpy as np
-from Flux_Base import _Flux_Base
+from Fluxer import Fluxer
 from Flux_Limiter import Flux_Limiter
 # pylint: disable = W0232, E1101
 
 
-class MinmodLimited(_Flux_Base):
+class MinmodLimited(Fluxer):
 
     """A compact flux solver with numerical dissipation and adaptive grid."""
 
@@ -24,7 +24,9 @@ class MinmodLimited(_Flux_Base):
         self.set_derivatives()
         flux = self.limit(self.concentrations, self.flux())
         dcdt = np.diff(flux, 1)/self.dz
-        dcdt = np.pad(dcdt, ((0, 0), (2, 2)), 'constant', constant_values=((0, 0), (0, 0)))
+        dcdt = np.pad(dcdt, ((0, 0), (2, 2)),
+                             'constant',
+                             constant_values=((0, 0), (0, 0)))
         return dcdt
 
     def set_derivatives(self):

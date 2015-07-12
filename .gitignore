@@ -56,3 +56,6 @@ target/
 # Ignore saved files.
 *.hdf5
 *.json
+
+# Ignore pycharm
+.idea

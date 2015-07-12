@@ -1,4 +1,4 @@
-from compact import Compact
+from Compact import Compact
 import numpy as np
 
 

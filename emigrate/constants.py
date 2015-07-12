@@ -1,9 +1,16 @@
 """Constants for use in the Emigrate solver."""
-F = 9.65E4       # Faraday's const.[C/mol]
-Rmu = 8.31       # Universal gas const. [J/mol*K]
-Temp = 298       # Temperature [K]
-Kw = 1E-14       # Water equilibrium constant
-muH = 362E-9/F           # Mobility of Hydronium   % [m^2/s*V]/F --> [mol*s/Kg]
-muOH = 205E-9/F          # Mobility of Hydroxide   % [m^2/s*V]/F --> [mol*s/Kg]
-met2lit = 1000           # m^3 to liters
-visc = 1E-3              # Dynamic viscosity (water) [Pa s]
+
+# Physical Constants
+k_water = 1E-14
+lpm3 = 1000
+faraday = 96485.34          # Faraday's const.[C/mol]
+boltzmann = 8.617e-6        # EV/K
+temperature = 25
+temperature_K = temperature + 273.15
+h_mobility = 362E-9/faraday   # Mobility of Hydroxide   % [m^2/s*V]/F --> [mol*s/Kg]
+oh_mobility = 205E-9/faraday  # Mobility of Hydronium   % [m^2/s*V]/F --> [mol*s/Kg]
+h_diffusivity = h_mobility / 1 * boltzmann * (temperature_K)
+oh_diffusivity = oh_mobility / -1 * boltzmann * (temperature_K)
+viscosity = 1E-3            # Dynamic viscosity of water [Pa s]
+
+# Rmu = 8.31       # Universal gas const. [J/mol*K]
