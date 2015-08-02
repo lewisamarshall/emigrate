@@ -21,5 +21,6 @@ setup(name='emigrate',
       description='A package for simulating electrophoresis.',
       packages=find_packages(),
       requires=['numpy', 'scipy', 'ionize'],
-      entry_points={'console_scripts': ['emigrate = emigrate.cli:CLI']},
+      entry_points={'console_scripts': ['emigrate = emigrate.CLI:CLI']},
+      test_suite="emigrate.tests",
       )
