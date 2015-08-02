@@ -26,7 +26,7 @@ class Frame(object):
     bulk_flow = 0
 
     def __init__(self, constructor):
-        """Initialize a Electrolyte object."""
+        """Initialize a Frame object."""
 
         # Try loading from file first.
         if isinstance(constructor, basestring):
