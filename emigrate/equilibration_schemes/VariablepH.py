@@ -31,13 +31,14 @@ class VariablepH(Equilibrator):
     _index_0 = None
 
     # New public properties
+    # TODO: move to state.
     ionization_fraction = None
     absolute_mobility = None
     water_conductivity = None
     water_diffusive_conductivity = None
 
-    def __init__(self, ions, concentrations):
-        super(VariablepH, self).__init__(ions, concentrations)
+    def __init__(self, state):
+        super(VariablepH, self).__init__(state)
         self._prepare_arrays()
         self._multiroot = Multiroot()
 
@@ -49,7 +50,7 @@ class VariablepH(Equilibrator):
         self._set_Pmat()
         self._set_absolute_mobility()
 
-    def _equilibrate(self):
+    def equilibrate(self):
         """Calculate equilibrium."""
         self._calc_pH()
         self._calc_ionization_fraction()
@@ -62,9 +63,8 @@ class VariablepH(Equilibrator):
     def _set_z_index(self):
         """Set the valence indices."""
         all_z = []
-        for i in self.ions:
+        for i in self.state.ions:
             all_z.extend(i.z0)
-        all_z = set(all_z)
         self._z0 = range(min(all_z), max(all_z)+1)
         self._index_0 = self._z0.index(0)
 
@@ -86,7 +86,7 @@ class VariablepH(Equilibrator):
     def _set_absolute_mobility(self):
         """Build the absolute mobility matrix."""
         self.absolute_mobility = []
-        for i in self.ions:
+        for i in self.state.ions:
             self.absolute_mobility.append(self._align_zero(i.absolute_mobility,
                                                            i.z0))
         self.absolute_mobility = np.array(self.absolute_mobility)
@@ -96,7 +96,7 @@ class VariablepH(Equilibrator):
         # Set up the matrix of Ls, the multiplication
         # of acidity coefficients for each ion.
         self._l_matrix = []
-        for i in self.ions:
+        for i in self.state.ions:
             self._l_matrix.append(self._align_zero(i.L(I=0), i.z0))
         self._l_matrix = np.array(self._l_matrix)
 
@@ -104,7 +104,7 @@ class VariablepH(Equilibrator):
         """Build the Q matrix for pH solving."""
         # Construct Q vector.
         self._Q = 1.
-        for j in range(len(self.ions)):
+        for j in range(len(self.state.ions)):
             self._Q = np.convolve(self._Q, self._l_matrix[j, :])
 
         # Convolve with water dissociation.
@@ -113,13 +113,13 @@ class VariablepH(Equilibrator):
     def _set_Pmat(self):
         """Build the Pmat Matrix for pH solving."""
         self._PMat = []
-        for i in range(len(self.ions)):
+        for i in range(len(self.state.ions)):
 
             Mmod = self._l_matrix.copy()
             Mmod[i, :] *= self._z0
 
             Pi = 1.
-            for k in range(len(self.ions)):
+            for k in range(len(self.state.ions)):
                 Pi = np.convolve(Pi, Mmod[k, :])
 
             Pi = np.convolve([0.0, 1.0], Pi)  # Convolve with P2
@@ -130,7 +130,7 @@ class VariablepH(Equilibrator):
         """Return the pH of the object."""
         # Multiply P matrix by concentrations, and sum.
         P = np.sum(self._PMat *
-                   np.array(self.concentrations)[:, np.newaxis, :], 0)
+                   np.array(self.state.concentrations)[:, np.newaxis, :], 0)
 
         # Construct polynomial. Change the shapes, then reverse  order
         if P.shape[0] < self._Q.shape[0]:
