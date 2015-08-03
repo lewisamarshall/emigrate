@@ -8,7 +8,6 @@ class Compact(Fluxer):
 
     """A compact flux solver with no numerical dissipation or adaptive gird."""
 
-    use_adaptive_grid = False
     boundary_mode = 'characteristic'
     differentiation_method = '6th-Order'
     j = 0
@@ -37,27 +36,27 @@ class Compact(Fluxer):
 
     def diffusive_flux(self):
         """Calculate flux due to diffusion."""
-        cD = self.state.diffusivity * self.concentrations
+        cD = self.state.diffusivity * self.state.concentrations
         diffusion = \
             self.second_derivative(cD)
         return diffusion
 
     def electromigration_flux(self):
         """Calculate flux due to electromigration."""
-        uc = self.mobility * self.concentrations
+        uc = self.mobility * self.state.concentrations
         electromigration = \
             self.first_derivative(uc * self.E)
         return electromigration
 
     def advection_flux(self):
-        advection = -self.u*self.first_derivative(self.concentrations)
+        advection = -self.u*self.first_derivative(self.state.concentrations)
         return advection
 
     def conductivity(self):
         """Calculate the conductivty at each location."""
         conductivity = np.sum(self.state.molar_conductivity
-                              * self.concentrations, 0)
+                              * self.state.concentrations, 0)
         return conductivity
 
     def node_flux(self):
-        return np.zeros(self.x.shape)
+        return np.zeros(self.state.nodes.shape)

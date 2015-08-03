@@ -15,6 +15,7 @@ class Fluxer(object):
     nonnegative = True
 
     # Field info
+    # TODO: Remove local referneces
     mode = 'voltage'
     j = 0.
     current = 0.
@@ -22,22 +23,12 @@ class Fluxer(object):
     V = 0
 
     # Dependant state information
-    x = None
-    concentrations = None
-    area = None
     _area = 1.
 
     # Reference Frame
     frame = None
     edge = 'right'
-    frame_velocity = 0
-
-    # Equilibrator properties
-    pH = None
-    I = None
-    water_conductivity = None
-    water_diffusive_conductivity = None
-    # equilibrator = None
+    _frame_velocity = 0
 
     def __init__(self, state):
         """Initialize the compact flux solver."""
@@ -46,7 +37,6 @@ class Fluxer(object):
         # Prepare the grid points from the state nodes
         self._prep_domain()
 
-        # TODO: Remove local referneces
         # Prepare the voltage/current and bulk flow mode from the state.
         self.V = self.state.voltage
         self.current_density = self.state.current_density
@@ -61,9 +51,8 @@ class Fluxer(object):
             self.mode = 'current'
 
         # use state area if it exists, otherwise default to _area
-        self.area = self.state.area
-        if self.area is not None:
-            self._area = self.area
+        if self.state.area is not None:
+            self._area = self.state.area
         self._area = np.array(self._area)
         if self._area.size > 1:
             self.area_variation = True
@@ -101,15 +90,12 @@ class Fluxer(object):
                                          _a_matrix)
 
     def update(self):
-        self.x = self.state.nodes
-        self.area = self.state.area
-        self.concentrations = self.state.concentrations
         self._update()
         self.set_boundary()
 
         # Impose nonnegativity constraint.
         if self.nonnegative is True:
-            self.dcdt = self._impose_nonnegativity(self.concentrations,
+            self.dcdt = self._impose_nonnegativity(self.state.concentrations,
                                                    self.dcdt)
 
         # Update the reference frame for the next time step.
@@ -118,7 +104,8 @@ class Fluxer(object):
 
     def _impose_nonnegativity(self, concentrations, dcdt):
         dcdt = np.where(np.greater(concentrations, 0),
-                        dcdt, np.maximum(0, dcdt))
+                        dcdt,
+                        np.maximum(0, dcdt))
         return dcdt
 
     def _update_reference_frame(self):
@@ -130,17 +117,13 @@ class Fluxer(object):
             pH = self.state.pH[0]
         else:
             raise RuntimeError('Edge must be left or right.')
-        self.frame_velocity = E * self.frame.effective_mobility(pH)
+        self._frame_velocity = E * self.frame.effective_mobility(pH)
 
     def _update(self):
-        """Calculate the flux of chemical species."""
-        self.dcdt = self.concentrations * 0.
+        raise NotImplementedError
 
     def pack(self, frame):
         raise NotImplementedError
 
     def unpack(self, packed, frame):
-        raise NotImplementedError
-
-    def _objective(self, time, packed):
         raise NotImplementedError

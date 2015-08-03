@@ -14,7 +14,6 @@ class SLIP(Fluxer):
     NI = 10
     Vthermal = .025
     pointwave = 1
-    adaptive_grid = True
     area_variation = False
     # limiter = Flux_limiter(minmod)
 
@@ -31,7 +30,7 @@ class SLIP(Fluxer):
 
     def set_area_flux(self):
         if self.area_variation:
-            self.area_flux = (self.node_flux-self.frame_velocity) * self.ax
+            self.area_flux = (self.node_flux-self._frame_velocity) * self.ax
             # self.area_flux[0] = self.area_flux[-1] = 0.
         else:
             self.area_flux = np.zeros(self.state.nodes.shape)
@@ -47,7 +46,8 @@ class SLIP(Fluxer):
 
     # Components of dcdt
     def electromigration_dcdt(self):
-        flux = self.limit(self.concentrations, self.electromigration_flux())
+        flux = self.limit(self.state.concentrations,
+                          self.electromigration_flux())
         dcdt = np.diff(flux, 1)/self.dz
         dcdt = np.pad(dcdt, ((0, 0), (2, 2)), 'constant',
                       constant_values=((0, 0), (0, 0))) / self.xz
@@ -55,7 +55,7 @@ class SLIP(Fluxer):
 
     def diffusion_dcdt(self):
         """Calculate flux due to diffusion."""
-        cD = self.state.diffusivity * self.concentrations
+        cD = self.state.diffusivity * self.state.concentrations
         diffusion = (self.second_derivative(cD) -
                      self.first_derivative(cD) *
                      self.xzz/self.xz)/self.xz**2
@@ -63,13 +63,13 @@ class SLIP(Fluxer):
 
     def advection_dcdt(self):
         advection_speed = (self.node_flux -
-                           (self.state.bulk_flow - self.frame_velocity))
+                           (self.state.bulk_flow - self._frame_velocity))
         advection = advection_speed * self.cz / self.xz
         return advection
 
     def electromigration_flux(self):
         """Calculate flux due to electromigration."""
-        uc = self.state.mobility * self.concentrations
+        uc = self.state.mobility * self.state.concentrations
         electromigration = uc * self.E
         return electromigration
 
@@ -89,7 +89,7 @@ class SLIP(Fluxer):
 
     def set_characteristic(self):
         """Calculate the characteristic speed of paramters."""
-        self.characteristic = (self.state.bulk_flow - self.frame_velocity) + \
+        self.characteristic = (self.state.bulk_flow - self._frame_velocity) + \
             self.E * self.state.mobility - self.node_flux
 
     def limiter(self, c):
@@ -119,9 +119,9 @@ class SLIP(Fluxer):
 
     # Helper Functions
     def set_derivatives(self):
-        self.xz = self.first_derivative(self.x)
-        self.xzz = self.second_derivative(self.x)
-        self.cz = self.first_derivative(self.concentrations)
+        self.xz = self.first_derivative(self.state.nodes)
+        self.xzz = self.second_derivative(self.state.nodes)
+        self.cz = self.first_derivative(self.state.concentrations)
         if self._area.size > 1:
             self.az = self.first_derivative(self._area)
             self.ax = self.az/self.xz
@@ -141,14 +141,15 @@ class SLIP(Fluxer):
         elif self.mode is 'current':
             self.j = self.current/self._area
             self.E = -(self.j+self.diffusive_current())/self.conductivity()
-            self.V = np.sum((self.E[:-1]+self.E[1:]) / 2 * np.diff(self.x))
+            self.V = np.sum((self.E[:-1]+self.E[1:]) /
+                            2 * np.diff(self.state.nodes))
         else:
             raise RuntimeError()
 
     def conductivity(self):
         """Calculate the conductivty at each location."""
         conductivity = np.sum(self.state.molar_conductivity
-                              * self.concentrations, 0)
+                              * self.state.concentrations, 0)
         conductivity += self.state.water_conductivity
         return conductivity
 
@@ -156,7 +157,7 @@ class SLIP(Fluxer):
         """Calculate the diffusive current at each location."""
         diffusive_current = self.first_derivative(
             np.sum(self.state.molar_conductivity/self.state.mobility *
-                   self.state.diffusivity*self.concentrations,
+                   self.state.diffusivity*self.state.concentrations,
                    0) + self.state.water_diffusive_conductivity
             )
         return diffusive_current
