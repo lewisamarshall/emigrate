@@ -20,7 +20,7 @@ setup(name='emigrate',
       license='LICENSE',
       description='A package for simulating electrophoresis.',
       packages=find_packages(),
-      requires=['numpy', 'scipy', 'ionize'],
+      requires=['numpy', 'scipy', 'ionize', 'h5py', 'ionize'],
       entry_points={'console_scripts': ['emigrate = emigrate.CLI:CLI']},
       test_suite="emigrate.tests",
       )
