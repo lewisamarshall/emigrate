@@ -27,8 +27,6 @@ class Fluxer(object):
     area = None
     _area = 1.
 
-    bulk_flow = 0.
-
     # Reference Frame
     frame = None
     edge = 'right'
@@ -61,8 +59,6 @@ class Fluxer(object):
                     )
         else:
             self.mode = 'current'
-
-        self.bulk_flow = self.state.bulk_flow
 
         # use state area if it exists, otherwise default to _area
         self.area = self.state.area
@@ -125,22 +121,13 @@ class Fluxer(object):
                         dcdt, np.maximum(0, dcdt))
         return dcdt
 
-    def update_ion_parameters(self, equilibrator):
-        self.mobility = self.state.mobility
-        self.diffusivity = self.state.diffusivity
-        self.molar_conductivity = self.state.molar_conductivity
-        self.pH = self.state.pH
-        self.water_conductivity = self.state.water_conductivity
-        self.water_diffusive_conductivity = \
-            self.state.water_diffusive_conductivity
-
     def _update_reference_frame(self):
         if self.edge == 'right':
             E = self.E[-1]
-            pH = self.pH[-1]
+            pH = self.state.pH[-1]
         elif self.edge == 'left':
             E = self.E[0]
-            pH = self.pH[0]
+            pH = self.state.pH[0]
         else:
             raise RuntimeError('Edge must be left or right.')
         self.frame_velocity = E * self.frame.effective_mobility(pH)

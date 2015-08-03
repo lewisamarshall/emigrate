@@ -63,7 +63,6 @@ class Solver(object):
         # Set flux mode
         self.flux_mode = flux_mode
         self._set_flux_mode()
-        self.fluxer.update_ion_parameters(self.equilibrator)
 
         # Precondition if requested.
         if precondition:
@@ -161,7 +160,6 @@ class Solver(object):
         """Perform actions when a successful solution step is found."""
         self.fluxer.unpack(packed)
         self.equilibrator.equilibrate()
-        self.fluxer.update_ion_parameters(self.equilibrator)
 
     def _objective(self, time, packed):
         """The objective function of the solver."""

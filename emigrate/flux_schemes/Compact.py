@@ -37,7 +37,7 @@ class Compact(Fluxer):
 
     def diffusive_flux(self):
         """Calculate flux due to diffusion."""
-        cD = self.diffusivity * self.concentrations
+        cD = self.state.diffusivity * self.concentrations
         diffusion = \
             self.second_derivative(cD)
         return diffusion
@@ -55,7 +55,7 @@ class Compact(Fluxer):
 
     def conductivity(self):
         """Calculate the conductivty at each location."""
-        conductivity = np.sum(self.molar_conductivity
+        conductivity = np.sum(self.state.molar_conductivity
                               * self.concentrations, 0)
         return conductivity
 

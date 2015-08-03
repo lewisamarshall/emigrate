@@ -55,7 +55,7 @@ class SLIP(Fluxer):
 
     def diffusion_dcdt(self):
         """Calculate flux due to diffusion."""
-        cD = self.diffusivity * self.concentrations
+        cD = self.state.diffusivity * self.concentrations
         diffusion = (self.second_derivative(cD) -
                      self.first_derivative(cD) *
                      self.xzz/self.xz)/self.xz**2
@@ -63,13 +63,13 @@ class SLIP(Fluxer):
 
     def advection_dcdt(self):
         advection_speed = (self.node_flux -
-                           (self.bulk_flow - self.frame_velocity))
+                           (self.state.bulk_flow - self.frame_velocity))
         advection = advection_speed * self.cz / self.xz
         return advection
 
     def electromigration_flux(self):
         """Calculate flux due to electromigration."""
-        uc = self.mobility * self.concentrations
+        uc = self.state.mobility * self.concentrations
         electromigration = uc * self.E
         return electromigration
 
@@ -89,8 +89,8 @@ class SLIP(Fluxer):
 
     def set_characteristic(self):
         """Calculate the characteristic speed of paramters."""
-        self.characteristic = (self.bulk_flow-self.frame_velocity) + self.E * \
-            self.mobility - self.node_flux
+        self.characteristic = (self.state.bulk_flow - self.frame_velocity) + \
+            self.E * self.state.mobility - self.node_flux
 
     def limiter(self, c):
         """temporary implimentation of a flux limiter."""
@@ -147,17 +147,17 @@ class SLIP(Fluxer):
 
     def conductivity(self):
         """Calculate the conductivty at each location."""
-        conductivity = np.sum(self.molar_conductivity
+        conductivity = np.sum(self.state.molar_conductivity
                               * self.concentrations, 0)
-        conductivity += self.water_conductivity
+        conductivity += self.state.water_conductivity
         return conductivity
 
     def diffusive_current(self):
         """Calculate the diffusive current at each location."""
         diffusive_current = self.first_derivative(
-            np.sum(self.molar_conductivity/self.mobility *
-                   self.diffusivity*self.concentrations,
-                   0) + self.water_diffusive_conductivity
+            np.sum(self.state.molar_conductivity/self.state.mobility *
+                   self.state.diffusivity*self.concentrations,
+                   0) + self.state.water_diffusive_conductivity
             )
         return diffusive_current
 
