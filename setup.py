@@ -2,7 +2,7 @@
 from setuptools import setup, find_packages
 
 setup(name='emigrate',
-      version='0.9.23',
+      version='0.10.0',
       author='Lewis A. Marshall',
       author_email='lewis.a.marshall@gmail.com',
       url="https://github.com/lewisamarshall/emigrate",
