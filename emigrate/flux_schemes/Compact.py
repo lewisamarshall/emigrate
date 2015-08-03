@@ -27,12 +27,13 @@ class Compact(Fluxer):
 
     def set_current(self):
         """Calculate the current based on a fixed voltage drop."""
-        self.j = self.V/sum(self.dz / self.conductivity())
+        self.state.current_density = (self.state.voltage /
+                                      sum(self.dz / self.conductivity()))
 
     def set_E(self):
         """Calculate the electric field at each node."""
         self.set_current()
-        self.E = -self.j/self.conductivity()
+        self.state.field = -self.state.current_density/self.conductivity()
 
     def diffusive_flux(self):
         """Calculate flux due to diffusion."""
@@ -45,7 +46,7 @@ class Compact(Fluxer):
         """Calculate flux due to electromigration."""
         uc = self.mobility * self.state.concentrations
         electromigration = \
-            self.first_derivative(uc * self.E)
+            self.first_derivative(uc * self.state.field)
         return electromigration
 
     def advection_flux(self):

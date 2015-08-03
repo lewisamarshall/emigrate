@@ -15,12 +15,7 @@ class Fluxer(object):
     nonnegative = True
 
     # Field info
-    # TODO: Remove local referneces
     mode = 'voltage'
-    j = 0.
-    current = 0.
-    E = None
-    V = 0
 
     # Dependant state information
     _area = 1.
@@ -38,10 +33,8 @@ class Fluxer(object):
         self._prep_domain()
 
         # Prepare the voltage/current and bulk flow mode from the state.
-        self.V = self.state.voltage
         self.current_density = self.state.current_density
-        self.current = self.state.current
-        if self.V:
+        if self.state.voltage:
             self.mode = 'voltage'
             if self.current_density:
                 warnings.warn(
@@ -110,10 +103,10 @@ class Fluxer(object):
 
     def _update_reference_frame(self):
         if self.edge == 'right':
-            E = self.E[-1]
+            E = self.state.field[-1]
             pH = self.state.pH[-1]
         elif self.edge == 'left':
-            E = self.E[0]
+            E = self.state.field[0]
             pH = self.state.pH[0]
         else:
             raise RuntimeError('Edge must be left or right.')

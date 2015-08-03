@@ -20,6 +20,7 @@ class Frame(object):
 
     # Default Properties
     voltage = 0
+    field = None
     current_density = 0
     current = 0.
     area = 1.

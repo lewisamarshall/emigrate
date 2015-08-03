@@ -70,7 +70,7 @@ class SLIP(Fluxer):
     def electromigration_flux(self):
         """Calculate flux due to electromigration."""
         uc = self.state.mobility * self.state.concentrations
-        electromigration = uc * self.E
+        electromigration = uc * self.state.field
         return electromigration
 
     # Flux Limitation
@@ -90,7 +90,7 @@ class SLIP(Fluxer):
     def set_characteristic(self):
         """Calculate the characteristic speed of paramters."""
         self.characteristic = (self.state.bulk_flow - self._frame_velocity) + \
-            self.E * self.state.mobility - self.node_flux
+            self.state.field * self.state.mobility - self.node_flux
 
     def limiter(self, c):
         """temporary implimentation of a flux limiter."""
@@ -115,7 +115,8 @@ class SLIP(Fluxer):
 
     def set_Kag(self):
         """Set the Kag parameter for spacing of low-gradient grid points."""
-        self.Kag = ((self.N-self.NI)/self.NI) * self.Vthermal / abs(self.V)
+        self.Kag = ((self.N-self.NI) / self.NI *
+                    self.Vthermal / abs(self.state.voltage))
 
     # Helper Functions
     def set_derivatives(self):
@@ -130,19 +131,23 @@ class SLIP(Fluxer):
 
     def set_current(self):
         """Calculate the current based on a fixed voltage drop."""
-        self.current = self.V/sum(self.dz / self.conductivity()/self._area)
-        self.j = self.current/self._area
+        self.state.current = (self.state.voltage /
+                              sum(self.dz / self.conductivity() / self._area))
+        self.state.current_density = self.state.current/self._area
 
     def set_E(self):
         """Calculate the electric field at each node."""
         if self.mode is 'voltage':
             self.set_current()
-            self.E = -(self.j+self.diffusive_current())/self.conductivity()
+            self.state.field = -(self.state.current_density +
+                                 self.diffusive_current())/self.conductivity()
         elif self.mode is 'current':
-            self.j = self.current/self._area
-            self.E = -(self.j+self.diffusive_current())/self.conductivity()
-            self.V = np.sum((self.E[:-1]+self.E[1:]) /
-                            2 * np.diff(self.state.nodes))
+            self.state.current_density = self.state.current/self._area
+            self.state.field = -(self.state.current_density +
+                                 self.diffusive_current())/self.conductivity()
+            self.state.voltage = np.sum((self.state.field[:-1] +
+                                         self.state.field[1:]) /
+                                        2 * np.diff(self.state.nodes))
         else:
             raise RuntimeError()
 
