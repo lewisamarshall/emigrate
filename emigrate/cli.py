@@ -11,26 +11,26 @@ import json
 class CLI(object):
     """Command line interface for emigrate."""
 
-    frames = None
+    frame_series = None
 
     def __init__(self):
         self.listener()
         return None
 
     def open(self, open_file):
-        if self.frames:
+        if self.frame_series:
             self.close()
-        self.frames = FrameSeries(filename=open_file, mode='r')
+        self.frame_series = FrameSeries(filename=open_file, mode='r')
 
     def close(self):
-        if self.frames:
-            self.frames.hdf5.close()
-            self.frames = None
+        if self.frame_series:
+            self.frame_series.hdf5.close()
+            self.frame_series = None
 
     def frame(self, frame):
-        serial = self.frames[frame].serialize()
+        serial = self.frame_series[frame].serialize()
         serial['n_electrolytes'] = \
-            len(self.frames.frames.keys())
+            len(self.frame_series.frames.keys())
         print json.dumps(serial)
         sys.stdout.flush()
 
