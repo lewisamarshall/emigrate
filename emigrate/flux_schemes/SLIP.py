@@ -11,10 +11,12 @@ class SLIP(Fluxer):
 
     boundary_mode = 'fixed'
     differentiation_method = 'dissipative'
+    area_variation = False
+
+    # Tuning for adaptive grid
     NI = 10
     Vthermal = .025
     pointwave = 1
-    area_variation = False
     # limiter = Flux_limiter(minmod)
 
     def _update(self):

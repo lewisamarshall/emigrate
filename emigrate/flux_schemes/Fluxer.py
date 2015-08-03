@@ -2,6 +2,11 @@ from Differentiate import Differentiate
 import numpy as np
 import warnings
 
+# TODO: Fix boundary characteristics
+# from boundary_characteristic import (boundary_characteristic,
+#                                      _get_characteristic_matricies,
+#                                      _a_matrix)
+
 
 class Fluxer(object):
 
@@ -76,11 +81,6 @@ class Fluxer(object):
         elif self.boundary_mode == 'characteristic':
             self.dcdt[:, 0] = self.boundary_characteristic('left')
             self.dcdt[:, -1] = self.boundary_characteristic('right')
-
-    # TODO: Fix boundary characteristics
-    from boundary_characteristic import (boundary_characteristic,
-                                         _get_characteristic_matricies,
-                                         _a_matrix)
 
     def update(self):
         self._update()
