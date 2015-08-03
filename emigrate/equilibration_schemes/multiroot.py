@@ -6,12 +6,17 @@ import warnings
 
 class Multiroot(object):
     """A class for fast roots-finding for an array of polynomials."""
-    def __init__(self, method='hybr', use_jac=True,
-                 enforce_positive=True, max_nodes=50):
-        self.method = method
-        self.use_jac = use_jac
-        self.enforce_positive = enforce_positive
-        self.max_nodes = max_nodes
+
+    method = 'hybr'
+    use_jac = True
+    max_nodes = 50
+    enforce_positive = True
+    solver_options = {'band': (0, 0),
+                      'col_deriv': True
+                      }
+
+    def __init__(self):
+        pass
 
     def __call__(self, polys, guess=None):
         if guess is None:
@@ -43,11 +48,32 @@ class Multiroot(object):
         return self._ensure_positive(roots, polys)
 
     def _optimize_solve(self, polys, guess):
-        # Find the length of the polynomials
         offset = polys.shape[0]//2
-        n = np.arange(polys.shape[0], 0., -1.)-offset
+        n = np.arange(polys.shape[0], 0., -1.) - offset
 
-        if self.use_jac:
+        objective = self._get_objective(polys, n)
+        jac = self._get_jacobian(polys, n, offset)
+
+        roots = optimize.root(objective, guess,
+                              jac=jac, method=self.method,
+                              options=self.solver_options)
+
+        if not roots.success:
+            warnings.warn(roots.message)
+
+        return roots.x
+
+    def _get_objective(self, polys, n):
+        def objective(x):
+            xn = x ** n[:, np.newaxis]
+            return np.sum(polys * xn, 0)
+
+        return objective
+
+    def _get_jacobian(self, polys, n, offset):
+        if not self.use_jac:
+            return None
+        else:
             p2 = polys[:, :] * np.arange(polys.shape[0]-offset,
                                          -offset,
                                          -1)[:, np.newaxis]
@@ -56,24 +82,8 @@ class Multiroot(object):
             def jac(x):
                 xn = x ** m[:, np.newaxis]
                 return np.diag(np.sum(p2 * xn, 0))
-        else:
-            jac = None
 
-        def polyval(x):
-            xn = x ** n[:, np.newaxis]
-            return np.sum(polys * xn, 0)
-
-        roots = optimize.root(polyval, guess,
-                              jac=jac, method=self.method,
-                              options={'band': (0, 0),
-                                       'col_deriv': True
-                                       }
-                              )
-
-        if not roots.success:
-            warnings.warn(roots.message)
-
-        return roots.x
+            return jac
 
     def _analytical_solve(self, polys):
         return np.apply_along_axis(self._1d_analytical_solve,
