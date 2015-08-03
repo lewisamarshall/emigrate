@@ -8,17 +8,19 @@ class Frame(object):
 
     """Represent an electrophoresis system."""
 
-    # Required Properties
+    # Core Properties
     nodes = None
     ions = []
     concentrations = None
 
-    # Optional Properties
+    # Solution Properties
     pH = None
+    cH = None
     ionic_strength = None
 
     # Default Properties
     voltage = 0
+    field = None
     current_density = 0
     current = 0.
     area = 1.

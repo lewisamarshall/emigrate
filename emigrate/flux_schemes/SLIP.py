@@ -11,11 +11,12 @@ class SLIP(Fluxer):
 
     boundary_mode = 'fixed'
     differentiation_method = 'dissipative'
+    area_variation = False
+
+    # Tuning for adaptive grid
     NI = 10
     Vthermal = .025
     pointwave = 1
-    adaptive_grid = True
-    area_variation = False
     # limiter = Flux_limiter(minmod)
 
     def _update(self):
@@ -31,7 +32,7 @@ class SLIP(Fluxer):
 
     def set_area_flux(self):
         if self.area_variation:
-            self.area_flux = (self.node_flux-self.frame_velocity) * self.ax
+            self.area_flux = (self.node_flux-self._frame_velocity) * self.ax
             # self.area_flux[0] = self.area_flux[-1] = 0.
         else:
             self.area_flux = np.zeros(self.state.nodes.shape)
@@ -47,7 +48,8 @@ class SLIP(Fluxer):
 
     # Components of dcdt
     def electromigration_dcdt(self):
-        flux = self.limit(self.concentrations, self.electromigration_flux())
+        flux = self.limit(self.state.concentrations,
+                          self.electromigration_flux())
         dcdt = np.diff(flux, 1)/self.dz
         dcdt = np.pad(dcdt, ((0, 0), (2, 2)), 'constant',
                       constant_values=((0, 0), (0, 0))) / self.xz
@@ -55,7 +57,7 @@ class SLIP(Fluxer):
 
     def diffusion_dcdt(self):
         """Calculate flux due to diffusion."""
-        cD = self.diffusivity * self.concentrations
+        cD = self.state.diffusivity * self.state.concentrations
         diffusion = (self.second_derivative(cD) -
                      self.first_derivative(cD) *
                      self.xzz/self.xz)/self.xz**2
@@ -63,14 +65,14 @@ class SLIP(Fluxer):
 
     def advection_dcdt(self):
         advection_speed = (self.node_flux -
-                           (self.bulk_flow - self.frame_velocity))
+                           (self.state.bulk_flow - self._frame_velocity))
         advection = advection_speed * self.cz / self.xz
         return advection
 
     def electromigration_flux(self):
         """Calculate flux due to electromigration."""
-        uc = self.mobility * self.concentrations
-        electromigration = uc * self.E
+        uc = self.state.mobility * self.state.concentrations
+        electromigration = uc * self.state.field
         return electromigration
 
     # Flux Limitation
@@ -89,8 +91,8 @@ class SLIP(Fluxer):
 
     def set_characteristic(self):
         """Calculate the characteristic speed of paramters."""
-        self.characteristic = (self.bulk_flow-self.frame_velocity) + self.E * \
-            self.mobility - self.node_flux
+        self.characteristic = (self.state.bulk_flow - self._frame_velocity) + \
+            self.state.field * self.state.mobility - self.node_flux
 
     def limiter(self, c):
         """temporary implimentation of a flux limiter."""
@@ -115,13 +117,14 @@ class SLIP(Fluxer):
 
     def set_Kag(self):
         """Set the Kag parameter for spacing of low-gradient grid points."""
-        self.Kag = ((self.N-self.NI)/self.NI) * self.Vthermal / abs(self.V)
+        self.Kag = ((self.N-self.NI) / self.NI *
+                    self.Vthermal / abs(self.state.voltage))
 
     # Helper Functions
     def set_derivatives(self):
-        self.xz = self.first_derivative(self.x)
-        self.xzz = self.second_derivative(self.x)
-        self.cz = self.first_derivative(self.concentrations)
+        self.xz = self.first_derivative(self.state.nodes)
+        self.xzz = self.second_derivative(self.state.nodes)
+        self.cz = self.first_derivative(self.state.concentrations)
         if self._area.size > 1:
             self.az = self.first_derivative(self._area)
             self.ax = self.az/self.xz
@@ -130,34 +133,39 @@ class SLIP(Fluxer):
 
     def set_current(self):
         """Calculate the current based on a fixed voltage drop."""
-        self.current = self.V/sum(self.dz / self.conductivity()/self._area)
-        self.j = self.current/self._area
+        self.state.current = (self.state.voltage /
+                              sum(self.dz / self.conductivity() / self._area))
+        self.state.current_density = self.state.current/self._area
 
     def set_E(self):
         """Calculate the electric field at each node."""
         if self.mode is 'voltage':
             self.set_current()
-            self.E = -(self.j+self.diffusive_current())/self.conductivity()
+            self.state.field = -(self.state.current_density +
+                                 self.diffusive_current())/self.conductivity()
         elif self.mode is 'current':
-            self.j = self.current/self._area
-            self.E = -(self.j+self.diffusive_current())/self.conductivity()
-            self.V = np.sum((self.E[:-1]+self.E[1:]) / 2 * np.diff(self.x))
+            self.state.current_density = self.state.current/self._area
+            self.state.field = -(self.state.current_density +
+                                 self.diffusive_current())/self.conductivity()
+            self.state.voltage = np.sum((self.state.field[:-1] +
+                                         self.state.field[1:]) /
+                                        2 * np.diff(self.state.nodes))
         else:
             raise RuntimeError()
 
     def conductivity(self):
         """Calculate the conductivty at each location."""
-        conductivity = np.sum(self.molar_conductivity
-                              * self.concentrations, 0)
-        conductivity += self.water_conductivity
+        conductivity = np.sum(self.state.molar_conductivity
+                              * self.state.concentrations, 0)
+        conductivity += self.state.water_conductivity
         return conductivity
 
     def diffusive_current(self):
         """Calculate the diffusive current at each location."""
         diffusive_current = self.first_derivative(
-            np.sum(self.molar_conductivity/self.mobility *
-                   self.diffusivity*self.concentrations,
-                   0) + self.water_diffusive_conductivity
+            np.sum(self.state.molar_conductivity/self.state.mobility *
+                   self.state.diffusivity*self.state.concentrations,
+                   0) + self.state.water_diffusive_conductivity
             )
         return diffusive_current
 
@@ -177,24 +185,8 @@ class SLIP(Fluxer):
                       )
         return np.concatenate(queued)
 
-    def unpack(self, packed, frame):
-        frame.nodes = packed[:self.N]
-        frame.area = packed[self.N:self.N*2]
-        frame.concentrations = \
-            packed[self.N*2:].reshape(frame.concentrations.shape)
-
-    def objective(self, time, packed):
-        """The objective function of the solver."""
-        # Update local parameters
-        self.t = t
-        self._decompose_state(state)
-
-        # Update the flux calculator and get the relevant parameters
-        self.fluxer.update(self.x, self.area, self.concentrations)
-        dcdt = self.fluxer.dcdt
-        dxdt = self.fluxer.node_flux
-        dadt = self.fluxer.area_flux
-
-        # Compose them and return to the solver
-        dstatedt = self._compose_state(dxdt, dadt, dcdt)
-        return dstatedt
+    def unpack(self, packed):
+        self.state.nodes = packed[:self.N]
+        self.state.area = packed[self.N:self.N*2]
+        self.state.concentrations = \
+            packed[self.N*2:].reshape(self.state.concentrations.shape)

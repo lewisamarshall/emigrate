@@ -8,27 +8,31 @@ class Fixed(Equilibrator):
 
     """An equilibration class for fixed pH problems."""
 
-    # TODO: remove
-    pH = 7
-    cH = 10**(-pH)
+    def __init__(self, state):
+        super(Fixed, self).__init__(state)
+        if self.state.pH is None:
+            self.state.pH = 7.
+        if self.state.cH is None:
+            self.state.cH = 10**(-self.state.pH)
 
     def _equilibrate(self):
         """Calculate the equilibrium properties."""
-        self.calc_diffusivity()
-        self.calc_mobility()
-        self.calc_molar_conductivity()
+        self._calc_diffusivity()
+        self._calc_mobility()
+        self._calc_molar_conductivity()
 
-    def calc_diffusivity(self):
+    def _calc_diffusivity(self):
         """Calculate the diffusivity."""
-        self.diffusivity = np.array([[ion.diffusivity(self.pH)]
-                                    for ion in self.sate.ions])
+        self.state.diffusivity = np.array([[ion.diffusivity(self.state.pH)]
+                                          for ion in self.sate.ions])
 
-    def calc_mobility(self):
+    def _calc_mobility(self):
         """Calculate the effective mobility."""
-        self.mobility = np.array([[ion.effective_mobility(self.pH)]
-                                  for ion in self.state.ions])
+        self.state.mobility = np.array([[ion.effective_mobility(self.state.pH)]
+                                       for ion in self.state.ions])
 
-    def calc_molar_conductivity(self):
+    def _calc_molar_conductivity(self):
         """Calculate the conductivity."""
-        self.molar_conductivity = np.array([[ion.molar_conductivity(self.pH)]
-                                            for ion in self.state.ions])
+        self.state.molar_conductivity = \
+            np.array([[ion.molar_conductivity(self.state.pH)]
+                     for ion in self.state.ions])

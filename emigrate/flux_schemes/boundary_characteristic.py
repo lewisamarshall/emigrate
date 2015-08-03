@@ -31,7 +31,7 @@ def _get_characteristic_matricies(self, index):
 
 def _a_matrix(self, index):
     a1 = np.diag(self.mobility[:, index] * self.E[index] +
-                 self.bulk_flow)
+                 self.state.bulk_flow)
     q = self.j / self.conductivity()[index]**2 * self.concentrations[:, index] *\
         self.mobility[:, index]
     r = self.molar_conductivity[:, index]

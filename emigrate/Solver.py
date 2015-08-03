@@ -63,7 +63,6 @@ class Solver(object):
         # Set flux mode
         self.flux_mode = flux_mode
         self._set_flux_mode()
-        self.fluxer.update_ion_parameters(self.equilibrator)
 
         # Precondition if requested.
         if precondition:
@@ -129,7 +128,7 @@ class Solver(object):
             else:
                 self._solve_step(interval, max_time)
                 self.t = self.solver.t
-                self.fluxer.unpack(self.solver.y, self.state)
+                self.fluxer.unpack(self.solver.y)
                 yield self.state
         else:
             message = 'Solver failed at time {}.'
@@ -138,7 +137,7 @@ class Solver(object):
     def _solve_step(self, dt, tmax):
         tnew = min(self.solver.t + dt, tmax)
         self.solver.integrate(tnew)
-        self.fluxer.unpack(self.solver.y, self.state)
+        self.fluxer.unpack(self.solver.y)
         self._write_solution()
 
     def _initialize_solver(self):
@@ -159,15 +158,14 @@ class Solver(object):
 
     def _solout(self, time, packed):
         """Perform actions when a successful solution step is found."""
-        self.fluxer.unpack(packed, self.state)
+        self.fluxer.unpack(packed)
         self.equilibrator.equilibrate()
-        self.fluxer.update_ion_parameters(self.equilibrator)
 
     def _objective(self, time, packed):
         """The objective function of the solver."""
         # Update local parameters
         self.time = time
-        self.fluxer.unpack(packed, self.state)
+        self.fluxer.unpack(packed)
 
         # Update the flux calculator and get the relevant parameters
         self.fluxer.update()

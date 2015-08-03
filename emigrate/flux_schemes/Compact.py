@@ -8,7 +8,6 @@ class Compact(Fluxer):
 
     """A compact flux solver with no numerical dissipation or adaptive gird."""
 
-    use_adaptive_grid = False
     boundary_mode = 'characteristic'
     differentiation_method = '6th-Order'
     j = 0
@@ -28,36 +27,37 @@ class Compact(Fluxer):
 
     def set_current(self):
         """Calculate the current based on a fixed voltage drop."""
-        self.j = self.V/sum(self.dz / self.conductivity())
+        self.state.current_density = (self.state.voltage /
+                                      sum(self.dz / self.conductivity()))
 
     def set_E(self):
         """Calculate the electric field at each node."""
         self.set_current()
-        self.E = -self.j/self.conductivity()
+        self.state.field = -self.state.current_density/self.conductivity()
 
     def diffusive_flux(self):
         """Calculate flux due to diffusion."""
-        cD = self.diffusivity * self.concentrations
+        cD = self.state.diffusivity * self.state.concentrations
         diffusion = \
             self.second_derivative(cD)
         return diffusion
 
     def electromigration_flux(self):
         """Calculate flux due to electromigration."""
-        uc = self.mobility * self.concentrations
+        uc = self.mobility * self.state.concentrations
         electromigration = \
-            self.first_derivative(uc * self.E)
+            self.first_derivative(uc * self.state.field)
         return electromigration
 
     def advection_flux(self):
-        advection = -self.u*self.first_derivative(self.concentrations)
+        advection = -self.u*self.first_derivative(self.state.concentrations)
         return advection
 
     def conductivity(self):
         """Calculate the conductivty at each location."""
-        conductivity = np.sum(self.molar_conductivity
-                              * self.concentrations, 0)
+        conductivity = np.sum(self.state.molar_conductivity
+                              * self.state.concentrations, 0)
         return conductivity
 
     def node_flux(self):
-        return np.zeros(self.x.shape)
+        return np.zeros(self.state.nodes.shape)
