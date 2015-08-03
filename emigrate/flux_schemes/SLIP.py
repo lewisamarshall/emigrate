@@ -166,15 +166,16 @@ class SLIP(Fluxer):
             frame.area = np.array(frame.area)
             if frame.area.size != self.N:
                 frame.area = np.resize(frame.area, [self.N])
-            return np.concatenate((frame.nodes.flatten(),
-                                   frame.area.flatten(),
-                                   frame.concentrations.flatten(),
-                                   ))
+            queued = (frame.nodes.flatten(),
+                      frame.area.flatten(),
+                      frame.concentrations.flatten(),
+                      )
         else:
-            return np.concatenate((self.node_flux.flatten(),
-                                   self.area_flux.flatten(),
-                                   self.dcdt.flatten(),
-                                   ))
+            queued = (self.node_flux.flatten(),
+                      self.area_flux.flatten(),
+                      self.dcdt.flatten(),
+                      )
+        return np.concatenate(queued)
 
     def unpack(self, packed, frame):
         frame.nodes = packed[:self.N]
