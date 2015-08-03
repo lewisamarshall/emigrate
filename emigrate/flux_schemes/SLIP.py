@@ -177,24 +177,8 @@ class SLIP(Fluxer):
                       )
         return np.concatenate(queued)
 
-    def unpack(self, packed, frame):
-        frame.nodes = packed[:self.N]
-        frame.area = packed[self.N:self.N*2]
-        frame.concentrations = \
-            packed[self.N*2:].reshape(frame.concentrations.shape)
-
-    def objective(self, time, packed):
-        """The objective function of the solver."""
-        # Update local parameters
-        self.t = t
-        self._decompose_state(state)
-
-        # Update the flux calculator and get the relevant parameters
-        self.fluxer.update(self.x, self.area, self.concentrations)
-        dcdt = self.fluxer.dcdt
-        dxdt = self.fluxer.node_flux
-        dadt = self.fluxer.area_flux
-
-        # Compose them and return to the solver
-        dstatedt = self._compose_state(dxdt, dadt, dcdt)
-        return dstatedt
+    def unpack(self, packed):
+        self.state.nodes = packed[:self.N]
+        self.state.area = packed[self.N:self.N*2]
+        self.state.concentrations = \
+            packed[self.N*2:].reshape(self.state.concentrations.shape)
