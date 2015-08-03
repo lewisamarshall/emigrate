@@ -1,13 +1,15 @@
+"""Command line interface for emigrate."""
 # import emigrate
-from Solver import Solver
-from Frame import Frame
-from FrameSeries import FrameSeries
+from .Solver import Solver
+from .Frame import Frame
+from .FrameSeries import FrameSeries
 
 import sys
 import json
 
 
 class CLI(object):
+    """Command line interface for emigrate."""
 
     frames = None
 
@@ -15,10 +17,10 @@ class CLI(object):
         self.listener()
         return None
 
-    def open(self, file):
+    def open(self, open_file):
         if self.frames:
             self.close()
-        self.frames = FrameSeries(filename=file, mode='r')
+        self.frames = FrameSeries(filename=open_file, mode='r')
 
     def close(self):
         if self.frames:
