@@ -35,7 +35,7 @@ class SLIP(Fluxer):
             self.area_flux = (self.node_flux-self.frame_velocity) * self.ax
             # self.area_flux[0] = self.area_flux[-1] = 0.
         else:
-            self.area_flux = 0
+            self.area_flux = np.zeros(self.state.nodes.shape)
 
     def set_node_flux(self):
         """Calculate the flux of nodes."""
@@ -108,6 +108,8 @@ class SLIP(Fluxer):
         """Calculate the cost function of each node."""
         self.set_Kag()
         deriv = np.fabs(self.cz)
+        if np.isnan(deriv).any():
+            print deriv
         cost = deriv / np.nanmax(deriv, 1)[:, np.newaxis]
         cost = np.nanmax(cost, 0) + self.Kag
         return cost
@@ -159,3 +161,40 @@ class SLIP(Fluxer):
                    0) + self.water_diffusive_conductivity
             )
         return diffusive_current
+
+    def pack(self, frame=None):
+        if frame:
+            frame.area = np.array(frame.area)
+            if frame.area.size != self.N:
+                frame.area = np.resize(frame.area, [self.N])
+            return np.concatenate((frame.nodes.flatten(),
+                                   frame.area.flatten(),
+                                   frame.concentrations.flatten(),
+                                   ))
+        else:
+            return np.concatenate((self.node_flux.flatten(),
+                                   self.area_flux.flatten(), 
+                                   self.dcdt.flatten(),
+                                   ))
+
+    def unpack(self, packed, frame):
+        frame.nodes = packed[:self.N]
+        frame.area = packed[self.N:self.N*2]
+        frame.concentrations = \
+            packed[self.N*2:].reshape(frame.concentrations.shape)
+
+    def objective(self, time, packed):
+        """The objective function of the solver."""
+        # Update local parameters
+        self.t = t
+        self._decompose_state(state)
+
+        # Update the flux calculator and get the relevant parameters
+        self.fluxer.update(self.x, self.area, self.concentrations)
+        dcdt = self.fluxer.dcdt
+        dxdt = self.fluxer.node_flux
+        dadt = self.fluxer.area_flux
+
+        # Compose them and return to the solver
+        dstatedt = self._compose_state(dxdt, dadt, dcdt)
+        return dstatedt

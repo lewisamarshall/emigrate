@@ -42,44 +42,47 @@ class Fluxer(object):
     water_diffusive_conductivity = None
     # equilibrator = None
 
-    def __init__(self, system):
+    def __init__(self, state):
         """Initialize the compact flux solver."""
+        self.state = state
 
-        # Prepare the grid points from the system nodes
-        self._prep_domain(system.nodes)
+        # Prepare the grid points from the state nodes
+        self._prep_domain()
 
-        # Prepare the voltage/current and bulk flow mode from the system.
-        self.V = system.voltage
-        self.current_density = system.current_density
-        self.current = system.current
+        # TODO: Remove local referneces
+        # Prepare the voltage/current and bulk flow mode from the state.
+        self.V = self.state.voltage
+        self.current_density = self.state.current_density
+        self.current = self.state.current
         if self.V:
             self.mode = 'voltage'
             if self.current_density:
                 warnings.warn(
-                    'System has both current and voltage. Using voltage.'
+                    'state has both current and voltage. Using voltage.'
                     )
         else:
             self.mode = 'current'
 
-        self.bulk_flow = system.bulk_flow
+        self.bulk_flow = self.state.bulk_flow
 
-        # use system area if it exists, otherwise default to _area
-        self.area = system.area
+        # use state area if it exists, otherwise default to _area
+        self.area = self.state.area
         if self.area is not None:
             self._area = self.area
         self._area = np.array(self._area)
         if self._area.size > 1:
             self.area_variation = True
 
-        # Create the differentiation system.
+        # Create the differentiation state.
         self.differ = Differentiate(self.N, self.dz,
                                     method=self.differentiation_method,
                                     smoother=self.smoother)
 
-    def _prep_domain(self, nodes):
-        self.x = np.array(nodes)
-        self.z = np.linspace(min(self.x), max(self.x), len(self.x))
-        self.N = self.x.size
+    def _prep_domain(self):
+        self.z = np.linspace(min(self.state.nodes),
+                             max(self.state.nodes),
+                             len(self.state.nodes))
+        self.N = self.state.nodes.size
         self.dz = self.z[1]-self.z[0]
 
     def first_derivative(self, x_input):
@@ -98,20 +101,22 @@ class Fluxer(object):
             self.dcdt[:, 0] = self.boundary_characteristic('left')
             self.dcdt[:, -1] = self.boundary_characteristic('right')
 
+    # TODO: Fix boundary characteristics
     from boundary_characteristic import (boundary_characteristic,
                                          _get_characteristic_matricies,
                                          _a_matrix)
 
-    def update(self, x, area, concentrations):
-        self.x = x
-        self.area = area
-        self.concentrations = concentrations
+    def update(self):
+        self.x = self.state.nodes
+        self.area = self.state.area
+        self.concentrations = self.state.concentrations
         self._update()
         self.set_boundary()
 
         # Impose nonnegativity constraint.
         if self.nonnegative is True:
-            self.dcdt = self._impose_nonnegativity(concentrations, self.dcdt)
+            self.dcdt = self._impose_nonnegativity(self.concentrations,
+                                                   self.dcdt)
 
         # Update the reference frame for the next time step.
         if self.frame is not None:
@@ -147,7 +152,10 @@ class Fluxer(object):
         self.dcdt = self.concentrations * 0.
 
     def pack(self, frame):
-        pass
+        raise NotImplementedError
 
     def unpack(self, packed, frame):
-        pass
+        raise NotImplementedError
+
+    def _objective(self, time, packed):
+        raise NotImplementedError

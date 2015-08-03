@@ -4,14 +4,16 @@ import numpy as np
 from scipy.integrate import ode
 from scipy.interpolate import interp1d
 
-# Warning import
+# Other Libraries
 import warnings
+import copy
 
 # Emigrate imports
 from flux_schemes import fluxers
 from equilibration_schemes import equilibrators
 from FrameSeries import FrameSeries
 from Frame import Frame
+from preconditioner import preconditioner
 
 # pylint: disable=W0212
 
@@ -30,30 +32,29 @@ class Solver(object):
     If not filename is specified, the solution will be stored in memory.
     """
 
-    system = None
+    # State Information
+    initial_condition = None
+    state = None
+    time = None
+    frame_series = None
 
     # Solver Parameters
-    atol = 1e-12
-    rtol = 1e-6
+    _atol = 1e-12
+    _rtol = 1e-6
+    _method = 'dopri5'
 
     # Modules
-    equilibrator = None
+    flux_mode = None
+    equilibrium_mode = None
     fluxer = None
+    equilibrator = None
 
-    # Solutions
-    frames = None
-
-    def __init__(self, system, filename=False, precondition=False,
+    def __init__(self, initial_condition, filename=False, precondition=False,
                  flux_mode='slip', equilibrium_mode='pH'):
         """Initialize with a system from the constructor class."""
 
-        self.system = system
-
-        # Prepare state
-        self.ions = self.system.ions
-        self.x = np.array(system.nodes)
-        self.concentrations = np.array(self.system.concentrations)
-        self.area = system.area
+        self.initial_condition = initial_condition
+        self.state = copy.deepcopy(initial_condition)
 
         # Set equilibrium mode.
         self.equilibrium_mode = equilibrium_mode
@@ -64,43 +65,38 @@ class Solver(object):
         self._set_flux_mode()
         self.fluxer.update_ion_parameters(self.equilibrator)
 
-        # Get information from flux calculator
-        self.N = self.fluxer.N
-        self.adaptive_grid = self.fluxer.adaptive_grid
-        self.area_variation = self.fluxer.area_variation
-
         # Precondition if requested.
         if precondition:
-            self.precondition()
+            self.initial_condition = preconditioner(self.initial_condition,
+                                                    self.fluxer)
 
         # Create empty solution dictionaries
-        ion_names = [ion.name for ion in self.ions]
-        self.frames = FrameSeries(ion_names,
-                                  filename,
-                                  mode='w')
-        self._write_solution(0, self.x, self.area, self.concentrations)
+        ion_names = [ion.name for ion in self.initial_condition.ions]
+        self.frame_series = FrameSeries(ion_names, filename, mode='w')
 
     def _set_equilibrium_mode(self):
         """Import an equilibration object to calculate ion properties."""
+        # Find the equilibrator.
         try:
             self.equilibrator = equilibrators[self.equilibrium_mode]
         except:
             error_string = '{} is not an equilibrator.'
             raise RuntimeError(error_string.format(self.equilibrium_mode))
 
-        self.equilibrator = self.equilibrator(self.ions,
-                                              self.concentrations)
-        self.equilibrator.equilibrate(self.concentrations)
+        # Initialize the equilibrator.
+        self.equilibrator = self.equilibrator(self.state)
+        self.equilibrator.equilibrate()
 
     def _set_flux_mode(self):
         """Import a flux calculator to calculate ion fluxes."""
+        # Find the fluxer.
         try:
             self.fluxer = fluxers[self.flux_mode]
         except:
             error_string = '{} is not an fluxer.'
             raise RuntimeError(error_string.format(self.flux_mode))
-        self.fluxer = self.fluxer(self.system)
-        self.fluxer.update_ion_parameters(self.equilibrator)
+        # Initialize the fluxer.
+        self.fluxer = self.fluxer(self.state)
 
     def set_reference_frame(self, frame=None, edge='right'):
         """Set the frame of reference.
@@ -110,128 +106,69 @@ class Solver(object):
         self.fluxer.frame = frame
         self.fluxer.edge = edge
 
-    def _decompose_state(self, state):
-        """Decompose the state into X and concentrations."""
-        self.x = state[:self.N]
-        if self.area_variation:
-            self.area = state[self.N:self.N*2]
-            self.concentrations = \
-                state[self.N*2:].reshape(self.concentrations.shape)
-        else:
-            self.concentrations = \
-                state[self.N:].reshape(self.concentrations.shape)
-
-    def _compose_state(self, x, area, concentrations):
-        """Compose X and concentrations into a state."""
-        x = x.flatten()
-        concentrations = concentrations.flatten()
-        if self.area_variation:
-            area = area.flatten()
-            state = np.concatenate((x, area, concentrations))
-        else:
-            state = np.concatenate((x, concentrations))
-        return state
-
-    def _write_solution(self, t, x, area, concentrations):
+    def _write_solution(self):
         """Write the current state to solutions."""
-        pH = self.equilibrator.pH
-        ionic_strength = self.equilibrator.ionic_strength
-        current_frame = \
-            Frame(dict(nodes=x, ions=self.ions,
-                       concentrations=concentrations,
-                       pH=pH, ionic_strength=ionic_strength,
-                       voltage=self.fluxer.V,
-                       current_density=self.fluxer.j,
-                       area=self.area)
-                  )
-        self.frames.add_frame(t, current_frame)
+        self.frame_series.add_frame(self.time, self.state)
 
-    def solve(self, tmax, dt=1, method='dopri5'):
+    def solve(self, interval=1, max_time=10, method='dopri5'):
         """Solve for a series of time points using an ODE solver."""
+        if max_time is None:
+            raise RuntimeError('Solving requires a finite maximum time.')
+
+        print "Solving..."
+        for i in self.iterate(interval, max_time):
+            pass
+        print "Solved."
+        return self.frame_series
+
+    def iterate(self, interval=1., max_time=None):
+        self._initialize_solver()
+        while self.solver.successful():
+            if self.solver.t >= max_time and max_time is not None:
+                return
+            else:
+                self._solve_step(interval, max_time)
+                self.t = self.solver.t
+                self.fluxer.unpack(self.solver.y, self.state)
+                yield self.state
+        else:
+            message = 'Solver failed at time {}.'
+            raise RuntimeError(message.format(self.solver.t))
+
+    def _solve_step(self, dt, tmax):
+        tnew = min(self.solver.t + dt, tmax)
+        self.solver.integrate(tnew)
+        self.fluxer.unpack(self.solver.y, self.state)
+        self._write_solution()
+
+    def _initialize_solver(self):
+        self.time = 0
+        self._write_solution()
+
         self.solver = solver = ode(self._objective)
 
-        solver.set_integrator(method, atol=self.atol, rtol=self.rtol)
+        solver.set_integrator(self._method, atol=self._atol, rtol=self._rtol)
 
         if solver._integrator.supports_solout:
             solver.set_solout(self._solout)
         else:
-            warnings.warn("Solver doesn't support solout.")
+            warnings.warn("""Solver doesn't support solout.
+                             Equilibrium won't be computed.""")
 
-        solver.set_initial_value(self._compose_state(self.x,
-                                                     self.area,
-                                                     self.concentrations)
-                                 )
+        solver.set_initial_value(self.fluxer.pack(self.initial_condition))
 
-        while solver.successful() and solver.t < tmax:
-            tnew = min(solver.t + dt, tmax)
-            solver.integrate(tnew)
-            self._decompose_state(solver.y)
-            self._write_solution(solver.t,
-                                 self.x,
-                                 self.area,
-                                 self.concentrations)
-        self._decompose_state(solver.y)
-
-        if not solver.successful():
-            print 'solver failed at time', solver.t
-
-    def precondition(self):
-        """Precondition the system by spacing the grid points."""
-        # set up the interpolator to get the new parameters
-        concentration_interpolator = interp1d(self.x,
-                                              self.concentrations,
-                                              kind='cubic')
-        if self.area_variation:
-            area_interpolator = interp1d(self.x,
-                                         self.area,
-                                         kind='cubic')
-
-        # Update the flux calculator
-        self.fluxer.update(self.x, self.area, self.concentrations)
-
-        # Get the node cost from the flux calculator
-        cost = self.fluxer.node_cost()
-        cost = self.fluxer.differ.smooth(cost)
-
-        # The last cost is poorly calculated, set it to an intermediate value
-        cost[-1] = np.median(cost)
-
-        # get the new grid parameters
-        self.x = self._precondition_x(cost)
-        self.concentrations = concentration_interpolator(self.x)
-        if self.area_variation:
-            self.area = area_interpolator(self.x)
-
-        # equilibrate the new system.
-        self.equilibrator.cH = self.equilibrator.pH = None
-        self.equilibrator.equilibrate(self.concentrations)
-        self.fluxer.update_ion_parameters(self.equilibrator)
-
-    def _precondition_x(self, cost):
-        """Precondition the grid based on a cost."""
-        new_x = np.cumsum(1/cost)
-        new_x -= new_x[0]
-        new_x *= max(self.x)/new_x[-1]
-        return new_x
-
-    def _solout(self, t, state):
+    def _solout(self, time, packed):
         """Perform actions when a successful solution step is found."""
-        self._decompose_state(state)
-        self.equilibrator.equilibrate(self.concentrations)
+        self.fluxer.unpack(packed, self.state)
+        self.equilibrator.equilibrate()
         self.fluxer.update_ion_parameters(self.equilibrator)
 
-    def _objective(self, t, state):
+    def _objective(self, time, packed):
         """The objective function of the solver."""
         # Update local parameters
-        self.t = t
-        self._decompose_state(state)
+        self.time = time
+        self.fluxer.unpack(packed, self.state)
 
         # Update the flux calculator and get the relevant parameters
-        self.fluxer.update(self.x, self.area, self.concentrations)
-        dcdt = self.fluxer.dcdt
-        dxdt = self.fluxer.node_flux
-        dadt = self.fluxer.area_flux
-
-        # Compose them and return to the solver
-        dstatedt = self._compose_state(dxdt, dadt, dcdt)
-        return dstatedt
+        self.fluxer.update()
+        return self.fluxer.pack()

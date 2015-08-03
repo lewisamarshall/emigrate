@@ -137,11 +137,11 @@ class VariablepH(Equilibrator):
             P.resize((self._Q.shape[0], P.shape[1]))
         elif P.shape[0] > self._Q.shape[0]:
             self._Q.resize(P.shape[0])
-        poly = (P+self._Q[:, np.newaxis])[::-1]
+        poly = (P + self._Q[:, np.newaxis])[::-1]
 
-        self.cH = self._multiroot(poly, self.cH)
+        self.cH = self.state.cH = self._multiroot(poly, self.cH)
 
-        self.pH = -np.log10(self.cH)
+        self.pH = self.state.pH = -np.log10(self.cH)
 
         if any(np.isnan(self.pH)):
             print 'pH:', self.pH
