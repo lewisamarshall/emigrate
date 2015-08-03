@@ -34,6 +34,7 @@ class Solver(object):
     # State Information
     initial_condition = None
     state = None
+    # TODO: Determine correct time
     time = None
     frame_series = None
 
@@ -132,8 +133,6 @@ class Solver(object):
                 return
             else:
                 self._solve_step(interval, max_time)
-                self.t = self.solver.t
-                self.fluxer.unpack(self.solver.y)
                 yield self.state
         else:
             message = 'Solver failed at time {}.'
@@ -142,6 +141,7 @@ class Solver(object):
     def _solve_step(self, dt, tmax):
         tnew = min(self.solver.t + dt, tmax)
         self.solver.integrate(tnew)
+        self.t = self.solver.t
         self.fluxer.unpack(self.solver.y)
         self._write_solution()
 
