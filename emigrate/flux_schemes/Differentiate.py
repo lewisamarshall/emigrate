@@ -22,12 +22,11 @@ class Differentiate(object):
     truncate = False
     smoother = True
 
-    def __init__(self, N, dz, method, smoother=True):
+    def __init__(self, N, dz, method):
         """Initialize with a length and step size."""
         self.N = N
         self.dz = dz
         self.method = method
-        self.smoother = smoother
         self.set_matrices()
 
     def first_derivative(self, x):
