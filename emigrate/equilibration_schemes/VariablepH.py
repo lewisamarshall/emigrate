@@ -30,17 +30,17 @@ class VariablepH(Equilibrator):
     _z = None
     _index_0 = None
 
-    # New public properties
-    # TODO: move to state.
-    ionization_fraction = None
-    absolute_mobility = None
-    water_conductivity = None
-    water_diffusive_conductivity = None
-
     def __init__(self, state):
         super(VariablepH, self).__init__(state)
+        self._prepare_state()
         self._prepare_arrays()
         self._multiroot = Multiroot()
+
+    def _prepare_state(self):
+        self.state.ionization_fraction = None
+        self.state.water_conductivity = None
+        self.state.water_diffusive_conductivity = None
+        self.state.cH = None
 
     def _prepare_arrays(self):
         """Prepare arrays to solve problems during initialization."""
@@ -85,11 +85,11 @@ class VariablepH(Equilibrator):
 
     def _set_absolute_mobility(self):
         """Build the absolute mobility matrix."""
-        self.absolute_mobility = []
+        absolute_mobility = []
         for i in self.state.ions:
-            self.absolute_mobility.append(self._align_zero(i.absolute_mobility,
-                                                           i.z0))
-        self.absolute_mobility = np.array(self.absolute_mobility)
+            absolute_mobility.append(self._align_zero(i.absolute_mobility,
+                                                      i.z0))
+        self.state.absolute_mobility = np.array(absolute_mobility)
 
     def _set_l_matrix(self):
         """Build the L matrix."""
@@ -139,55 +139,58 @@ class VariablepH(Equilibrator):
             self._Q.resize(P.shape[0])
         poly = (P + self._Q[:, np.newaxis])[::-1]
 
-        self.cH = self.state.cH = self._multiroot(poly, self.cH)
+        self.state.cH = self._multiroot(poly, self.state.cH)
 
-        self.pH = self.state.pH = -np.log10(self.cH)
+        self.state.pH = self.state.pH = -np.log10(self.state.cH)
 
-        if any(np.isnan(self.pH)):
-            print 'pH:', self.pH
-            print 'cH:', self.cH
+        if any(np.isnan(self.state.pH)):
+            print 'pH:', self.state.pH
+            print 'cH:', self.state.cH
             raise RuntimeError("Couldn't find correct pH.")
 
     def _calc_mobility(self):
         """Calculate effective mobility."""
-        self.mobility = np.sum(self.ionization_fraction *
-                               self.absolute_mobility[:, :, np.newaxis], 1)
+        self.state.mobility = np.sum(self.state.ionization_fraction *
+                                     self.state.absolute_mobility[:, :,
+                                                                  np.newaxis],
+                                     1)
 
     def _calc_diffusivity(self):
         """Calculate diffusivity."""
-        self.diffusivity = (self.absolute_mobility[:, :, np.newaxis] *
-                            self.ionization_fraction /
-                            (self._z[np.newaxis, :, np.newaxis])) *\
+        self.state.diffusivity = (self.state.absolute_mobility[:,
+                                                               :, np.newaxis] *
+                                  self.state.ionization_fraction /
+                                  (self._z[np.newaxis, :, np.newaxis])) * \
             boltzmann * (temperature_K)
-        self.diffusivity = np.sum(self.diffusivity, 1)
+        self.state.diffusivity = np.sum(self.state.diffusivity, 1)
 
     def _calc_molar_conductivity(self):
         """Calculate molar conductivity."""
-        self.molar_conductivity = lpm3 * faraday * \
+        self.state.molar_conductivity = lpm3 * faraday * \
             np.sum(self._z[np.newaxis, :, np.newaxis] *
-                   self.ionization_fraction *
-                   self.absolute_mobility[:, :, np.newaxis], 1)
+                   self.state.ionization_fraction *
+                   self.state.absolute_mobility[:, :, np.newaxis], 1)
 
     def _calc_ionization_fraction(self):
         """Calculate ionization fraction."""
         # Calculate the numerator of the function for ionization fraction.
         i_frac_vector = self._l_matrix[:, :, np.newaxis] *\
-            self.cH**self._z0[np.newaxis, :, np.newaxis]
+            self.state.cH**self._z0[np.newaxis, :, np.newaxis]
 
         # Calculate the vector of ionization fractions
         denom = np.sum(i_frac_vector, 1)
 
         # Filter out the uncharged state.
-        self.ionization_fraction = i_frac_vector/denom[:, np.newaxis, :]
-        self.ionization_fraction = np.delete(self.ionization_fraction,
-                                             self._index_0,
-                                             axis=1)
+        ionization_fraction = i_frac_vector/denom[:, np.newaxis, :]
+        self.state.ionization_fraction = np.delete(ionization_fraction,
+                                                   self._index_0,
+                                                   axis=1)
 
     def _calc_water_conductivity(self):
-        self.water_conductivity = (self.cH * h_mobility +
-                                   k_water / self.cH * oh_mobility)
+        self.state.water_conductivity = (self.state.cH * h_mobility +
+                                         k_water / self.state.cH * oh_mobility)
 
     def _calc_water_diffusive_conductivity(self):
-        self.water_diffusive_conductivity = \
-            (self.cH * h_diffusivity -
-             k_water/self.cH * oh_diffusivity) * faraday
+        self.state.water_diffusive_conductivity = \
+            (self.state.cH * h_diffusivity -
+             k_water/self.state.cH * oh_diffusivity) * faraday

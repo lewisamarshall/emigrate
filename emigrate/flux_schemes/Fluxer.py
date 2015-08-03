@@ -126,13 +126,13 @@ class Fluxer(object):
         return dcdt
 
     def update_ion_parameters(self, equilibrator):
-        self.mobility = equilibrator.mobility
-        self.diffusivity = equilibrator.diffusivity
-        self.molar_conductivity = equilibrator.molar_conductivity
-        self.pH = equilibrator.pH
-        self.water_conductivity = equilibrator.water_conductivity
+        self.mobility = self.state.mobility
+        self.diffusivity = self.state.diffusivity
+        self.molar_conductivity = self.state.molar_conductivity
+        self.pH = self.state.pH
+        self.water_conductivity = self.state.water_conductivity
         self.water_diffusive_conductivity = \
-            equilibrator.water_diffusive_conductivity
+            self.state.water_diffusive_conductivity
 
     def _update_reference_frame(self):
         if self.edge == 'right':
