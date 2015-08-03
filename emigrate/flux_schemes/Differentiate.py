@@ -17,10 +17,8 @@ class Differentiate(object):
     M = None
     fM = None
     epsilon = 1.
-    sparse = True
     factorized = True
     truncate = False
-    smoother = True
 
     def __init__(self, N, dz, method):
         """Initialize with a length and step size."""
@@ -31,40 +29,34 @@ class Differentiate(object):
 
     def first_derivative(self, x):
         """Take the first derivative of the input."""
-        if self.sparse is True:
-            if self.factorized is True:
-                derivative = self.fA1(self.B1.dot(x))
-            else:
-                derivative = linalg.spsolve(self.A1, self.B1.dot(x))
+        if self.factorized is True:
+            derivative = self.fA1(self.B1.dot(x))
         else:
-            derivative = np.linalg.solve(self.A1, np.dot(self.B1, x))
+            derivative = linalg.spsolve(self.A1, self.B1.dot(x))
+
         return derivative
 
     def second_derivative(self, x):
         """Take the second derivative of the input."""
-        if self.sparse is True:
-            if self.factorized is True:
-                derivative = self.fA2(self.B2.dot(x))
-            else:
-                derivative = linalg.spsolve(self.A2, self.B2.dot(x))
+        if self.factorized is True:
+            derivative = self.fA2(self.B2.dot(x))
         else:
-            derivative = np.linalg.solve(self.A2, np.dot(self.B2, x))
+            derivative = linalg.spsolve(self.A2, self.B2.dot(x))
+
         return derivative
 
     def smooth(self, x):
         """Smooth x using an implicit smoothing formula."""
-        if self.sparse is True:
-            if self.factorized is True:
-                if self.truncate:
-                    smooth = np.copy(x)
-                    smooth[1:-1] = \
-                        self.fM(self.A2[1:-1, 1:-1].dot(x[1:-1]))
-                else:
-                    smooth = self.fM(self.A2.dot(x))
+        if self.factorized is True:
+            if self.truncate:
+                smooth = np.copy(x)
+                smooth[1:-1] = \
+                    self.fM(self.A2[1:-1, 1:-1].dot(x[1:-1]))
             else:
-                smooth = linalg.spsolve(self.M, self.A2.dot(x))
+                smooth = self.fM(self.A2.dot(x))
         else:
-            smooth = np.linalg.solve(self.M, np.dot(self.A2, x))
+            smooth = linalg.spsolve(self.M, self.A2.dot(x))
+
         return smooth
 
     def set_matrices(self):
@@ -73,14 +65,12 @@ class Differentiate(object):
         self.set_A2()
         self.set_B1()
         self.set_B2()
-        if self.smoother:
-            self.set_M()
+        self.set_M()
         if self.factorized:
             self.fA1 = linalg.factorized(self.A1)
             self.fA2 = linalg.factorized(self.A2)
-            if self.smoother:
-                self.fM = linalg.factorized(self.M)
-                self.fA2t = linalg.factorized(self.A2[1:-1, 1:-1])
+            self.fM = linalg.factorized(self.M)
+            self.fA2t = linalg.factorized(self.A2[1:-1, 1:-1])
 
     def set_A1(self):
         """Setup for A1."""
@@ -162,8 +152,7 @@ class Differentiate(object):
                 func = [-i for i in func]
             construct[-1-idx, :] = [0] * (N - len(func)) + func
 
-        if self.sparse is True:
-            construct = sp.csc_matrix(construct)
+        construct = sp.csc_matrix(construct)
 
         return construct
 
@@ -190,7 +179,6 @@ if __name__ == '__main__':
     if True:
         print my_diff.fA2
         print my_diff.factorized
-        print my_diff.smoother
         print my_diff.fM
         print test_functions[2, :].shape
         smoothed = my_diff.smooth(test_functions[2, :])

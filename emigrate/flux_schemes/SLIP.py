@@ -14,7 +14,6 @@ class SLIP(Fluxer):
     NI = 10
     Vthermal = .025
     pointwave = 1
-    smoother = True
     adaptive_grid = True
     area_variation = False
     # limiter = Flux_limiter(minmod)
@@ -173,7 +172,7 @@ class SLIP(Fluxer):
                                    ))
         else:
             return np.concatenate((self.node_flux.flatten(),
-                                   self.area_flux.flatten(), 
+                                   self.area_flux.flatten(),
                                    self.dcdt.flatten(),
                                    ))
 

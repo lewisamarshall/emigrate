@@ -9,7 +9,6 @@ class Fluxer(object):
 
     # Differentiation information
     differentiation_method = '6th-Order'
-    smoother = False
 
     # Boundary condition information
     boundary_mode = 'characteristic'
@@ -75,8 +74,7 @@ class Fluxer(object):
 
         # Create the differentiation state.
         self.differ = Differentiate(self.N, self.dz,
-                                    method=self.differentiation_method,
-                                    smoother=self.smoother)
+                                    method=self.differentiation_method)
 
     def _prep_domain(self):
         self.z = np.linspace(min(self.state.nodes),
