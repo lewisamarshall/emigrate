@@ -141,7 +141,7 @@ class VariablepH(Equilibrator):
 
         self.state.cH = self._multiroot(poly, self.state.cH)
 
-        self.state.pH = self.state.pH = -np.log10(self.state.cH)
+        self.state.pH = -np.log10(self.state.cH)
 
         if any(np.isnan(self.state.pH)):
             print 'pH:', self.state.pH
@@ -174,14 +174,12 @@ class VariablepH(Equilibrator):
     def _calc_ionization_fraction(self):
         """Calculate ionization fraction."""
         # Calculate the numerator of the function for ionization fraction.
-        i_frac_vector = self._l_matrix[:, :, np.newaxis] *\
+        ionization_fraction = self._l_matrix[:, :, np.newaxis] *\
             self.state.cH**self._z0[np.newaxis, :, np.newaxis]
 
-        # Calculate the vector of ionization fractions
-        denom = np.sum(i_frac_vector, 1)
+        ionization_fraction /= np.sum(ionization_fraction, 1)[:, np.newaxis, :]
 
         # Filter out the uncharged state.
-        ionization_fraction = i_frac_vector/denom[:, np.newaxis, :]
         self.state.ionization_fraction = np.delete(ionization_fraction,
                                                    self._index_0,
                                                    axis=1)

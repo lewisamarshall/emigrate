@@ -23,6 +23,7 @@ class Fluxer(object):
     mode = 'voltage'
 
     # Dependant state information
+    # TODO: Change implimentation
     _area = 1.
 
     # Reference Frame

@@ -2,7 +2,6 @@
 # Numerical imports
 import numpy as np
 from scipy.integrate import ode
-from scipy.interpolate import interp1d
 
 # Other Libraries
 import warnings
@@ -35,6 +34,7 @@ class Solver(object):
     # State Information
     initial_condition = None
     state = None
+    # TODO: Determine correct time
     time = None
     frame_series = None
 
@@ -48,6 +48,10 @@ class Solver(object):
     equilibrium_mode = None
     fluxer = None
     equilibrator = None
+
+    # TODO: Remove these
+    area_variation = None
+    ion_names = None
 
     def __init__(self, initial_condition, filename=False, precondition=False,
                  flux_mode='slip', equilibrium_mode='pH'):
@@ -66,12 +70,13 @@ class Solver(object):
 
         # Precondition if requested.
         if precondition:
-            self.initial_condition = preconditioner(self.initial_condition,
-                                                    self.fluxer)
+            preconditioner(self.state,
+                           self.fluxer,
+                           self.area_variation)
 
         # Create empty solution dictionaries
-        ion_names = [ion.name for ion in self.initial_condition.ions]
-        self.frame_series = FrameSeries(ion_names, filename, mode='w')
+        self.ion_names = [ion.name for ion in self.initial_condition.ions]
+        self.frame_series = FrameSeries(self.ion_names, filename, mode='w')
 
     def _set_equilibrium_mode(self):
         """Import an equilibration object to calculate ion properties."""
@@ -102,6 +107,7 @@ class Solver(object):
 
         Frame should be an ion. Edge should be right or left.
         """
+        # TODO: Change this implementation.
         self.fluxer.frame = frame
         self.fluxer.edge = edge
 
@@ -127,8 +133,6 @@ class Solver(object):
                 return
             else:
                 self._solve_step(interval, max_time)
-                self.t = self.solver.t
-                self.fluxer.unpack(self.solver.y)
                 yield self.state
         else:
             message = 'Solver failed at time {}.'
@@ -137,11 +141,13 @@ class Solver(object):
     def _solve_step(self, dt, tmax):
         tnew = min(self.solver.t + dt, tmax)
         self.solver.integrate(tnew)
+        self.t = self.solver.t
         self.fluxer.unpack(self.solver.y)
         self._write_solution()
 
     def _initialize_solver(self):
         self.time = 0
+        self.equilibrator.equilibrate()
         self._write_solution()
 
         self.solver = solver = ode(self._objective)

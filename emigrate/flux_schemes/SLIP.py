@@ -9,6 +9,7 @@ class SLIP(Fluxer):
 
     """A compact flux solver with numerical dissipation and adaptive grid."""
 
+    # TODO: hide internal functions
     boundary_mode = 'fixed'
     differentiation_method = 'dissipative'
     area_variation = False
@@ -71,9 +72,9 @@ class SLIP(Fluxer):
 
     def electromigration_flux(self):
         """Calculate flux due to electromigration."""
-        uc = self.state.mobility * self.state.concentrations
-        electromigration = uc * self.state.field
-        return electromigration
+        return (self.state.mobility *
+                self.state.concentrations *
+                self.state.field)
 
     # Flux Limitation
     def limit(self, concentrations, flux):
@@ -174,14 +175,14 @@ class SLIP(Fluxer):
             frame.area = np.array(frame.area)
             if frame.area.size != self.N:
                 frame.area = np.resize(frame.area, [self.N])
-            queued = (frame.nodes.flatten(),
-                      frame.area.flatten(),
-                      frame.concentrations.flatten(),
+            queued = (frame.nodes.ravel(),
+                      frame.area.ravel(),
+                      frame.concentrations.ravel(),
                       )
         else:
-            queued = (self.node_flux.flatten(),
-                      self.area_flux.flatten(),
-                      self.dcdt.flatten(),
+            queued = (self.node_flux.ravel(),
+                      self.area_flux.ravel(),
+                      self.dcdt.ravel(),
                       )
         return np.concatenate(queued)
 
