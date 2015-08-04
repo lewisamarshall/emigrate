@@ -23,7 +23,7 @@ install:
   - python setup.py install
 
 script:
-  - python setup.py test
+  - coverage run --source=emigrate setup.py test
 
 after_success:
   - coveralls
