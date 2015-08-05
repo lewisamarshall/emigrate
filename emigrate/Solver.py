@@ -115,7 +115,7 @@ class Solver(object):
         """Write the current state to solutions."""
         self.frame_series.add_frame(self.time, self.state)
 
-    def solve(self, interval=1, max_time=10, method='dopri5'):
+    def solve(self, interval=1., max_time=10, method='dopri5'):
         """Solve for a series of time points using an ODE solver."""
         if max_time is None:
             raise RuntimeError('Solving requires a finite maximum time.')
@@ -126,7 +126,7 @@ class Solver(object):
         print "Solved."
         return self.frame_series
 
-    def iterate(self, interval=1., max_time=None):
+    def iterate(self, interval=1., max_time=None, method='dopri5'):
         self._initialize_solver()
         while self.solver.successful():
             if self.solver.t >= max_time and max_time is not None:
