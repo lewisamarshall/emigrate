@@ -38,14 +38,31 @@ class TestFrame(unittest.TestCase):
 class TestSolver(unittest.TestCase):
     def setUp(self):
         self.frame = Frame(initialization_dict)
+        self.tmax = 200
+        self.dt = 1
 
     def test_solve(self):
         solver = Solver(self.frame, filename='../example_1.hdf5',
+                        precondition=False, flux_mode='slip')
+
+        solver.solve(self.dt, self.tmax)
+
+    def test_precondition(self):
+        solver = Solver(self.frame, filename='../example_1.hdf5',
                         precondition=True, flux_mode='slip')
-        tmax = 200
-        dt = 1
-        ode_solver = 'dopri5'
-        solver.solve(dt, tmax, method=ode_solver)
+
+    def test_fixed_pH(self):
+        self.frame.pH = 7
+        solver = Solver(self.frame, filename='../example_1.hdf5',
+                        precondition=False, equilibrium_mode='fixed')
+        solver.solve(self.dt, self.tmax)
+
+    def test_compact(self):
+        solver = Solver(self.frame, filename='../example_1.hdf5',
+                        precondition=False, flux_mode='compact')
+        solver.solve(self.dt, self.tmax)
+
+
 
     # def test_iter(self):
     #     solver = Solver(self.frame, filename='../example_1.hdf5',
