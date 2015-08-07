@@ -78,8 +78,8 @@ class FrameSeries(object):
             if key in ['concentrations', 'nodes', 'pH']:
                 try:
                     location.create_dataset(key, data=value,
-                                        compression=self.compression,
-                                        dtype='f4')
+                                            compression=self.compression,
+                                            dtype='f4')
                 except TypeError:
                     pass
             elif key is 'ions':
