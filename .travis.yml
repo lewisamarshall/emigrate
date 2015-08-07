@@ -16,14 +16,14 @@ before_install:
   - export PATH=/home/travis/miniconda/bin:$PATH
   - conda update --yes conda
   - pip install coveralls
-
+  - mkdir examples
 install:
-  - conda install --yes python=$TRAVIS_PYTHON_VERSION numpy scipy nose h5py
+  - conda install --yes python=$TRAVIS_PYTHON_VERSION numpy scipy nose h5py coverage
   - pip install ionize
   - python setup.py install
 
 script:
-  - python setup.py test
+  - coverage run --source=emigrate setup.py test
 
 after_success:
   - coveralls

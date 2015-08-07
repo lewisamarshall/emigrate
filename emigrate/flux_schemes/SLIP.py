@@ -9,7 +9,7 @@ class SLIP(Fluxer):
 
     """A compact flux solver with numerical dissipation and adaptive grid."""
 
-    # TODO: hide internal functions
+    # #TODO:60 hide internal functions
     boundary_mode = 'fixed'
     differentiation_method = 'dissipative'
     area_variation = False
