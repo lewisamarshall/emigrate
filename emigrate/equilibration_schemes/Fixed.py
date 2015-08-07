@@ -15,7 +15,7 @@ class Fixed(Equilibrator):
         if self.state.cH is None:
             self.state.cH = 10**(-self.state.pH)
 
-    def _equilibrate(self):
+    def equilibrate(self):
         """Calculate the equilibrium properties."""
         self._calc_diffusivity()
         self._calc_mobility()
