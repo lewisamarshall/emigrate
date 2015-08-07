@@ -1,6 +1,7 @@
 import h5py
 import json
 import numpy as np
+import sys
 from collections import OrderedDict
 from Frame import Frame
 
@@ -43,7 +44,10 @@ class FrameSeries(object):
                                                       (len(self.ions),),
                                                       dtype=string_dt)
                 for idx, value in enumerate(self.ions):
-                    self._ions[idx] = value
+                    if sys.version_info < (3,):
+                        self._ions[idx] = value
+                    else:
+                        self._ions[idx] = mystring.encode('ascii')
 
     def __getitem__(self, frame):
         frame = str(frame)
