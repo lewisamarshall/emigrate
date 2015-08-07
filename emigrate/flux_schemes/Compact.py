@@ -8,7 +8,7 @@ class Compact(Fluxer):
 
     """A compact flux solver with no numerical dissipation or adaptive gird."""
 
-    boundary_mode = 'characteristic'
+    boundary_mode = 'fixed'
     differentiation_method = '6th-Order'
     j = 0
     E = None
@@ -16,14 +16,12 @@ class Compact(Fluxer):
     x = None
     concentrations = None
 
-    def _dcdt(self):
+    def _update(self):
         """Calculate the flux of chemical species."""
         self.set_E()
-        total_flux = self.diffusive_flux() + \
+        self.dcdt = self.diffusive_flux() + \
             self.electromigration_flux() +\
             self.advection_flux()
-        total_flux = self.set_boundary(total_flux)
-        return total_flux
 
     def set_current(self):
         """Calculate the current based on a fixed voltage drop."""
@@ -44,13 +42,14 @@ class Compact(Fluxer):
 
     def electromigration_flux(self):
         """Calculate flux due to electromigration."""
-        uc = self.mobility * self.state.concentrations
+        uc = self.state.mobility * self.state.concentrations
         electromigration = \
             self.first_derivative(uc * self.state.field)
         return electromigration
 
     def advection_flux(self):
-        advection = -self.u*self.first_derivative(self.state.concentrations)
+        advection = (-self.state.bulk_flow *
+                     self.first_derivative(self.state.concentrations))
         return advection
 
     def conductivity(self):
@@ -61,3 +60,13 @@ class Compact(Fluxer):
 
     def node_flux(self):
         return np.zeros(self.state.nodes.shape)
+
+    def pack(self, frame=None):
+        if frame:
+            return frame.concentrations.ravel()
+        else:
+            return self.dcdt.ravel()
+
+    def unpack(self, packed):
+        self.state.concentrations = \
+            packed.reshape(self.state.concentrations.shape)

@@ -34,7 +34,7 @@ class Solver(object):
     # State Information
     initial_condition = None
     state = None
-    # TODO: Determine correct time
+    # #TODO:30 Determine correct time
     time = None
     frame_series = None
 
@@ -49,7 +49,7 @@ class Solver(object):
     fluxer = None
     equilibrator = None
 
-    # TODO: Remove these
+    # #TODO:50 Remove these
     area_variation = None
     ion_names = None
 
@@ -107,7 +107,7 @@ class Solver(object):
 
         Frame should be an ion. Edge should be right or left.
         """
-        # TODO: Change this implementation.
+        # #TODO:20 Change this implementation.
         self.fluxer.frame = frame
         self.fluxer.edge = edge
 
@@ -120,10 +120,8 @@ class Solver(object):
         if max_time is None:
             raise RuntimeError('Solving requires a finite maximum time.')
 
-        print "Solving..."
         for i in self.iterate(interval, max_time):
             pass
-        print "Solved."
         return self.frame_series
 
     def iterate(self, interval=1., max_time=None, method='dopri5'):

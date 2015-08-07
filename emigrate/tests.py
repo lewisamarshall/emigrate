@@ -21,7 +21,7 @@ initialization_dict = dict(n_nodes=137,
                            current=-500.,
                            )
 
-# TODO: Add smaller unit tests.
+# #TODO:10 Add smaller unit tests.
 # class TestEquilibrate(unittest.TestCase):
 #     pass
 #
@@ -38,7 +38,7 @@ class TestFrame(unittest.TestCase):
 class TestSolver(unittest.TestCase):
     def setUp(self):
         self.frame = Frame(initialization_dict)
-        self.tmax = 200
+        self.tmax = 20
         self.dt = 1
 
     def test_solve(self):

@@ -76,9 +76,12 @@ class FrameSeries(object):
     def _write_frame(self, frame, location):
         for key, value in frame.__dict__.items():
             if key in ['concentrations', 'nodes', 'pH']:
-                location.create_dataset(key, data=value,
+                try:
+                    location.create_dataset(key, data=value,
                                         compression=self.compression,
                                         dtype='f4')
+                except TypeError:
+                    pass
             elif key is 'ions':
                 location['ions'] = self._ions
             else:

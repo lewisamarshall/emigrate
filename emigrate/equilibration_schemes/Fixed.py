@@ -14,6 +14,8 @@ class Fixed(Equilibrator):
             self.state.pH = 7.
         if self.state.cH is None:
             self.state.cH = 10**(-self.state.pH)
+        self.state.water_diffusive_conductivity = 0
+        self.state.water_conductivity = 0
 
     def equilibrate(self):
         """Calculate the equilibrium properties."""
@@ -24,7 +26,7 @@ class Fixed(Equilibrator):
     def _calc_diffusivity(self):
         """Calculate the diffusivity."""
         self.state.diffusivity = np.array([[ion.diffusivity(self.state.pH)]
-                                          for ion in self.sate.ions])
+                                          for ion in self.state.ions])
 
     def _calc_mobility(self):
         """Calculate the effective mobility."""

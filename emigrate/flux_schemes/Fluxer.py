@@ -2,7 +2,7 @@ from Differentiate import Differentiate
 import numpy as np
 import warnings
 
-# TODO: Fix boundary characteristics
+# #TODO:40 Fix boundary characteristics
 # from boundary_characteristic import (boundary_characteristic,
 #                                      _get_characteristic_matricies,
 #                                      _a_matrix)
@@ -23,7 +23,7 @@ class Fluxer(object):
     mode = 'voltage'
 
     # Dependant state information
-    # TODO: Change implimentation
+    # #TODO:0 Change implimentation
     _area = 1.
 
     # Reference Frame
