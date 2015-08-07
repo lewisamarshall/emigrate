@@ -47,7 +47,7 @@ class FrameSeries(object):
                     if sys.version_info < (3,):
                         self._ions[idx] = value
                     else:
-                        self._ions[idx] = mystring.encode('ascii')
+                        self._ions[idx] = value.encode('ascii')
 
     def __getitem__(self, frame):
         frame = str(frame)
