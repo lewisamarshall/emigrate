@@ -48,17 +48,17 @@ class TestSolver(unittest.TestCase):
         solver.solve(self.dt, self.tmax)
 
     def test_precondition(self):
-        solver = Solver(self.frame, filename='../example_1.hdf5',
+        solver = Solver(self.frame, filename='../example_2.hdf5',
                         precondition=True, flux_mode='slip')
 
     def test_fixed_pH(self):
         self.frame.pH = 7
-        solver = Solver(self.frame, filename='../example_1.hdf5',
+        solver = Solver(self.frame, filename='../example_3.hdf5',
                         precondition=False, equilibrium_mode='fixed')
         solver.solve(self.dt, self.tmax)
 
     def test_compact(self):
-        solver = Solver(self.frame, filename='../example_1.hdf5',
+        solver = Solver(self.frame, filename='../example_4.hdf5',
                         precondition=False, flux_mode='compact')
         solver.solve(self.dt, self.tmax)
 
