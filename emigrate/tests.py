@@ -40,7 +40,7 @@ class TestFrameSeries(unittest.TestCase):
     @classmethod
     def setUpClass(self):
         self.frame = Frame(initialization_dict)
-        self.fs = FrameSeries(ions=self.frame.ions,
+        self.fs = FrameSeries(ions=[ion.name for ion in self.frame.ions],
                               filename='examples/test_frame_series.hdf5',
                               mode='w')
         self.fs.add_frame(0, self.frame)
