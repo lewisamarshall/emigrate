@@ -1,13 +1,14 @@
 import unittest
 import numpy as np
 from scipy.special import erf
+import ionize
 
 
 from .Solver import Solver
 from .Frame import Frame
 from .FrameSeries import FrameSeries
 from .flux_schemes.Differentiate import Differentiate
-import ionize
+from equilibration_schemes.Multiroot import Multiroot
 
 solutions = [ionize.Solution(['hepes', 'tris'], [.05, .105]),
              ionize.Solution(['caproic acid', 'tris',
@@ -29,7 +30,20 @@ initialization_dict = dict(n_nodes=137,
 
 
 class TestMultiroot(unittest.TestCase):
-    pass
+    @classmethod
+    def setUpClass(self):
+        self.array = np.array([[1, 1, 3, -10],
+                               [1, 8, 4, -12]]
+                              ).transpose()
+        self.array = np.concatenate([self.array]*1000, axis=1)
+        self.multiroot = Multiroot()
+
+    def test_multiroot_noguess(self):
+        self.multiroot(self.array)
+
+    def test_multiroot_guess(self):
+        guess = self.multiroot(self.array)
+        self.multiroot(self.array, guess-1)
 
 
 class TestDifferentiate(unittest.TestCase):
@@ -69,6 +83,10 @@ class TestDifferentiate(unittest.TestCase):
 class TestFrame(unittest.TestCase):
     def test_initialize(self):
         frame = Frame(initialization_dict)
+
+    def test_serialize(self):
+        frame = Frame(initialization_dict)
+        frame.serialize()
 
 
 class TestFrameSeries(unittest.TestCase):
@@ -115,6 +133,29 @@ class TestSolver(unittest.TestCase):
         solver = Solver(self.frame, filename='examples/test_compact.hdf5',
                         precondition=False, flux_mode='compact')
         solver.solve(self.dt, self.tmax)
+
+    def test_reference_frame(self):
+        solutions = [ionize.Solution(['acetic acid', 'b-alanine'],
+                                     [.02, .012]),
+                     ionize.Solution(['acetic acid', 'pyridine', 'aniline'],
+                                     [.02, .009/2, .011/2]),
+                     ionize.Solution(['acetic acid', 'sodium'],
+                                     [.02, .018]),
+                     ]
+        system = Frame(dict(lengths=[.01, .004, .01],
+                            n_nodes=100,
+                            interface_length=.0005,
+                            solutions=solutions,
+                            current_density=500,
+                            domain_mode='left',
+                            ))
+        solver = Solver(system,
+                        filename='examples/test_reference_frame.hdf5',
+                        precondition=True,
+                        flux_mode='slip')
+        solver.set_reference_frame(ionize.load_ion('acetic acid'), 'right')
+        solver.solve(self.dt, self.tmax)
+
 
 if __name__ == '__main__':
     unittest.main()
