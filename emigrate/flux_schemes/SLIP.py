@@ -108,18 +108,15 @@ class SLIP(Fluxer):
 
     def node_cost(self):
         """Calculate the cost function of each node."""
-        self.set_Kag()
         deriv = np.fabs(self.cz)
-        if np.isnan(deriv).any():
-            print deriv
         cost = deriv / np.nanmax(deriv, 1)[:, np.newaxis]
-        cost = np.nanmax(cost, 0) + self.Kag
+        cost = np.nanmax(cost, 0) + self.Kag()
         return cost
 
-    def set_Kag(self):
+    def Kag(self):
         """Set the Kag parameter for spacing of low-gradient grid points."""
-        self.Kag = ((self.N-self.NI) / self.NI *
-                    self.Vthermal / abs(self.state.voltage))
+        return ((self.N-self.NI) / self.NI *
+                self.Vthermal / abs(self.state.voltage))
 
     # Helper Functions
     def set_derivatives(self):
