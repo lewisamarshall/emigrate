@@ -30,7 +30,6 @@ class Compact(Fluxer):
 
     def set_E(self):
         """Calculate the electric field at each node."""
-        self.set_current()
         self.state.field = -self.state.current_density/self.conductivity()
 
     def diffusive_flux(self):
