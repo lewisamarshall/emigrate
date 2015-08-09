@@ -50,7 +50,6 @@ class Solver(object):
     equilibrator = None
 
     # #TODO:50 Remove these
-    area_variation = None
     ion_names = None
 
     def __init__(self, initial_condition, filename=False, precondition=False,
@@ -70,9 +69,7 @@ class Solver(object):
 
         # Precondition if requested.
         if precondition:
-            preconditioner(self.state,
-                           self.fluxer,
-                           self.area_variation)
+            preconditioner(self.state, self.fluxer)
 
         # Create empty solution dictionaries
         self.ion_names = [ion.name for ion in self.initial_condition.ions]
@@ -115,7 +112,7 @@ class Solver(object):
         """Write the current state to solutions."""
         self.frame_series.add_frame(self.time, self.state)
 
-    def solve(self, interval=1., max_time=10, method='dopri5'):
+    def solve(self, interval=1., max_time=10):
         """Solve for a series of time points using an ODE solver."""
         if max_time is None:
             raise RuntimeError('Solving requires a finite maximum time.')
@@ -124,7 +121,7 @@ class Solver(object):
             pass
         return self.frame_series
 
-    def iterate(self, interval=1., max_time=None, method='dopri5'):
+    def iterate(self, interval=1., max_time=None):
         self._initialize_solver()
         while self.solver.successful():
             if self.solver.t >= max_time and max_time is not None:

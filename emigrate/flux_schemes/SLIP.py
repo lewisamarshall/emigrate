@@ -2,7 +2,6 @@
 import numpy as np
 from Fluxer import Fluxer
 from Flux_Limiter import Flux_Limiter
-# pylint: disable = W0232, E1101
 
 
 class SLIP(Fluxer):
@@ -40,8 +39,7 @@ class SLIP(Fluxer):
 
     def set_node_flux(self):
         """Calculate the flux of nodes."""
-        flux = self.first_derivative(self.node_cost() *
-                                     self.xz)
+        flux = self.first_derivative(self.node_cost() * self.xz)
         flux = self.differ.smooth(flux)
         flux *= self.pointwave
         flux[0, ] = flux[-1, ] = 0.
@@ -80,8 +78,8 @@ class SLIP(Fluxer):
     def limit(self, concentrations, flux):
         self.set_alpha()
         limited_flux = 0.5*(flux[:, 3:] + flux[:, :-3]) +\
-            self.alpha[:, 1:-2] * (np.diff(concentrations, 1)[:, 1:-1]
-                                   - self.limiter(concentrations))
+            self.alpha[:, 1:-2] * (np.diff(concentrations, 1)[:, 1:-1] -
+                                   self.limiter(concentrations))
         return limited_flux
 
     def set_alpha(self):
@@ -108,18 +106,15 @@ class SLIP(Fluxer):
 
     def node_cost(self):
         """Calculate the cost function of each node."""
-        self.set_Kag()
         deriv = np.fabs(self.cz)
-        if np.isnan(deriv).any():
-            print deriv
         cost = deriv / np.nanmax(deriv, 1)[:, np.newaxis]
-        cost = np.nanmax(cost, 0) + self.Kag
+        cost = np.nanmax(cost, 0) + self.Kag()
         return cost
 
-    def set_Kag(self):
+    def Kag(self):
         """Set the Kag parameter for spacing of low-gradient grid points."""
-        self.Kag = ((self.N-self.NI) / self.NI *
-                    self.Vthermal / abs(self.state.voltage))
+        return ((self.N-self.NI) / self.NI *
+                self.Vthermal / abs(self.state.voltage))
 
     # Helper Functions
     def set_derivatives(self):
@@ -156,8 +151,8 @@ class SLIP(Fluxer):
 
     def conductivity(self):
         """Calculate the conductivty at each location."""
-        conductivity = np.sum(self.state.molar_conductivity
-                              * self.state.concentrations, 0)
+        conductivity = np.sum(self.state.molar_conductivity *
+                              self.state.concentrations, 0)
         conductivity += self.state.water_conductivity
         return conductivity
 

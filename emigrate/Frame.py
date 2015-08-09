@@ -2,6 +2,11 @@ import numpy as np
 from scipy.special import erf
 import ionize
 import warnings
+try:
+    import simplejson as json
+except:
+    import json
+import ionize
 
 
 class Frame(object):
@@ -27,12 +32,36 @@ class Frame(object):
     pressure = 0
     bulk_flow = 0
 
+    # I/O
+    def _encode(self, obj):
+        if isinstance(obj, ionize.Ion):
+            ion = obj.serialize()
+            ion.update({'__ion__': True})
+            return ion
+        elif isinstance(obj, np.ndarray):
+            return {'__ndarray__': True, 'data': obj.tolist()}
+        # Let the base class default method raise the TypeError
+        return json.JSONEncoder.default(self, obj)
+
+    def _object_hook(self, obj):
+        if '__ion__' in obj:
+            return ionize.Ion(1, 1, 1, 1).deserialize(obj)
+        elif '__ndarray__' in obj:
+            return np.array(obj['data'])
+        return obj
+
     def __init__(self, constructor):
         """Initialize a Frame object."""
 
         # Try loading from file first.
         if isinstance(constructor, basestring):
-            self.open_file(constructor)
+            self.deserialize(constructor)
+            try:
+
+                self.deserialize(constructor)
+            except Exception as e:
+                raise e
+                # self.open_file(constructor)
 
         # Next look for a construction dictionary
         elif 'solutions' in constructor.keys():
@@ -44,45 +73,11 @@ class Frame(object):
 
         self._resolve_current()
 
-    def deserialize(self, constructor):
-        """Use a dictionary to update electrolyte properties."""
-        # Initialize optional properties
-        self.ions = constructor['ions']
-        for key, value in constructor.items():
-            if key in self.__class__.__dict__.keys():
-                if key in ['nodes', 'pH']:
-                    value = np.array(value)
-                elif key == 'concentrations':
-                    if isinstance(value, dict):
-                        value = np.array([value[i] for i in self.ions])
-                    else:
-                        value = np.array(value)
-                # print key, value
-                self.__dict__[key] = value
-            else:
-                warnings.warn('Unused initialization key: {}'.format(key))
-
     def serialize(self):
-        serial = self.__dict__.copy()
-        try:
-            serial['ions'] = [ion.name for ion in self.ions]
-        except:
-            serial['ions'] = self.ions
-        serial['nodes'] = self.nodes.tolist()
-        serial['concentrations'] = {i: c for i, c in
-                                    zip(serial['ions'],
-                                        self.concentrations.tolist()
-                                        )
-                                    }
-        serial['concentrations']['x'] = serial['nodes']
-        try:
-            serial['pH'] = serial['pH'].tolist()
-        except:
-            pass
-        serial['properties'] = {'pH': serial['pH']}
-        serial['properties']['x'] = serial['nodes']
+        return json.dumps(self.__dict__, default=self._encode)
 
-        return serial
+    def deserialize(self, source):
+        self.__dict__ = json.loads(source, object_hook=self._object_hook)
 
     def construct(self, constructor_input):
         """Construct electrophoretic system based on a set of solutions."""
@@ -158,9 +153,9 @@ class Frame(object):
                                              right_side +
                                              constructor['lengths'][idx])
                     ion_concentration += ((cs[idx]-cs[idx-1]) *
-                                          (erf((self.nodes-left_side)
-                                           / constructor['interface_length'])
-                                           / 2. + .5))
+                                          (erf((self.nodes-left_side) /
+                                           constructor['interface_length']) /
+                                           2. + .5))
 
             self.concentrations.append(ion_concentration)
         self.concentrations = np.array(self.concentrations)
@@ -170,7 +165,7 @@ class Frame(object):
             cd = self.current/self.area
             if self.current_density and not self.current_density == cd:
                 warnings.warn('Current and current density do not match. '
-                              + 'Correcting current density.')
+                              'Correcting current density.')
             self.current_density = cd
         elif self.current_density:
             self.current = self.area * self.current_density
@@ -184,11 +179,11 @@ if __name__ == '__main__':
     my_solutions = [ionize.Solution(['hydrochloric acid', 'tris'], [.05, .1]),
                     ionize.Solution(['caproic acid', 'tris'], [.05, .1])
                     ]
-    system = Electrolyte({'lengths': [0.01]*2,
-                         'solutions': my_solutions})
+    system = Frame({'lengths': [0.01]*2,
+                    'solutions': my_solutions})
     print system.concentrations
-    print Electrolyte(system.serialize()).serialize()['concentrations'].keys()
-    print Electrolyte(system.serialize()).concentrations
+    print Frame(system.serialize())
+    print Frame(system.serialize()).__dict__
     # # print system.domain
     # print system.ions
     # print system.concentrations

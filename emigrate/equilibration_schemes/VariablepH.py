@@ -157,6 +157,7 @@ class VariablepH(Equilibrator):
 
     def _calc_diffusivity(self):
         """Calculate diffusivity."""
+        # TODO: Check if this works for low ionization fraction
         self.state.diffusivity = (self.state.absolute_mobility[:,
                                                                :, np.newaxis] *
                                   self.state.ionization_fraction /

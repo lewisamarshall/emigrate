@@ -2,16 +2,12 @@ from scipy.interpolate import interp1d
 import numpy as np
 
 
-def preconditioner(state, fluxer, area_variation):
+def preconditioner(state, fluxer):
     """Precondition the system by spacing the grid points."""
     # set up the interpolator to get the new parameters
     concentration_interpolator = interp1d(state.nodes,
                                           state.concentrations,
                                           kind='cubic')
-    if area_variation:
-        area_interpolator = interp1d(state.nodes,
-                                     state.area,
-                                     kind='cubic')
 
     # Get the node cost from the flux calculator
     fluxer.update()
@@ -24,7 +20,10 @@ def preconditioner(state, fluxer, area_variation):
     # get the new grid parameters
     state.nodes = _precondition_x(state, cost)
     state.concentrations = concentration_interpolator(state.nodes)
-    if area_variation:
+    if np.size(state.area) > 1:
+        area_interpolator = interp1d(state.nodes,
+                                     state.area,
+                                     kind='cubic')
         state.area = area_interpolator(state.nodes)
 
 
