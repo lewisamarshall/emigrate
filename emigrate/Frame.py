@@ -2,7 +2,10 @@ import numpy as np
 from scipy.special import erf
 import ionize
 import warnings
-import simplejson as json
+try:
+    import simplejson as json
+except:
+    import json
 import ionize
 
 
