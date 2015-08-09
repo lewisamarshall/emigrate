@@ -54,8 +54,8 @@ class TestDifferentiate(unittest.TestCase):
         self.test_functions = np.array([19*erf(z*3),
                                         25*erf(z*2),
                                         (15 * (erf(z*2) +
-                                         .3 * np.random.random(z.shape))
-                                         / (10*z**2+1))
+                                         .3 * np.random.random(z.shape)) /
+                                         (10*z**2+1))
                                         ])
 
     def test_6thOrder(self):
@@ -86,7 +86,7 @@ class TestFrame(unittest.TestCase):
 
     def test_serialize(self):
         frame = Frame(initialization_dict)
-        frame.serialize()
+        frame.serialize() == Frame(frame.serialize()).serialize()
 
 
 class TestFrameSeries(unittest.TestCase):
