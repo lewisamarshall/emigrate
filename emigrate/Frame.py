@@ -32,52 +32,21 @@ class Frame(object):
     pressure = 0
     bulk_flow = 0
 
-    # I/O
-    def _encode(self, obj):
-        if isinstance(obj, ionize.Ion):
-            ion = obj.serialize()
-            ion.update({'__ion__': True})
-            return ion
-        elif isinstance(obj, np.ndarray):
-            return {'__ndarray__': True, 'data': obj.tolist()}
-        # Let the base class default method raise the TypeError
-        return json.JSONEncoder.default(self, obj)
-
-    def _object_hook(self, obj):
-        if '__ion__' in obj:
-            return ionize.Ion(1, 1, 1, 1).deserialize(obj)
-        elif '__ndarray__' in obj:
-            return np.array(obj['data'])
-        return obj
-
     def __init__(self, constructor):
         """Initialize a Frame object."""
 
         # Try loading from file first.
         if isinstance(constructor, basestring):
-            self.deserialize(constructor)
             try:
-
                 self.deserialize(constructor)
             except Exception as e:
-                raise e
-                # self.open_file(constructor)
+                self._open(constructor)
 
         # Next look for a construction dictionary
         elif 'solutions' in constructor.keys():
             self.construct(constructor)
 
-        # Finally try to deserialize the object directly
-        else:
-            self.deserialize(constructor)
-
         self._resolve_current()
-
-    def serialize(self):
-        return json.dumps(self.__dict__, default=self._encode)
-
-    def deserialize(self, source):
-        self.__dict__ = json.loads(source, object_hook=self._object_hook)
 
     def construct(self, constructor_input):
         """Construct electrophoretic system based on a set of solutions."""
@@ -170,9 +139,33 @@ class Frame(object):
         elif self.current_density:
             self.current = self.area * self.current_density
 
-    def open_file(self, filename):
-        with open(filename, 'r') as file:
-            raise NotImplementedError
+    # I/O
+    def serialize(self):
+        return json.dumps(self.__dict__, default=self._encode)
+
+    def deserialize(self, source):
+        self.__dict__ = json.loads(source, object_hook=self._object_hook)
+
+    def _encode(self, obj):
+        if isinstance(obj, ionize.Ion):
+            ion = obj.serialize()
+            ion.update({'__ion__': True})
+            return ion
+        elif isinstance(obj, np.ndarray):
+            return {'__ndarray__': True, 'data': obj.tolist()}
+        # Let the base class default method raise the TypeError
+        return json.JSONEncoder.default(self, obj)
+
+    def _object_hook(self, obj):
+        if '__ion__' in obj:
+            return ionize.Ion(1, 1, 1, 1).deserialize(obj)
+        elif '__ndarray__' in obj:
+            return np.array(obj['data'])
+        return obj
+
+    def _open(self, filename):
+        with open(filename, 'r') as source:
+            self.deserialize(source.read())
 
 
 if __name__ == '__main__':
@@ -184,9 +177,3 @@ if __name__ == '__main__':
     print system.concentrations
     print Frame(system.serialize())
     print Frame(system.serialize()).__dict__
-    # # print system.domain
-    # print system.ions
-    # print system.concentrations
-    # for i in range(3):
-    #     plot.plot(system.domain, system.concentrations[i, :])
-    # plot.show()
