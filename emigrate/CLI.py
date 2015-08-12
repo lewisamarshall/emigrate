@@ -38,11 +38,15 @@ def plot(ctx, output):
         ctx.obj['frame'] = ctx.obj['frame_series'][n]
 
     pyplot.figure()
-    for ion_concentration in ctx.obj['frame'].concentrations:
-        pyplot.plot(ctx.obj['frame'].nodes, ion_concentration, '-')
+    frame = ctx.obj['frame']
+    for ion, ion_concentration in zip(frame.ions, frame.concentrations):
+        pyplot.plot(frame.nodes, ion_concentration, '-', label=ion)
     pyplot.xlabel('x (mm)')
     pyplot.ylabel('concentration (M)')
-    pyplot.savefig('output')
+    pyplot.ylim(ymin=0)
+    pyplot.xlim(xmax=frame.nodes[-1])
+    pyplot.legend()
+    pyplot.savefig('output', bbox_inches='tight')
 
 
 @cli.command()
