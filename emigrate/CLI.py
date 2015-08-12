@@ -3,8 +3,9 @@ from .Solver import Solver
 from .Frame import Frame
 from .FrameSeries import FrameSeries
 
-# import sys
+import sys
 import click
+from matplotlib import pyplot
 
 
 @click.group(name='emigrate', chain=True)
@@ -16,58 +17,48 @@ def cli(ctx):
 @cli.command()
 @click.pass_context
 @click.argument('filename', type=click.Path(exists=True))
-@click.option('--frame', '-f', prompt=True, type=click.INT)
-def open(ctx, filename, frame):
+@click.option('--io', is_flag=True)
+@click.option('--frame', '-f', prompt=False, default=None, type=click.INT)
+def open(ctx, filename, frame, io):
     """Open an emgrate file and return a serialized frame."""
-    if ctx.obj:
-        close(ctx)
-    ctx.obj = FrameSeries(filename=filename, mode='r')
-    # click.echo(ctx.obj[frame].serialize())
+    ctx.obj['frame_series'] = FrameSeries(filename=filename, mode='r')
+    if frame:
+        ctx.obj['frame'] = ctx.obj['frame_series'][frame]
+    if io:
+        for frame in iter(sys.stdin.readline, ''):
+            click.echo(ctx.obj['frame_series'][int(frame)].serialize())
+
 
 @cli.command()
 @click.pass_context
-@click.option('--frame', '-f', prompt=True, type=click.INT)
-def plot(ctx, frame):
-    print 'plotting'
-    print ctx.obj
+@click.argument('output', type=click.Path(exists=False))
+def plot(ctx, output):
+    if not ctx.obj['frame']:
+        n = click.prompt('Frame', default=1, type=click.INT)
+        ctx.obj['frame'] = ctx.obj['frame_series'][n]
+
+    pyplot.figure()
+    for ion_concentration in ctx.obj['frame'].concentrations:
+        pyplot.plot(ctx.obj['frame'].nodes, ion_concentration, '-')
+    pyplot.xlabel('x (mm)')
+    pyplot.ylabel('concentration (M)')
+    pyplot.savefig('output')
+
+
+@cli.command()
+@click.pass_context
+def echo(ctx):
+    if not ctx.obj['frame']:
+        n = click.prompt('Frame', default=1, type=click.INT)
+        ctx.obj['frame'] = ctx.obj['frame_series'][n]
+
+    click.echo(ctx.obj['frame'].serialize())
+
 
 def close(ctx):
-    if ctx.obj:
-        ctx.obj.hdf5.close()
-        ctx.obj = None
-
-#     def prompt(self):
-#         for command in iter(sys.stdin.readline, ''):
-#             command = command.strip().split()
-#             if command[0] == 'open':
-#                 self.open(command[1])
-#             elif command[0] == 'frame':
-#                 self.frame(int(command[1]))
-#             elif command[0] == 'close':
-#                 self.close()
-#             elif command[0] == 'exit':
-#                 break
-#             else:
-#                 sys.stderr.write('unknown command')
-#                 sys.stderr.flush()
-
-#         print json.dumps(serial)
-#         sys.stdout.flush()
-#
-#     def listener(self):
-#         for command in iter(sys.stdin.readline, ''):
-#             command = command.strip().split()
-#             if command[0] == 'open':
-#                 self.open(command[1])
-#             elif command[0] == 'frame':
-#                 self.frame(int(command[1]))
-#             elif command[0] == 'close':
-#                 self.close()
-#             elif command[0] == 'exit':
-#                 break
-#             else:
-#                 sys.stderr.write('unknown command')
-#                 sys.stderr.flush()
+    if ctx.obj.get('frame_series', None):
+        ctx.obj['frame_series'].hdf5.close()
+        ctx.obj['frame_series'] = None
 
 if __name__ == '__main__':
-    cli()
+    cli(obj={'frame_series': None, 'frame': None})
