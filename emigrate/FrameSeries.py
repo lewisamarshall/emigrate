@@ -91,8 +91,6 @@ class FrameSeries(object):
             else:
                 pass
 
-    def _serialize_frames(self):
-        return [frame.serialize() for frame in self.frame.values()]
 
 if __name__ == '__main__':
     file = '/Users/lewis/Documents/github/emigrate/test.hdf5'

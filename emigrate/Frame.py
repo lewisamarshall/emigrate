@@ -1,4 +1,5 @@
 import numpy as np
+import h5py
 from scipy.special import erf
 import ionize
 import warnings
@@ -45,6 +46,9 @@ class Frame(object):
         # Next look for a construction dictionary
         elif 'solutions' in constructor.keys():
             self.construct(constructor)
+
+        else:
+            self.__dict__ = constructor
 
         self._resolve_current()
 
@@ -153,8 +157,10 @@ class Frame(object):
             return ion
         elif isinstance(obj, np.ndarray):
             return {'__ndarray__': True, 'data': obj.tolist()}
+        elif isinstance(obj, h5py._hl.dataset.Dataset):
+            return {'__ndarray__': True, 'data': obj[()].tolist()}
         # Let the base class default method raise the TypeError
-        return json.JSONEncoder.default(self, obj)
+        return json.JSONEncoder().default(obj)
 
     def _object_hook(self, obj):
         if '__ion__' in obj:
