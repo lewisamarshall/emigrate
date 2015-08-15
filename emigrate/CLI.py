@@ -6,6 +6,12 @@ from .FrameSeries import FrameSeries
 import sys
 import click
 from matplotlib import pyplot
+from math import ceil
+
+try:
+    import simplejson as json
+except:
+    import json
 
 
 @click.group(name='emigrate', chain=True)
@@ -55,6 +61,33 @@ def echo(ctx):
         ctx.obj['frame'] = ctx.obj['frame_series'][n]
 
     click.echo(ctx.obj['frame'].serialize())
+
+
+@cli.command()
+@click.pass_context
+@click.option('-i', '--input', type=click.Path(exists=True))
+@click.option('-o', '--output', type=click.Path(exists=False))
+def construct(ctx, input, output):
+    constructor = deserialize(input)
+    ctx.obj['frame'] = Frame(constructor)
+    if output:
+        with open(output, 'w') as loc:
+            json.dump(ctx.obj['frame'], loc)
+
+
+@cli.command()
+@click.pass_context
+@click.option('-o', '--output', type=click.Path(exists=False))
+@click.option('-t', '--time', type=click.Path(exists=True))
+@click.option('-d', '--dt', type=click.Path(exists=False))
+def solve(ctx, output, dt, time):
+    solver = Solver(ctx.obj['frame'], filename=output)
+
+    with click.progressbar(length=time,
+                           label='Solving...'
+                           ) as bar:
+        for frame in solver.iterate(dt, time):
+            bar.update(dt)
 
 
 def close(ctx):
