@@ -18,12 +18,10 @@ def cli(ctx):
 @click.pass_context
 @click.argument('filename', type=click.Path(exists=True))
 @click.option('--io', is_flag=True)
-@click.option('--frame', '-f', prompt=False, default=None, type=click.INT)
-def open(ctx, filename, frame, io):
+def open(ctx, filename, io):
     """Open an emgrate file and return a serialized frame."""
     ctx.obj['frame_series'] = FrameSeries(filename=filename, mode='r')
-    if frame:
-        ctx.obj['frame'] = ctx.obj['frame_series'][frame]
+
     if io:
         for frame in iter(sys.stdin.readline, ''):
             click.echo(ctx.obj['frame_series'][int(frame)].serialize())
