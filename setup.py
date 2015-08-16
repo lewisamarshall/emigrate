@@ -1,5 +1,10 @@
 #!/usr/bin/python
 from setuptools import setup, find_packages
+try:
+    import pypandoc
+    long_description = pypandoc.convert('README.md', 'rst')
+except:
+    long_description = None
 
 setup(name='emigrate',
       version='0.10.0',
@@ -11,7 +16,6 @@ setup(name='emigrate',
           "Development Status :: 3 - Alpha",
           "Environment :: Console",
           "Intended Audience :: Science/Research",
-          "License :: OSI Approved :: GNU General Public License v2 (GPLv2)",
           "Operating System :: OS Independent",
           "Topic :: Software Development :: Libraries :: Python Modules",
           "Topic :: Scientific/Engineering :: Chemistry",
@@ -20,7 +24,8 @@ setup(name='emigrate',
       license='LICENSE',
       description='A package for simulating electrophoresis.',
       packages=find_packages(),
+      long_description=long_description,
       requires=['numpy', 'scipy', 'ionize', 'h5py', 'ionize'],
-      entry_points={'console_scripts': ['emigrate = emigrate.CLI:CLI']},
+      entry_points={'console_scripts': ['emigrate = emigrate.cli']},
       test_suite="emigrate.tests",
       )
