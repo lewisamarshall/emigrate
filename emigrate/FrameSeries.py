@@ -6,7 +6,7 @@ from collections import OrderedDict
 from Frame import Frame
 
 # Create a string data type
-string_dt = h5py.special_dtype(vlen=bytes)
+string_dt = h5py.special_dtype(vlen=unicode)
 
 
 class FrameSeries(object):
