@@ -112,5 +112,8 @@ def close(ctx):
         ctx.obj['frame_series'].hdf5.close()
         ctx.obj['frame_series'] = None
 
-if __name__ == '__main__':
+def main():
     cli(obj={'frame_series': None, 'frame': None})
+
+if __name__ == '__main__':
+    main()

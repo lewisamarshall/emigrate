@@ -26,6 +26,6 @@ setup(name='emigrate',
       packages=find_packages(),
       long_description=long_description,
       requires=['numpy', 'scipy', 'ionize', 'h5py', 'ionize'],
-      entry_points={'console_scripts': ['emigrate = emigrate.cli']},
+      entry_points={'console_scripts': ['emigrate = emigrate.cli:main']},
       test_suite="emigrate.tests",
       )
