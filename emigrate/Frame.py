@@ -36,15 +36,8 @@ class Frame(object):
     def __init__(self, constructor):
         """Initialize a Frame object."""
 
-        # Try loading from file first.
-        if isinstance(constructor, basestring):
-            try:
-                self.deserialize(constructor)
-            except Exception as e:
-                self._open(constructor)
-
         # Next look for a construction dictionary
-        elif 'solutions' in constructor.keys():
+        if 'solutions' in constructor.keys():
             self.construct(constructor)
 
         else:
@@ -145,10 +138,10 @@ class Frame(object):
 
     # I/O
     def serialize(self):
-        return json.dumps(self.__dict__, default=self._encode)
-
-    def deserialize(self, source):
-        self.__dict__ = json.loads(source, object_hook=self._object_hook)
+        serial = {'__frame__': True}
+        serial.update(self.__dict__)
+        return json.dumps(serial, default=self._encode, sort_keys=True,
+                          indent=4, separators=(',', ': '))
 
     def _encode(self, obj):
         if isinstance(obj, ionize.Ion):
@@ -162,16 +155,6 @@ class Frame(object):
         # Let the base class default method raise the TypeError
         return json.JSONEncoder().default(obj)
 
-    def _object_hook(self, obj):
-        if '__ion__' in obj:
-            return ionize.Ion(1, 1, 1, 1).deserialize(obj)
-        elif '__ndarray__' in obj:
-            return np.array(obj['data'])
-        return obj
-
-    def _open(self, filename):
-        with open(filename, 'r') as source:
-            self.deserialize(source.read())
 
 
 if __name__ == '__main__':
