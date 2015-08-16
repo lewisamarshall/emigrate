@@ -56,9 +56,14 @@ target/
 # Ignore saved files.
 *.hdf5
 *.json
+.ipynb_checkpoints
+*.png
 
 # Ignore pycharm
 .idea
 
-# Ignore 
+# Ignore
 .imdone
+
+# Include constructor
+!examples/constructor.json

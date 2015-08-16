@@ -1,0 +1,242 @@
+{
+    "current": -500.0,
+    "interface_length": 0.0005,
+    "lengths": [
+        0.005,
+        0.001,
+        0.02
+    ],
+    "n_nodes": 137,
+    "solutions": [
+        {
+            "T": 25.0,
+            "__solution__": true,
+            "concentrations": [
+                0.05,
+                0.105
+            ],
+            "ions": [
+                {
+                    "absolute_mobility_ref": [
+                        -2.3500000000000002e-08
+                    ],
+                    "dCp": [
+                        47.0
+                    ],
+                    "dH": [
+                        20400.0
+                    ],
+                    "name": "hepes",
+                    "nightingale_function": null,
+                    "pKa_ref": [
+                        7.5
+                    ],
+                    "type": "ionize ion",
+                    "z": [
+                        -1
+                    ]
+                },
+                {
+                    "absolute_mobility_ref": [
+                        2.9500000000000003e-08
+                    ],
+                    "dCp": [
+                        -59.0
+                    ],
+                    "dH": [
+                        47450.0
+                    ],
+                    "name": "tris",
+                    "nightingale_function": null,
+                    "pKa_ref": [
+                        8.076
+                    ],
+                    "type": "ionize ion",
+                    "z": [
+                        1
+                    ]
+                }
+            ],
+            "type": "ionize solution"
+        },
+        {
+            "T": 25.0,
+            "__solution__": true,
+            "concentrations": [
+                0.01,
+                0.1,
+                0.01,
+                0.01,
+                0.01,
+                0.01
+            ],
+            "ions": [
+                {
+                    "absolute_mobility_ref": [
+                        -3.02e-08
+                    ],
+                    "dCp": null,
+                    "dH": [
+                        -2391.0
+                    ],
+                    "name": "caproic acid",
+                    "nightingale_function": null,
+                    "pKa_ref": [
+                        4.857
+                    ],
+                    "type": "ionize ion",
+                    "z": [
+                        -1
+                    ]
+                },
+                {
+                    "absolute_mobility_ref": [
+                        2.9500000000000003e-08
+                    ],
+                    "dCp": [
+                        -59.0
+                    ],
+                    "dH": [
+                        47450.0
+                    ],
+                    "name": "tris",
+                    "nightingale_function": null,
+                    "pKa_ref": [
+                        8.076
+                    ],
+                    "type": "ionize ion",
+                    "z": [
+                        1
+                    ]
+                },
+                {
+                    "absolute_mobility_ref": [
+                        -3.3000000000000004e-08,
+                        -1.9e-08
+                    ],
+                    "dCp": null,
+                    "dH": null,
+                    "name": "fluorescein",
+                    "nightingale_function": null,
+                    "pKa_ref": [
+                        6.8,
+                        4.4
+                    ],
+                    "type": "ionize ion",
+                    "z": [
+                        -2,
+                        -1
+                    ]
+                },
+                {
+                    "absolute_mobility_ref": [
+                        -3.6000000000000005e-08
+                    ],
+                    "dCp": null,
+                    "dH": null,
+                    "name": "alexa fluor 488",
+                    "nightingale_function": null,
+                    "pKa_ref": [
+                        2.0
+                    ],
+                    "type": "ionize ion",
+                    "z": [
+                        -1
+                    ]
+                },
+                {
+                    "absolute_mobility_ref": [
+                        -2.69e-08
+                    ],
+                    "dCp": [
+                        25.0
+                    ],
+                    "dH": [
+                        21100.0
+                    ],
+                    "name": "mops",
+                    "nightingale_function": null,
+                    "pKa_ref": [
+                        7.2
+                    ],
+                    "type": "ionize ion",
+                    "z": [
+                        -1
+                    ]
+                },
+                {
+                    "absolute_mobility_ref": [
+                        -4.24e-08
+                    ],
+                    "dCp": [
+                        -142.0,
+                        0,
+                        0
+                    ],
+                    "dH": [
+                        -410.0
+                    ],
+                    "name": "acetic acid",
+                    "nightingale_function": null,
+                    "pKa_ref": [
+                        4.756
+                    ],
+                    "type": "ionize ion",
+                    "z": [
+                        -1
+                    ]
+                }
+            ],
+            "type": "ionize solution"
+        },
+        {
+            "T": 25.0,
+            "__solution__": true,
+            "concentrations": [
+                0.04,
+                0.08
+            ],
+            "ions": [
+                {
+                    "absolute_mobility_ref": [
+                        -7.91e-08
+                    ],
+                    "dCp": null,
+                    "dH": [
+                        55815.0
+                    ],
+                    "name": "hydrochloric acid",
+                    "nightingale_function": null,
+                    "pKa_ref": [
+                        -2.0
+                    ],
+                    "type": "ionize ion",
+                    "z": [
+                        -1
+                    ]
+                },
+                {
+                    "absolute_mobility_ref": [
+                        2.9500000000000003e-08
+                    ],
+                    "dCp": [
+                        -59.0
+                    ],
+                    "dH": [
+                        47450.0
+                    ],
+                    "name": "tris",
+                    "nightingale_function": null,
+                    "pKa_ref": [
+                        8.076
+                    ],
+                    "type": "ionize ion",
+                    "z": [
+                        1
+                    ]
+                }
+            ],
+            "type": "ionize solution"
+        }
+    ]
+}

@@ -6,7 +6,7 @@ from collections import OrderedDict
 from Frame import Frame
 
 # Create a string data type
-string_dt = h5py.special_dtype(vlen=bytes)
+string_dt = h5py.special_dtype(vlen=unicode)
 
 
 class FrameSeries(object):
@@ -91,8 +91,6 @@ class FrameSeries(object):
             else:
                 pass
 
-    def _serialize_frames(self):
-        return [frame.serialize() for frame in self.frame.values()]
 
 if __name__ == '__main__':
     file = '/Users/lewis/Documents/github/emigrate/test.hdf5'

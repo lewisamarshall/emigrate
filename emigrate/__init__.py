@@ -11,4 +11,3 @@ CLI is a command line interface for the solver.
 from .Solver import Solver
 from .Frame import Frame
 from .FrameSeries import FrameSeries
-from .CLI import CLI
