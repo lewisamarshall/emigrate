@@ -8,11 +8,11 @@ import warnings
 import copy
 
 # Emigrate imports
-from flux_schemes import fluxers
-from equilibration_schemes import equilibrators
-from FrameSeries import FrameSeries
-from Frame import Frame
-from preconditioner import preconditioner
+from .flux_schemes import fluxers
+from .equilibration_schemes import equilibrators
+from .FrameSeries import FrameSeries
+from .Frame import Frame
+from .preconditioner import preconditioner
 
 # pylint: disable=W0212
 
