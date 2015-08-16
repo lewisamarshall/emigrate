@@ -18,7 +18,7 @@ before_install:
   - pip install coveralls simplejson
 
 install:
-  - conda install --yes python=$TRAVIS_PYTHON_VERSION numpy scipy nose h5py coverage click
+  - conda install --yes python=$TRAVIS_PYTHON_VERSION numpy scipy nose h5py coverage click matplotlib
   - pip install ionize
   - python setup.py install
 

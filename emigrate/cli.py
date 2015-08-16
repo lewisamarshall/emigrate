@@ -2,13 +2,13 @@
 from .Solver import Solver
 from .Frame import Frame
 from .FrameSeries import FrameSeries
-from deserialize import deserialize
+from .deserialize import deserialize
 
 import sys
 import os
+from math import ceil
 import click
 from matplotlib import pyplot
-from math import ceil
 
 try:
     import simplejson as json
