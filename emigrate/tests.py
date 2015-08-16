@@ -8,7 +8,8 @@ from .Solver import Solver
 from .Frame import Frame
 from .FrameSeries import FrameSeries
 from .flux_schemes.Differentiate import Differentiate
-from equilibration_schemes.Multiroot import Multiroot
+from .deserialize import deserialize
+from .equilibration_schemes.Multiroot import Multiroot
 
 solutions = [ionize.Solution(['hepes', 'tris'], [.05, .105]),
              ionize.Solution(['caproic acid', 'tris',
@@ -86,8 +87,8 @@ class TestFrame(unittest.TestCase):
 
     def test_serialize(self):
         frame = Frame(initialization_dict)
-        frame.serialize() == Frame(frame.serialize()).serialize()
-
+        self.assertEqual(frame.serialize(compact=True),
+                         deserialize(frame.serialize(compact=False)).serialize(compact=True))
 
 class TestFrameSeries(unittest.TestCase):
     @classmethod
@@ -110,7 +111,7 @@ class TestFrameSeries(unittest.TestCase):
 class TestSolver(unittest.TestCase):
     def setUp(self):
         self.frame = Frame(initialization_dict)
-        self.tmax = 20
+        self.tmax = 1
         self.dt = 1
 
     def test_slip(self):
