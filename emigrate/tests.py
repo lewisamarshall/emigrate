@@ -111,7 +111,7 @@ class TestFrameSeries(unittest.TestCase):
 class TestSolver(unittest.TestCase):
     def setUp(self):
         self.frame = Frame(initialization_dict)
-        self.tmax = 1
+        self.tmax = 20
         self.dt = 1
 
     def test_slip(self):
