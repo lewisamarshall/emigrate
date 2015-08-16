@@ -137,11 +137,17 @@ class Frame(object):
             self.current = self.area * self.current_density
 
     # I/O
-    def serialize(self):
+    def serialize(self, compact=False):
         serial = {'__frame__': True}
         serial.update(self.__dict__)
-        return json.dumps(serial, default=self._encode, sort_keys=True,
-                          indent=4, separators=(',', ': '))
+
+        if compact:
+            sort_keys, indent, separators = False, None, (',', ':')
+        else:
+            sort_keys, indent, separators = True, 4, (', ', ': ')
+
+        return json.dumps(serial, default=self._encode, sort_keys=sort_keys,
+                          indent=indent, separators=separators)
 
     def _encode(self, obj):
         if isinstance(obj, ionize.Ion):

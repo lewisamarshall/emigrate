@@ -39,7 +39,7 @@ def load(ctx, filename, io):
 
     if io:
         for frame in iter(sys.stdin.readline, ''):
-            click.echo(ctx.obj['frame_series'][int(frame)].serialize())
+            click.echo(ctx.obj['frame_series'][int(frame)].serialize(compact=True))
 
 
 @cli.command()
@@ -75,7 +75,7 @@ def echo(ctx, frame):
         n = click.prompt('Frame', default=1, type=click.INT)
         ctx.obj['frame'] = ctx.obj['frame_series'][n]
 
-    click.echo(ctx.obj['frame'].serialize())
+    click.echo(ctx.obj['frame'].serialize(compact=True))
 
 
 @cli.command()
