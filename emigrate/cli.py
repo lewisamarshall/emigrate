@@ -53,7 +53,6 @@ def plot(ctx, output, frame):
         n = click.prompt('Frame', default=1, type=click.INT)
         ctx.obj['frame'] = ctx.obj['frame_series'][n]
 
-    pyplot.figure()
     frame = ctx.obj['frame']
     for ion, ion_concentration in zip(frame.ions, frame.concentrations):
         pyplot.plot(frame.nodes, ion_concentration, '-', label=ion)
