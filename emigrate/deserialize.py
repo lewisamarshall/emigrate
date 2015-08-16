@@ -17,11 +17,9 @@ def object_hook(obj):
         return np.array(obj['data'])
     elif '__ion__' in obj:
         obj.pop('__ion__')
-        obj.pop('type')
         return ionize.Ion(**obj)
     elif '__solution__' in obj:
         obj.pop('__solution__')
-        obj.pop('type')
         return ionize.Solution(**obj)
     elif 'type' in obj:
         t = obj.pop('type')
