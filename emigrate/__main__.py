@@ -38,8 +38,9 @@ def load(ctx, filename, io):
         raise RuntimeError("Can't load {} files.".format(file_extension))
 
     if io:
-        for frame in iter(sys.stdin.readline, ''):
-            click.echo(ctx.obj['frame_series'][int(frame)].serialize(compact=True))
+        for frame_num in iter(sys.stdin.readline, ''):
+            frame = ctx.obj['frame_series'][int(frame_num)]
+            click.echo(frame.serialize(compact=True))
 
 
 @cli.command()
@@ -79,16 +80,22 @@ def echo(ctx, frame):
 
 @cli.command()
 @click.pass_context
-@click.option('-i', '--infile', type=click.Path(exists=True))
+@click.option('-i', '--infile', type=click.Path(exists=True), default=None)
 @click.option('-o', '--output', type=click.Path(exists=False), default=None)
-def construct(ctx, infile, output):
-    infile = click.format_filename(infile)
-    with open(infile, 'r') as inputfile:
-        constructor = deserialize(inputfile.read())
-    ctx.obj['frame'] = Frame(constructor)
-    if output:
-        with open(output, 'w') as loc:
-            loc.write(ctx.obj['frame'].serialize())
+@click.option('--io', is_flag=True)
+def construct(ctx, infile, output, io):
+    if io:
+        for constructor in iter(sys.stdin.readline, ''):
+            constructor = deserialize(constructor)
+            click.echo(Frame(constructor).serialize(compact=True))
+    else:
+        infile = click.format_filename(infile)
+        with open(infile, 'r') as inputfile:
+            constructor = deserialize(inputfile.read())
+        ctx.obj['frame'] = Frame(constructor)
+        if output:
+            with open(output, 'w') as loc:
+                loc.write(ctx.obj['frame'].serialize())
 
 
 @cli.command()

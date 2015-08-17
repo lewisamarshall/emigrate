@@ -162,7 +162,6 @@ class Frame(object):
         return json.JSONEncoder().default(obj)
 
 
-
 if __name__ == '__main__':
     my_solutions = [ionize.Solution(['hydrochloric acid', 'tris'], [.05, .1]),
                     ionize.Solution(['caproic acid', 'tris'], [.05, .1])

@@ -79,7 +79,7 @@ class FrameSeries(object):
 
     def _write_frame(self, frame, location):
         for key, value in frame.__dict__.items():
-            if key in ['concentrations', 'nodes', 'pH']:
+            if key in ['concentrations', 'nodes', 'pH', 'field']:
                 try:
                     location.create_dataset(key, data=value,
                                             compression=self.compression,

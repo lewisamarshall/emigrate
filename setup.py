@@ -7,7 +7,7 @@ except:
     long_description = None
 
 setup(name='emigrate',
-      version='0.11.3',
+      version='0.12.0',
       author='Lewis A. Marshall',
       author_email='lewis.a.marshall@gmail.com',
       url="https://github.com/lewisamarshall/emigrate",
