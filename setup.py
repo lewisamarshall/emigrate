@@ -7,7 +7,7 @@ except:
     long_description = None
 
 setup(name='emigrate',
-      version='0.11.2',
+      version='0.11.3',
       author='Lewis A. Marshall',
       author_email='lewis.a.marshall@gmail.com',
       url="https://github.com/lewisamarshall/emigrate",
@@ -26,6 +26,6 @@ setup(name='emigrate',
       packages=find_packages(),
       long_description=long_description,
       requires=['numpy', 'scipy', 'ionize', 'h5py', 'ionize'],
-      entry_points={'console_scripts': ['emigrate = emigrate.cli:main']},
+      entry_points={'console_scripts': ['emigrate = emigrate.__main__:main']},
       test_suite="emigrate.tests",
       )
