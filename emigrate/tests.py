@@ -2,8 +2,10 @@ import unittest
 import numpy as np
 from scipy.special import erf
 import ionize
+from click.testing import CliRunner
 
 
+from .__main__ import cli
 from .Solver import Solver
 from .Frame import Frame
 from .FrameSeries import FrameSeries
@@ -111,7 +113,7 @@ class TestFrameSeries(unittest.TestCase):
 class TestSolver(unittest.TestCase):
     def setUp(self):
         self.frame = Frame(initialization_dict)
-        self.tmax = 20
+        self.tmax = 2
         self.dt = 1
 
     def test_slip(self):
@@ -157,6 +159,43 @@ class TestSolver(unittest.TestCase):
         solver.set_reference_frame(ionize.load_ion('acetic acid'), 'right')
         solver.solve(self.dt, self.tmax)
 
+class TestCLI(unittest.TestCase):
+    def setUp(self):
+        self.runner = runner = CliRunner()
+
+    def tearDown(self):
+        del self.runner
+
+    def test_construct(self):
+        result = self.runner.invoke(cli,
+                                    ['construct',
+                                     '-i', 'examples/constructor.json',
+                                     '-o', 'examples/initial_condition.json'],
+                                     obj={'frame_series': None, 'frame': None})
+        self.assertEqual(result.exit_code, 0, result)
+
+    def test_solve(self):
+        result = self.runner.invoke(cli,
+                                    ['load', 'examples/initial_condition.json',
+                                     'solve', '-t', '10.0', '-d', '1.0',
+                                     '--output', 'examples/cli_test.hdf5'],
+                                     obj={'frame_series': None, 'frame': None})
+        self.assertEqual(result.exit_code, 0, result)
+
+    def test_echo(self):
+        result = self.runner.invoke(cli,
+                                    ['load', 'examples/cli_test.hdf5',
+                                     'echo', '-f', '5'],
+                                     obj={'frame_series': None, 'frame': None})
+        self.assertEqual(result.exit_code, 0, result)
+
+    def test_plot(self):
+        result = self.runner.invoke(cli,
+                                    ['load', 'examples/cli_test.hdf5',
+                                     'plot', '-f', '5',
+                                     'examples/test_plot.png'],
+                                     obj={'frame_series': None, 'frame': None})
+        self.assertEqual(result.exit_code, 0, result)
 
 if __name__ == '__main__':
     unittest.main()

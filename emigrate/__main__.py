@@ -63,6 +63,7 @@ def plot(ctx, output, frame):
     pyplot.xlim(xmax=frame.nodes[-1])
     pyplot.legend()
     pyplot.savefig(output, bbox_inches='tight')
+    close(ctx)
 
 
 @cli.command()
@@ -76,6 +77,7 @@ def echo(ctx, frame):
         ctx.obj['frame'] = ctx.obj['frame_series'][n]
 
     click.echo(ctx.obj['frame'].serialize(compact=True))
+    close(ctx)
 
 
 @cli.command()
@@ -96,6 +98,7 @@ def construct(ctx, infile, output, io):
         if output:
             with open(output, 'w') as loc:
                 loc.write(ctx.obj['frame'].serialize())
+    close(ctx)
 
 
 @cli.command()
@@ -112,9 +115,10 @@ def solve(ctx, output, dt, time):
                            ) as bar:
         for frame in bar:
             pass
+    solver.frame_series.hdf5.close()
 
 def close(ctx):
-    if ctx.obj.get('frame_series', None):
+    if ctx.obj['frame_series']:
         ctx.obj['frame_series'].hdf5.close()
         ctx.obj['frame_series'] = None
 
