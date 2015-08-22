@@ -185,7 +185,7 @@ class TestCLI(unittest.TestCase):
                                      '-i', 'examples/constructor.json',
                                      '-o', 'examples/initial_condition.json'],
                                     obj={'frame_series': None, 'frame': None})
-        self.assertEqual(result.exit_code, 0, result)
+        self.assertEqual(result.exit_code, 0, result.exc_info)
 
     def test_solve(self):
         result = self.runner.invoke(cli,
@@ -193,7 +193,7 @@ class TestCLI(unittest.TestCase):
                                      'solve', '-t', '10.0', '-d', '1.0',
                                      '--output', 'examples/cli_test.hdf5'],
                                     obj={'frame_series': None, 'frame': None})
-        self.assertEqual(result.exit_code, 0, result)
+        self.assertEqual(result.exit_code, 0, result.exc_info)
 
     def test_echo(self):
         result = self.runner.invoke(cli,
