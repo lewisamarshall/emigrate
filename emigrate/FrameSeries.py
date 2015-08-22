@@ -17,7 +17,7 @@ class FrameSeries(object):
     _compression = 'gzip'
     _attributes = None
 
-    def __init__(self, ions=None, filename='default.hdf5'):
+    def __init__(self, filename='default.hdf5', ions=None):
         self.filename = filename
         self.ions = ions
 
@@ -46,7 +46,7 @@ class FrameSeries(object):
 
     def __getitem__(self, idx):
         idx = str(idx)
-        data = dict(self._frames()[idx])
+        data = dict(self.hdf5['frames'][idx])
         data['ions'] = np.array(self.ions).tolist()
         return Frame(data)
 

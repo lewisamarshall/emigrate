@@ -187,42 +187,52 @@ class TestCLI(unittest.TestCase):
                                      '-i', 'examples/constructor.json',
                                      '-o', 'examples/initial_condition.json'],
                                     obj={'frame_series': None, 'frame': None})
-        self.check_result(result)
+        self.assertEqual(result.exit_code,
+                         0,
+                         ' '.join(traceback.format_tb(result.exc_info[2]))
+                         )
 
     def test_solve(self):
         result = self.runner.invoke(cli,
                                     ['load', 'examples/initial_condition.json',
-                                     'solve', '-t', '10.0', '-d', '1.0',
-                                     '--output', 'examples/cli_test.hdf5'],
+                                     'solve', '-t', '3.0', '-d', '1.0',
+                                     '--output', 'examples/cli_test_solve.hdf5'],
                                     obj={'frame_series': None, 'frame': None})
-        self.check_result(result)
+        self.assertEqual(result.exit_code,
+                         0,
+                         ' '.join(traceback.format_tb(result.exc_info[2]))
+                         )
 
     def test_load(self):
         result = self.runner.invoke(cli,
                                     ['load', 'examples/cli_test.hdf5'],
                                     obj={'frame_series': None, 'frame': None})
-        self.check_result(result)
+        self.assertEqual(result.exit_code,
+                         0,
+                         ' '.join(traceback.format_tb(result.exc_info[2]))
+                         )
 
     def test_echo(self):
         result = self.runner.invoke(cli,
                                     ['load', 'examples/cli_test.hdf5',
                                      'echo', '-f', '5'],
                                     obj={'frame_series': None, 'frame': None})
-        self.check_result(result)
-
-    def test_plot(self):
-        result = self.runner.invoke(cli,
-                                    ['load', 'examples/cli_test.hdf5',
-                                     'plot', '-f', '5',
-                                     'examples/test_plot.png'],
-                                    obj={'frame_series': None, 'frame': None})
-        self.check_result(result)
-
-    def check_result(self, result):
         self.assertEqual(result.exit_code,
                          0,
                          ' '.join(traceback.format_tb(result.exc_info[2]))
                          )
+
+    def test_plot(self):
+        result = self.runner.invoke(cli,
+                                    ['plot', '-f', '1',
+                                     'examples/test_plot.png'],
+                                    obj={'frame_series': FrameSeries('examples/cli_test.hdf5'),
+                                         'frame': None})
+        self.assertEqual(result.exit_code,
+                         0,
+                         ' '.join(traceback.format_tb(result.exc_info[2]))
+                         )
+
 
 if __name__ == '__main__':
     unittest.main()

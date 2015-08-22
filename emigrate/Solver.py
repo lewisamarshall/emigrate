@@ -73,7 +73,7 @@ class Solver(object):
 
         # Create empty solution dictionaries
         self.ion_names = [ion.name for ion in self.initial_condition.ions]
-        self.frame_series = FrameSeries(self.ion_names, filename)
+        self.frame_series = FrameSeries(filename=filename, ions=self.ion_names)
 
     def _set_equilibrium_mode(self):
         """Import an equilibration object to calculate ion properties."""
