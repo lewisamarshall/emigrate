@@ -73,7 +73,7 @@ class Solver(object):
 
         # Create empty solution dictionaries
         self.ion_names = [ion.name for ion in self.initial_condition.ions]
-        self.frame_series = FrameSeries(self.ion_names, filename, mode='w')
+        self.frame_series = FrameSeries(self.ion_names, filename)
 
     def _set_equilibrium_mode(self):
         """Import an equilibration object to calculate ion properties."""
@@ -110,7 +110,7 @@ class Solver(object):
 
     def _write_solution(self):
         """Write the current state to solutions."""
-        self.frame_series.add_frame(self.time, self.state)
+        self.frame_series.append(self.time, self.state)
 
     def solve(self, interval=1., max_time=10):
         """Solve for a series of time points using an ODE solver."""
@@ -122,16 +122,17 @@ class Solver(object):
         return self.frame_series
 
     def iterate(self, interval=1., max_time=None):
-        self._initialize_solver()
-        while self.solver.successful():
-            if self.solver.t >= max_time and max_time is not None:
-                return
+        with self.frame_series.mode('r+'):
+            self._initialize_solver()
+            while self.solver.successful():
+                if self.solver.t >= max_time and max_time is not None:
+                    return
+                else:
+                    self._solve_step(interval, max_time)
+                    yield self.state
             else:
-                self._solve_step(interval, max_time)
-                yield self.state
-        else:
-            message = 'Solver failed at time {}.'
-            raise RuntimeError(message.format(self.solver.t))
+                message = 'Solver failed at time {}.'
+                raise RuntimeError(message.format(self.solver.t))
 
     def _solve_step(self, dt, tmax):
         tnew = min(self.solver.t + dt, tmax)

@@ -101,12 +101,14 @@ class TestFrameSeries(unittest.TestCase):
         # TODO: make frameseries properly save ions.
         self.fs = FrameSeries(ions=[ion.name for ion in self.frame.ions],
                               filename='examples/test_frame_series.hdf5',
-                              mode='w')
-        self.fs.add_frame(0, self.frame)
+                              )
+        with self.fs.mode('r+'):
+            self.fs.append(0, self.frame)
 
     def test_add(self):
-        for time in range(5):
-            self.fs.add_frame(time, self.frame)
+        with self.fs.mode('r+'):
+            for time in range(5):
+                self.fs.append(time, self.frame)
 
     def test_iterate(self):
         [None for frame in self.fs]

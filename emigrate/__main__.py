@@ -30,7 +30,7 @@ def load(ctx, filename, io):
     """Open an emgrate file and return a serialized frame."""
     _, file_extension = os.path.splitext(filename)
     if file_extension == '.hdf5':
-        ctx.obj['frame_series'] = FrameSeries(filename=filename, mode='r')
+        ctx.obj['frame_series'] = FrameSeries(filename=filename)
     elif file_extension == '.json':
         with open(filename) as f:
             ctx.obj['frame'] = deserialize(f.read())
