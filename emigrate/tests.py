@@ -89,8 +89,10 @@ class TestFrame(unittest.TestCase):
 
     def test_serialize(self):
         frame = Frame(initialization_dict)
+        recreated = deserialize(frame.serialize(compact=False))
         self.assertEqual(frame.serialize(compact=True),
-                         deserialize(frame.serialize(compact=False)).serialize(compact=True))
+                         recreated.serialize(compact=True))
+
 
 class TestFrameSeries(unittest.TestCase):
     @classmethod
@@ -159,7 +161,18 @@ class TestSolver(unittest.TestCase):
         solver.set_reference_frame(ionize.load_ion('acetic acid'), 'right')
         solver.solve(self.dt, self.tmax)
 
+
 class TestCLI(unittest.TestCase):
+
+    @classmethod
+    def setUpClass(self):
+        self.runner = runner = CliRunner()
+        result = self.runner.invoke(cli,
+                                    ['load', 'examples/initial_condition.json',
+                                     'solve', '-t', '10.0', '-d', '1.0',
+                                     '--output', 'examples/cli_test.hdf5'],
+                                    obj={'frame_series': None, 'frame': None})
+
     def setUp(self):
         self.runner = runner = CliRunner()
 
@@ -171,7 +184,7 @@ class TestCLI(unittest.TestCase):
                                     ['construct',
                                      '-i', 'examples/constructor.json',
                                      '-o', 'examples/initial_condition.json'],
-                                     obj={'frame_series': None, 'frame': None})
+                                    obj={'frame_series': None, 'frame': None})
         self.assertEqual(result.exit_code, 0, result)
 
     def test_solve(self):
@@ -179,14 +192,14 @@ class TestCLI(unittest.TestCase):
                                     ['load', 'examples/initial_condition.json',
                                      'solve', '-t', '10.0', '-d', '1.0',
                                      '--output', 'examples/cli_test.hdf5'],
-                                     obj={'frame_series': None, 'frame': None})
+                                    obj={'frame_series': None, 'frame': None})
         self.assertEqual(result.exit_code, 0, result)
 
     def test_echo(self):
         result = self.runner.invoke(cli,
                                     ['load', 'examples/cli_test.hdf5',
                                      'echo', '-f', '5'],
-                                     obj={'frame_series': None, 'frame': None})
+                                    obj={'frame_series': None, 'frame': None})
         self.assertEqual(result.exit_code, 0, result)
 
     def test_plot(self):
@@ -194,7 +207,7 @@ class TestCLI(unittest.TestCase):
                                     ['load', 'examples/cli_test.hdf5',
                                      'plot', '-f', '5',
                                      'examples/test_plot.png'],
-                                     obj={'frame_series': None, 'frame': None})
+                                    obj={'frame_series': None, 'frame': None})
         self.assertEqual(result.exit_code, 0, result)
 
 if __name__ == '__main__':

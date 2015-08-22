@@ -26,7 +26,6 @@ install:
 
 script:
   - coverage run --source=emigrate setup.py test
-  - bash test.sh
 
 after_success:
   - coveralls
