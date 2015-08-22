@@ -3,7 +3,7 @@ import numpy as np
 from scipy.special import erf
 import ionize
 from click.testing import CliRunner
-
+import traceback
 
 from .__main__ import cli
 from .Solver import Solver
@@ -187,7 +187,7 @@ class TestCLI(unittest.TestCase):
                                      '-i', 'examples/constructor.json',
                                      '-o', 'examples/initial_condition.json'],
                                     obj={'frame_series': None, 'frame': None})
-        self.assertEqual(result.exit_code, 0, result.exc_info)
+        self.check_result(result)
 
     def test_solve(self):
         result = self.runner.invoke(cli,
@@ -195,14 +195,20 @@ class TestCLI(unittest.TestCase):
                                      'solve', '-t', '10.0', '-d', '1.0',
                                      '--output', 'examples/cli_test.hdf5'],
                                     obj={'frame_series': None, 'frame': None})
-        self.assertEqual(result.exit_code, 0, result.exc_info)
+        self.check_result(result)
+
+    def test_load(self):
+        result = self.runner.invoke(cli,
+                                    ['load', 'examples/cli_test.hdf5'],
+                                    obj={'frame_series': None, 'frame': None})
+        self.check_result(result)
 
     def test_echo(self):
         result = self.runner.invoke(cli,
                                     ['load', 'examples/cli_test.hdf5',
                                      'echo', '-f', '5'],
                                     obj={'frame_series': None, 'frame': None})
-        self.assertEqual(result.exit_code, 0, result.exc_info)
+        self.check_result(result)
 
     def test_plot(self):
         result = self.runner.invoke(cli,
@@ -210,7 +216,13 @@ class TestCLI(unittest.TestCase):
                                      'plot', '-f', '5',
                                      'examples/test_plot.png'],
                                     obj={'frame_series': None, 'frame': None})
-        self.assertEqual(result.exit_code, 0, result.exc_info)
+        self.check_result(result)
+
+    def check_result(self, result):
+        self.assertEqual(result.exit_code,
+                         0,
+                         ' '.join(traceback.format_tb(result.exc_info[2]))
+                         )
 
 if __name__ == '__main__':
     unittest.main()

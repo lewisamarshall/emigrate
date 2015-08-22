@@ -22,7 +22,7 @@ class FrameSeries(object):
         self.ions = ions
 
         # If there is a file, open it with mode.
-        self.hdf5 = h5py.File(filename, 'a')
+        self.hdf5 = h5py.File(filename)
         self.mode('r')
         self._update_ions()
 
