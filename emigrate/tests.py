@@ -200,7 +200,7 @@ class TestCLI(unittest.TestCase):
                                     ['load', 'examples/cli_test.hdf5',
                                      'echo', '-f', '5'],
                                     obj={'frame_series': None, 'frame': None})
-        self.assertEqual(result.exit_code, 0, result)
+        self.assertEqual(result.exit_code, 0, result.exc_info)
 
     def test_plot(self):
         result = self.runner.invoke(cli,
@@ -208,7 +208,7 @@ class TestCLI(unittest.TestCase):
                                      'plot', '-f', '5',
                                      'examples/test_plot.png'],
                                     obj={'frame_series': None, 'frame': None})
-        self.assertEqual(result.exit_code, 0, result)
+        self.assertEqual(result.exit_code, 0, result.exc_info)
 
 if __name__ == '__main__':
     unittest.main()
