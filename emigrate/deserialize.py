@@ -3,7 +3,6 @@ import numpy as np
 from ionize.deserialize import object_hook as ionize_hook
 import ionize
 from .Frame import Frame
-from .FrameSeries import FrameSeries
 
 
 def deserialize(serial):

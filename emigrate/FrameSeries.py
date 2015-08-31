@@ -1,8 +1,9 @@
 import h5py
 import sys
-from ionize import Ion, deserialize
+import ionize
 
 from .Frame import Frame
+from .deserialize import deserialize
 
 # Create a string data type
 string_datatype = h5py.special_dtype(vlen=unicode)
