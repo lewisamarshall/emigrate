@@ -22,5 +22,6 @@ ratings:
 exclude_paths:
   - emigrate/tests.py
   - examples/*
+  - benchmark.py
 #- spec/**/*
 #- vendor/**/*
