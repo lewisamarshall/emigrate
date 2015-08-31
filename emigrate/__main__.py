@@ -24,15 +24,15 @@ def cli(ctx):
 
 @cli.command()
 @click.pass_context
-@click.argument('filename', type=click.Path(exists=True))
+@click.argument('path', type=click.Path(exists=True))
 @click.option('--io', is_flag=True)
-def load(ctx, filename, io):
+def load(ctx, path, io):
     """Open an emgrate file and return a serialized frame."""
-    _, file_extension = os.path.splitext(filename)
+    _, file_extension = os.path.splitext(path)
     if file_extension == '.hdf5':
-        ctx.obj['frame_series'] = FrameSeries(filename=filename)
+        ctx.obj['frame_series'] = FrameSeries(path=path)
     elif file_extension == '.json':
-        with open(filename) as f:
+        with open(path) as f:
             ctx.obj['frame'] = deserialize(f.read())
     else:
         raise RuntimeError("Can't load {} files.".format(file_extension))
@@ -56,7 +56,7 @@ def plot(ctx, output, frame):
 
     frame = ctx.obj['frame']
     for ion, ion_concentration in zip(frame.ions, frame.concentrations):
-        pyplot.plot(frame.nodes, ion_concentration, '-', label=ion)
+        pyplot.plot(frame.nodes, ion_concentration, '-', label=ion.name)
     pyplot.xlabel('x (mm)')
     pyplot.ylabel('concentration (M)')
     pyplot.ylim(ymin=0)
@@ -107,7 +107,7 @@ def construct(ctx, infile, output, io):
 @click.option('-t', '--time', type=float)
 @click.option('-d', '--dt', type=float)
 def solve(ctx, output, dt, time):
-    solver = Solver(ctx.obj['frame'], filename=output)
+    solver = Solver(ctx.obj['frame'], path=output)
 
     with click.progressbar(solver.iterate(dt, time),
                            length=int(ceil(time/dt)),
@@ -115,12 +115,13 @@ def solve(ctx, output, dt, time):
                            ) as bar:
         for frame in bar:
             pass
-    solver.frame_series.hdf5.close()
+
 
 def close(ctx):
     if ctx.obj['frame_series']:
-        ctx.obj['frame_series'].hdf5.close()
+        ctx.obj['frame_series'].close()
         ctx.obj['frame_series'] = None
+
 
 def main():
     cli(obj={'frame_series': None, 'frame': None})

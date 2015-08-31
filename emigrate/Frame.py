@@ -16,8 +16,9 @@ class Frame(object):
 
     # Core Properties
     nodes = None
-    ions = []
+    ions = None
     concentrations = None
+    time = None
 
     # Solution Properties
     pH = None

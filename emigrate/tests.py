@@ -99,16 +99,12 @@ class TestFrameSeries(unittest.TestCase):
     def setUpClass(self):
         self.frame = Frame(initialization_dict)
         # TODO: make frameseries properly save ions.
-        self.fs = FrameSeries(ions=[ion.name for ion in self.frame.ions],
-                              filename='examples/test_frame_series.hdf5',
-                              )
-        with self.fs.mode('r+'):
-            self.fs.append(0, self.frame)
+        self.fs = FrameSeries(path='examples/test_frame_series.hdf5', mode='w')
+        self.fs.append(self.frame)
 
     def test_add(self):
-        with self.fs.mode('r+'):
-            for time in range(5):
-                self.fs.append(time, self.frame)
+        for time in range(5):
+            self.fs.append(self.frame)
 
     def test_iterate(self):
         [None for frame in self.fs]
@@ -121,23 +117,23 @@ class TestSolver(unittest.TestCase):
         self.dt = 1
 
     def test_slip(self):
-        solver = Solver(self.frame, filename='examples/test_slip.hdf5',
+        solver = Solver(self.frame, path='examples/test_slip.hdf5',
                         precondition=False, flux_mode='slip')
 
         solver.solve(self.dt, self.tmax)
 
     def test_precondition(self):
-        solver = Solver(self.frame, filename='examples/test_precondition.hdf5',
+        solver = Solver(self.frame, path='examples/test_precondition.hdf5',
                         precondition=True, flux_mode='slip')
 
     def test_fixed_pH(self):
         self.frame.pH = 7
-        solver = Solver(self.frame, filename='examples/test_fixed_pH.hdf5',
+        solver = Solver(self.frame, path='examples/test_fixed_pH.hdf5',
                         precondition=False, equilibrium_mode='fixed')
         solver.solve(self.dt, self.tmax)
 
     def test_compact(self):
-        solver = Solver(self.frame, filename='examples/test_compact.hdf5',
+        solver = Solver(self.frame, path='examples/test_compact.hdf5',
                         precondition=False, flux_mode='compact')
         solver.solve(self.dt, self.tmax)
 
@@ -157,7 +153,7 @@ class TestSolver(unittest.TestCase):
                             domain_mode='left',
                             ))
         solver = Solver(system,
-                        filename='examples/test_reference_frame.hdf5',
+                        path='examples/test_reference_frame.hdf5',
                         precondition=True,
                         flux_mode='slip')
         solver.set_reference_frame(ionize.load_ion('acetic acid'), 'right')
@@ -196,7 +192,8 @@ class TestCLI(unittest.TestCase):
         result = self.runner.invoke(cli,
                                     ['load', 'examples/initial_condition.json',
                                      'solve', '-t', '3.0', '-d', '1.0',
-                                     '--output', 'examples/cli_test_solve.hdf5'],
+                                     '--output',
+                                     'examples/cli_test_solve.hdf5'],
                                     obj={'frame_series': None, 'frame': None})
         self.assertEqual(result.exit_code,
                          0,
@@ -226,7 +223,8 @@ class TestCLI(unittest.TestCase):
         result = self.runner.invoke(cli,
                                     ['plot', '-f', '1',
                                      'examples/test_plot.png'],
-                                    obj={'frame_series': FrameSeries('examples/cli_test.hdf5'),
+                                    obj={'frame_series':
+                                         FrameSeries('examples/cli_test.hdf5'),
                                          'frame': None})
         self.assertEqual(result.exit_code,
                          0,

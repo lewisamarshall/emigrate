@@ -1,7 +1,7 @@
 import h5py
-import numpy as np
 import sys
-import contextlib
+from ionize import Ion, deserialize
+
 from .Frame import Frame
 
 # Create a string data type
@@ -10,70 +10,52 @@ string_datatype = h5py.special_dtype(vlen=unicode)
 
 class FrameSeries(object):
 
-    filename = None
-    hdf5 = None
-    ions = None
+    # Public Attribute
+    path = None
 
+    # Private Attribute
+    _ions = None
+    _hdf5 = None
     _compression = 'gzip'
-    _attributes = None
 
-    def __init__(self, filename='default.hdf5', ions=None):
-        self.filename = filename
-        self.ions = ions
+    def __init__(self, path='default.hdf5', mode=None):
+        self.path = path
+        self._hdf5 = h5py.File(self.path, mode=mode)
+        if 'ions' in self._hdf5.keys():
+            self._ions = self._hdf5['ions']
 
-        # If there is a file, open it with mode.
-        self.hdf5 = h5py.File(filename)
-        self.mode('r')
-        self._update_ions()
+    def __enter__(self):
+        return self
 
-    def _frames(self):
-        return self.hdf5.require_group('frames')
-
-    def _update_ions(self):
-        if self.ions is None:
-            self._ions = self.hdf5['ions']
-            self.ions = self._ions
-        else:
-            with self.mode('w'):
-                self._ions = self.hdf5.create_dataset('ions',
-                                                      (len(self.ions),),
-                                                      dtype=string_datatype)
-                for idx, value in enumerate(self.ions):
-                    if sys.version_info < (3,):
-                        self._ions[idx] = value
-                    else:
-                        self._ions[idx] = value.encode('ascii')
+    def __exit__(self, eType, eValue, eTrace):
+        self.close()
 
     def __getitem__(self, idx):
+        assert isinstance(idx, int), "Index must be an integer."
         idx = str(idx)
-        data = dict(self.hdf5['frames'][idx])
-        data['ions'] = np.array(self.ions).tolist()
+        data = dict(self._frames()[idx])
+        data['ions'] = [deserialize(ion) for ion in self._ions[()].tolist()]
         return Frame(data)
-
-    def __setitem__(self, idx, frame):
-        idx = str(idx)
-        location = self._frames().create_group(idx)
-        # location.attrs['time'] = time
-        self._write_frame(frame, location)
-        self.hdf5.flush()
-
 
     def __iter__(self):
         def f():
             idx = 0
-            while True:
-                try:
-                    yield self[idx]
-                    idx += 1
-                except:
-                    raise StopIteration
+            for idx in range(len(self._frames().keys())):
+                yield self[idx]
+            raise StopIteration
+
         return f()
 
-    def append(self, time, frame):
-        idx = len(self._frames().keys())
-        self[idx]=frame
+    def __setitem__(self, idx, frame):
+        assert isinstance(idx, int), "Index must be an integer."
+        if len(self._frames().keys()) == 0:
+            self._set_ions(frame.ions)
 
-    def _write_frame(self, frame, location):
+        # Create location information
+        idx = str(idx)
+        location = self._frames().create_group(idx)
+
+        # Write dict items
         for key, value in frame.__dict__.items():
             if key in ['concentrations', 'nodes', 'pH', 'field']:
                 try:
@@ -83,29 +65,48 @@ class FrameSeries(object):
                 except TypeError:
                     pass
             elif key is 'ions':
-                location['ions'] = self.hdf5['ions']
+                location['ions'] = self._ions
             else:
                 pass
 
-    def mode(self, mode=None):
-        last_mode = self.hdf5.mode
-        if mode is None:
-            return last_mode
-        elif last_mode != mode:
-                self.hdf5.close()
-                self.hdf5 = h5py.File(self.filename, mode)
-        return self._mode_context(last_mode)
+        self._flush()
 
-    @contextlib.contextmanager
-    def _mode_context(self, last_mode):
-        yield
-        self.mode(last_mode)
+    def __len__(self):
+        return len(self._frames().keys())
+
+    def append(self, frame):
+        idx = len(self)
+        self[idx] = frame
+
+    def close(self):
+        self._hdf5.close()
+
+    def _flush(self):
+        self._hdf5.flush()
+
+    def _frames(self):
+        return self._hdf5.require_group('frames')
+
+    def _set_ions(self, ions):
+        self._ions = self._hdf5.create_dataset('ions',
+                                               shape=(len(ions),),
+                                               dtype=string_datatype)
+        for idx, ion in enumerate(ions):
+            if sys.version_info < (3,):
+                serial = ion.serialize()
+            else:
+                serial = ion.serialize().encode('ascii')
+
+            self._ions[idx] = serial
+
+        self._flush()
+
 
 
 if __name__ == '__main__':
-    filename = '/Users/lewis/Documents/github/emigrate/test.hdf5'
+    path = '/Users/lewis/Documents/github/emigrate/test.hdf5'
     ions = [str(i) for i in range(5)]
-    e = FrameSeries(filename=filename, mode='r')
+    e = FrameSeries(path=path, mode='r')
     # print e[1].concentrations.shape
     # print e[1].nodes.shape
     # print e[2].concentrations
