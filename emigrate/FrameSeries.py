@@ -34,6 +34,7 @@ class FrameSeries(object):
     def __getitem__(self, idx):
         assert isinstance(idx, int), "Index must be an integer."
         idx = str(idx)
+        assert idx in self._frames().keys(), ("Frame {} doesn't exist.").format(idx)
         data = dict(self._frames()[idx])
         data['ions'] = [deserialize(ion) for ion in self._ions[()].tolist()]
         return Frame(data)
@@ -101,7 +102,6 @@ class FrameSeries(object):
             self._ions[idx] = serial
 
         self._flush()
-
 
 
 if __name__ == '__main__':

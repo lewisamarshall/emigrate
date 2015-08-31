@@ -48,15 +48,13 @@ def load(ctx, path, io):
 @click.argument('output', type=click.Path(exists=False))
 @click.option('-f', '--frame', type=click.INT, default=None)
 def plot(ctx, output, frame):
-    if frame:
-        ctx.obj['frame'] = ctx.obj['frame_series'][frame]
-    if not ctx.obj['frame']:
-        n = click.prompt('Frame', default=1, type=click.INT)
-        ctx.obj['frame'] = ctx.obj['frame_series'][n]
 
+    ensure_frame(ctx, frame)
     frame = ctx.obj['frame']
+
     for ion, ion_concentration in zip(frame.ions, frame.concentrations):
         pyplot.plot(frame.nodes, ion_concentration, '-', label=ion.name)
+
     pyplot.xlabel('x (mm)')
     pyplot.ylabel('concentration (M)')
     pyplot.ylim(ymin=0)
@@ -70,12 +68,7 @@ def plot(ctx, output, frame):
 @click.pass_context
 @click.option('-f', '--frame', type=click.INT, default=None)
 def echo(ctx, frame):
-    if frame:
-        ctx.obj['frame'] = ctx.obj['frame_series'][frame]
-    if not ctx.obj['frame']:
-        n = click.prompt('Frame', default=1, type=click.INT)
-        ctx.obj['frame'] = ctx.obj['frame_series'][n]
-
+    ensure_frame(ctx, frame)
     click.echo(ctx.obj['frame'].serialize(compact=True))
     close(ctx)
 
@@ -121,6 +114,14 @@ def close(ctx):
     if ctx.obj['frame_series']:
         ctx.obj['frame_series'].close()
         ctx.obj['frame_series'] = None
+
+
+def ensure_frame(ctx, frame):
+    if frame:
+        ctx.obj['frame'] = ctx.obj['frame_series'][frame]
+    if not ctx.obj['frame']:
+        n = click.prompt('Frame', default=1, type=click.INT)
+        ctx.obj['frame'] = ctx.obj['frame_series'][n]
 
 
 def main():

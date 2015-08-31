@@ -165,6 +165,11 @@ class TestCLI(unittest.TestCase):
     @classmethod
     def setUpClass(self):
         self.runner = runner = CliRunner()
+        self.runner.invoke(cli,
+                                    ['construct',
+                                     '-i', 'examples/constructor.json',
+                                     '-o', 'examples/initial_condition.json'],
+                                    obj={'frame_series': None, 'frame': None})
         result = self.runner.invoke(cli,
                                     ['load', 'examples/initial_condition.json',
                                      'solve', '-t', '10.0', '-d', '1.0',
@@ -211,9 +216,10 @@ class TestCLI(unittest.TestCase):
 
     def test_echo(self):
         result = self.runner.invoke(cli,
-                                    ['load', 'examples/cli_test.hdf5',
-                                     'echo', '-f', '5'],
-                                    obj={'frame_series': None, 'frame': None})
+                                    ['echo', '-f', '5'],
+                                    obj={'frame_series':
+                                         FrameSeries(path='examples/cli_test.hdf5'),
+                                         'frame': None})
         self.assertEqual(result.exit_code,
                          0,
                          ' '.join(traceback.format_tb(result.exc_info[2]))
@@ -224,7 +230,7 @@ class TestCLI(unittest.TestCase):
                                     ['plot', '-f', '1',
                                      'examples/test_plot.png'],
                                     obj={'frame_series':
-                                         FrameSeries('examples/cli_test.hdf5'),
+                                         FrameSeries(path='examples/cli_test.hdf5'),
                                          'frame': None})
         self.assertEqual(result.exit_code,
                          0,
