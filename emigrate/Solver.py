@@ -40,13 +40,12 @@ class Solver(object):
     _fluxer = None
     _equilibrator = None
 
-    def __init__(self, initial_condition, path='default.hdf5',
-                 precondition=False, flux_mode='slip', equilibrium_mode='pH'):
+    def __init__(self, initial_condition, precondition=False,
+                 flux_mode='slip', equilibrium_mode='pH'):
         """Initialize with a system from the constructor class."""
 
         self.initial_condition = initial_condition
         self.state = copy.deepcopy(initial_condition)
-        self.path = path
 
         # Set equilibrium mode.
         self.equilibrium_mode = equilibrium_mode
@@ -96,25 +95,26 @@ class Solver(object):
         self._fluxer.frame = frame
         self._fluxer.edge = edge
 
-    def solve(self, interval=1., max_time=10):
+    def solve(self, path='default.hdf5', interval=1., max_time=10):
         """Solve for a series of time points using an ODE solver."""
         if max_time is None:
             raise RuntimeError('Solving requires a finite maximum time.')
 
-        for i in self.iterate(interval, max_time):
-            pass
-        return FrameSeries(self.path, mode='r')
+        [frame for frame in self.iterate(path, interval, max_time)]
 
-    def iterate(self, interval=1., max_time=None):
-        with FrameSeries(self.path, mode='w') as self._frame_series:
-            self._frame_series.append(self.state)
+        return FrameSeries(path, mode='r')
+
+    def iterate(self, path='default.hdf5', interval=1., max_time=None):
+        with FrameSeries(path, mode='w') as frame_series:
+            frame_series.append(self.state)
             self._initialize_solver()
             while self.solver.successful():
                 if self.solver.t >= max_time and max_time is not None:
                     return
                 else:
                     self._solve_step(interval, max_time)
-                    yield self.state
+                    frame_series.append(self.state)
+                    yield copy.deepcopy(self.state)
             else:
                 message = 'Solver failed at time {}.'
                 raise RuntimeError(message.format(self.solver.t))
@@ -124,11 +124,9 @@ class Solver(object):
         self.solver.integrate(new_time)
         self.state.time = self.solver.t
         self._fluxer.unpack(self.solver.y)
-        self._frame_series.append(self.state)
 
     def _initialize_solver(self):
         self._equilibrator.equilibrate()
-
         self.solver = solver = ode(self._objective)
 
         solver.set_integrator(self._method, atol=self._atol, rtol=self._rtol)
@@ -137,7 +135,7 @@ class Solver(object):
             solver.set_solout(self._solout)
         else:
             raise RuntimeError("Solver doesn't support solout."
-                               "Equilibrium won't be computed.")
+                               "Equilibrium can't be computed.")
 
         solver.set_initial_value(self._fluxer.pack(self.initial_condition))
 

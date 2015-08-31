@@ -100,9 +100,9 @@ def construct(ctx, infile, output, io):
 @click.option('-t', '--time', type=float)
 @click.option('-d', '--dt', type=float)
 def solve(ctx, output, dt, time):
-    solver = Solver(ctx.obj['frame'], path=output)
+    solver = Solver(ctx.obj['frame'])
 
-    with click.progressbar(solver.iterate(dt, time),
+    with click.progressbar(solver.iterate(output, dt, time),
                            length=int(ceil(time/dt)),
                            label='Solving...',
                            ) as bar:

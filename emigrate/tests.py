@@ -117,25 +117,24 @@ class TestSolver(unittest.TestCase):
         self.dt = 1
 
     def test_slip(self):
-        solver = Solver(self.frame, path='examples/test_slip.hdf5',
+        solver = Solver(self.frame,
                         precondition=False, flux_mode='slip')
 
-        solver.solve(self.dt, self.tmax)
+        solver.solve('examples/test_slip.hdf5', self.dt, self.tmax)
 
     def test_precondition(self):
-        solver = Solver(self.frame, path='examples/test_precondition.hdf5',
-                        precondition=True, flux_mode='slip')
+        solver = Solver(self.frame, precondition=True, flux_mode='slip')
 
     def test_fixed_pH(self):
         self.frame.pH = 7
-        solver = Solver(self.frame, path='examples/test_fixed_pH.hdf5',
+        solver = Solver(self.frame,
                         precondition=False, equilibrium_mode='fixed')
-        solver.solve(self.dt, self.tmax)
+        solver.solve('examples/test_fixed_pH.hdf5', self.dt, self.tmax)
 
     def test_compact(self):
-        solver = Solver(self.frame, path='examples/test_compact.hdf5',
+        solver = Solver(self.frame,
                         precondition=False, flux_mode='compact')
-        solver.solve(self.dt, self.tmax)
+        solver.solve('examples/test_compact.hdf5', self.dt, self.tmax)
 
     def test_reference_frame(self):
         solutions = [ionize.Solution(['acetic acid', 'b-alanine'],
@@ -153,11 +152,10 @@ class TestSolver(unittest.TestCase):
                             domain_mode='left',
                             ))
         solver = Solver(system,
-                        path='examples/test_reference_frame.hdf5',
                         precondition=True,
                         flux_mode='slip')
         solver.set_reference_frame(ionize.load_ion('acetic acid'), 'right')
-        solver.solve(self.dt, self.tmax)
+        solver.solve('examples/test_reference_frame.hdf5', self.dt, self.tmax)
 
 
 class TestCLI(unittest.TestCase):
