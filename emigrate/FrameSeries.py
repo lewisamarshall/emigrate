@@ -1,88 +1,68 @@
 import h5py
-import json
-import numpy as np
 import sys
-from collections import OrderedDict
-from Frame import Frame
+import ionize
+
+from .Frame import Frame
+from .deserialize import deserialize
 
 # Create a string data type
-string_dt = h5py.special_dtype(vlen=unicode)
+string_datatype = h5py.special_dtype(vlen=unicode)
 
 
 class FrameSeries(object):
 
-    filename = None
-    hdf5 = None
-    attributes = None
-    frames = None
-    ions = None
-    compression = 'gzip'
-    mode = None
+    # Public Attribute
+    path = None
 
-    def __init__(self, ions=None, filename='default.hdf5', mode='w-'):
-        self.filename = filename
-        self.ions = ions
-        self.mode = mode
+    # Private Attribute
+    _ions = None
+    _hdf5 = None
+    _compression = 'gzip'
 
-        # If there is a file, open it with mode.
-        self.hdf5 = h5py.File(filename, mode)
-        self._initialize_hdf5()
-        self._update_ions()
+    def __init__(self, path='default.hdf5', mode=None):
+        self.path = path
+        self._hdf5 = h5py.File(self.path, mode=mode)
+        if 'ions' in self._hdf5.keys():
+            self._ions = self._hdf5['ions']
 
-    def _initialize_hdf5(self):
-        self.attributes = self.hdf5.attrs
-        self.frames = self.hdf5.require_group('frames')
-        self.hdf5.flush()
+    def __enter__(self):
+        return self
 
-    def _update_ions(self):
-        if self.ions is None:
-            self._ions = self.hdf5['ions']
-            self.ions = self._ions
-        else:
-            if self.hdf5 and 'w' in self.mode:
-                self._ions = self.hdf5.create_dataset('ions',
-                                                      (len(self.ions),),
-                                                      dtype=string_dt)
-                for idx, value in enumerate(self.ions):
-                    if sys.version_info < (3,):
-                        self._ions[idx] = value
-                    else:
-                        self._ions[idx] = value.encode('ascii')
+    def __exit__(self, eType, eValue, eTrace):
+        self.close()
 
-    def __getitem__(self, frame):
-        frame = str(frame)
-        data = dict(self.frames[frame])
-        data['ions'] = np.array(self.ions).tolist()
+    def __getitem__(self, idx):
+        assert isinstance(idx, int), "Index must be an integer."
+        idx = str(idx)
+        assert idx in self._frames().keys(), ("Frame {} doesn't exist.").format(idx)
+        data = dict(self._frames()[idx])
+        data['ions'] = [deserialize(ion) for ion in self._ions[()].tolist()]
         return Frame(data)
 
     def __iter__(self):
         def f():
             idx = 0
-            while True:
-                try:
-                    yield self[idx]
-                    idx += 1
-                except:
-                    raise StopIteration
+            for idx in range(len(self._frames().keys())):
+                yield self[idx]
+            raise StopIteration
+
         return f()
 
-    def add_frame(self, time, frame):
-        # Name each electrolyte group with a string representation of a
-        # consecutive integer.
-        idx = str(len(self.frames.keys()))
-        location = self.frames.create_group(idx)
+    def __setitem__(self, idx, frame):
+        assert isinstance(idx, int), "Index must be an integer."
+        if len(self._frames().keys()) == 0:
+            self._set_ions(frame.ions)
 
-        # Write to location
-        location.attrs['time'] = time
-        self._write_frame(frame, location)
-        self.hdf5.flush()
+        # Create location information
+        idx = str(idx)
+        location = self._frames().create_group(idx)
 
-    def _write_frame(self, frame, location):
+        # Write dict items
         for key, value in frame.__dict__.items():
-            if key in ['concentrations', 'nodes', 'pH']:
+            if key in ['concentrations', 'nodes', 'pH', 'field']:
                 try:
                     location.create_dataset(key, data=value,
-                                            compression=self.compression,
+                                            compression=self._compression,
                                             dtype='f4')
                 except TypeError:
                     pass
@@ -91,11 +71,43 @@ class FrameSeries(object):
             else:
                 pass
 
+        self._flush()
+
+    def __len__(self):
+        return len(self._frames().keys())
+
+    def append(self, frame):
+        idx = len(self)
+        self[idx] = frame
+
+    def close(self):
+        self._hdf5.close()
+
+    def _flush(self):
+        self._hdf5.flush()
+
+    def _frames(self):
+        return self._hdf5.require_group('frames')
+
+    def _set_ions(self, ions):
+        self._ions = self._hdf5.create_dataset('ions',
+                                               shape=(len(ions),),
+                                               dtype=string_datatype)
+        for idx, ion in enumerate(ions):
+            if sys.version_info < (3,):
+                serial = ion.serialize()
+            else:
+                serial = ion.serialize().encode('ascii')
+
+            self._ions[idx] = serial
+
+        self._flush()
+
 
 if __name__ == '__main__':
-    file = '/Users/lewis/Documents/github/emigrate/test.hdf5'
+    path = '/Users/lewis/Documents/github/emigrate/test.hdf5'
     ions = [str(i) for i in range(5)]
-    e = FrameSeries(filename=file, mode='r')
+    e = FrameSeries(path=path, mode='r')
     # print e[1].concentrations.shape
     # print e[1].nodes.shape
     # print e[2].concentrations

@@ -1,7 +1,9 @@
 """Define the SLIP flux solver."""
 import numpy as np
-from Fluxer import Fluxer
-from Flux_Limiter import Flux_Limiter
+import warnings
+
+from .Fluxer import Fluxer
+from .Flux_Limiter import Flux_Limiter
 
 
 class SLIP(Fluxer):
@@ -106,9 +108,11 @@ class SLIP(Fluxer):
 
     def node_cost(self):
         """Calculate the cost function of each node."""
-        deriv = np.fabs(self.cz)
-        cost = deriv / np.nanmax(deriv, 1)[:, np.newaxis]
-        cost = np.nanmax(cost, 0) + self.Kag()
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore")
+            deriv = np.fabs(self.cz)
+            cost = deriv / np.nanmax(deriv, 1)[:, np.newaxis]
+            cost = np.nanmax(cost, 0) + self.Kag()
         return cost
 
     def Kag(self):

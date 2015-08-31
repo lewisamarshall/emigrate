@@ -1,20 +1,13 @@
 """An electrophoresis solver."""
-# Numerical imports
-import numpy as np
+# External package imports
 from scipy.integrate import ode
-
-# Other Libraries
-import warnings
 import copy
 
 # Emigrate imports
 from .flux_schemes import fluxers
 from .equilibration_schemes import equilibrators
 from .FrameSeries import FrameSeries
-from .Frame import Frame
 from .preconditioner import preconditioner
-
-# pylint: disable=W0212
 
 
 class Solver(object):
@@ -22,7 +15,7 @@ class Solver(object):
     """A class for performing electromigration calculations.
 
     Args:
-        system, filename=False, precondition=False
+        system, path=False, precondition=False
         flux_mode='compact', equilibrium_mode='pH'
 
     System should be an Frame system that defines the initial condition.
@@ -34,9 +27,7 @@ class Solver(object):
     # State Information
     initial_condition = None
     state = None
-    # #TODO:30 Determine correct time
-    time = None
-    frame_series = None
+    _frame_series = None
 
     # Solver Parameters
     _atol = 1e-12
@@ -46,13 +37,10 @@ class Solver(object):
     # Modules
     flux_mode = None
     equilibrium_mode = None
-    fluxer = None
-    equilibrator = None
+    _fluxer = None
+    _equilibrator = None
 
-    # #TODO:50 Remove these
-    ion_names = None
-
-    def __init__(self, initial_condition, filename=False, precondition=False,
+    def __init__(self, initial_condition, precondition=False,
                  flux_mode='slip', equilibrium_mode='pH'):
         """Initialize with a system from the constructor class."""
 
@@ -69,35 +57,34 @@ class Solver(object):
 
         # Precondition if requested.
         if precondition:
-            preconditioner(self.state, self.fluxer)
+            preconditioner(self.state, self._fluxer)
 
         # Create empty solution dictionaries
         self.ion_names = [ion.name for ion in self.initial_condition.ions]
-        self.frame_series = FrameSeries(self.ion_names, filename, mode='w')
 
     def _set_equilibrium_mode(self):
         """Import an equilibration object to calculate ion properties."""
         # Find the equilibrator.
         try:
-            self.equilibrator = equilibrators[self.equilibrium_mode]
+            self._equilibrator = equilibrators[self.equilibrium_mode]
         except:
             error_string = '{} is not an equilibrator.'
             raise RuntimeError(error_string.format(self.equilibrium_mode))
 
         # Initialize the equilibrator.
-        self.equilibrator = self.equilibrator(self.state)
-        self.equilibrator.equilibrate()
+        self._equilibrator = self._equilibrator(self.state)
+        self._equilibrator.equilibrate()
 
     def _set_flux_mode(self):
         """Import a flux calculator to calculate ion fluxes."""
         # Find the fluxer.
         try:
-            self.fluxer = fluxers[self.flux_mode]
+            self._fluxer = fluxers[self.flux_mode]
         except:
             error_string = '{} is not an fluxer.'
             raise RuntimeError(error_string.format(self.flux_mode))
         # Initialize the fluxer.
-        self.fluxer = self.fluxer(self.state)
+        self._fluxer = self._fluxer(self.state)
 
     def set_reference_frame(self, frame=None, edge='right'):
         """Set the frame of reference.
@@ -105,46 +92,41 @@ class Solver(object):
         Frame should be an ion. Edge should be right or left.
         """
         # #TODO:20 Change this implementation.
-        self.fluxer.frame = frame
-        self.fluxer.edge = edge
+        self._fluxer.frame = frame
+        self._fluxer.edge = edge
 
-    def _write_solution(self):
-        """Write the current state to solutions."""
-        self.frame_series.add_frame(self.time, self.state)
-
-    def solve(self, interval=1., max_time=10):
+    def solve(self, path='default.hdf5', interval=1., max_time=10):
         """Solve for a series of time points using an ODE solver."""
         if max_time is None:
             raise RuntimeError('Solving requires a finite maximum time.')
 
-        for i in self.iterate(interval, max_time):
-            pass
-        return self.frame_series
+        [frame for frame in self.iterate(path, interval, max_time)]
 
-    def iterate(self, interval=1., max_time=None):
-        self._initialize_solver()
-        while self.solver.successful():
-            if self.solver.t >= max_time and max_time is not None:
-                return
+        return FrameSeries(path, mode='r')
+
+    def iterate(self, path='default.hdf5', interval=1., max_time=None):
+        with FrameSeries(path, mode='w') as frame_series:
+            frame_series.append(self.state)
+            self._initialize_solver()
+            while self.solver.successful():
+                if self.solver.t >= max_time and max_time is not None:
+                    return
+                else:
+                    self._solve_step(interval, max_time)
+                    frame_series.append(self.state)
+                    yield copy.deepcopy(self.state)
             else:
-                self._solve_step(interval, max_time)
-                yield self.state
-        else:
-            message = 'Solver failed at time {}.'
-            raise RuntimeError(message.format(self.solver.t))
+                message = 'Solver failed at time {}.'
+                raise RuntimeError(message.format(self.solver.t))
 
-    def _solve_step(self, dt, tmax):
-        tnew = min(self.solver.t + dt, tmax)
-        self.solver.integrate(tnew)
-        self.t = self.solver.t
-        self.fluxer.unpack(self.solver.y)
-        self._write_solution()
+    def _solve_step(self, interval, max_time):
+        new_time = min(self.solver.t + interval, max_time)
+        self.solver.integrate(new_time)
+        self.state.time = self.solver.t
+        self._fluxer.unpack(self.solver.y)
 
     def _initialize_solver(self):
-        self.time = 0
-        self.equilibrator.equilibrate()
-        self._write_solution()
-
+        self._equilibrator.equilibrate()
         self.solver = solver = ode(self._objective)
 
         solver.set_integrator(self._method, atol=self._atol, rtol=self._rtol)
@@ -152,22 +134,18 @@ class Solver(object):
         if solver._integrator.supports_solout:
             solver.set_solout(self._solout)
         else:
-            warnings.warn("""Solver doesn't support solout.
-                             Equilibrium won't be computed.""")
+            raise RuntimeError("Solver doesn't support solout."
+                               "Equilibrium can't be computed.")
 
-        solver.set_initial_value(self.fluxer.pack(self.initial_condition))
+        solver.set_initial_value(self._fluxer.pack(self.initial_condition))
 
     def _solout(self, time, packed):
         """Perform actions when a successful solution step is found."""
-        self.fluxer.unpack(packed)
-        self.equilibrator.equilibrate()
+        self._fluxer.unpack(packed)
+        self._equilibrator.equilibrate()
 
     def _objective(self, time, packed):
         """The objective function of the solver."""
-        # Update local parameters
-        self.time = time
-        self.fluxer.unpack(packed)
-
-        # Update the flux calculator and get the relevant parameters
-        self.fluxer.update()
-        return self.fluxer.pack()
+        self._fluxer.unpack(packed)
+        self._fluxer.update()
+        return self._fluxer.pack()

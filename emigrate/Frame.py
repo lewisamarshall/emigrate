@@ -16,8 +16,9 @@ class Frame(object):
 
     # Core Properties
     nodes = None
-    ions = []
+    ions = None
     concentrations = None
+    time = None
 
     # Solution Properties
     pH = None
@@ -137,12 +138,12 @@ class Frame(object):
             self.current = self.area * self.current_density
 
     # I/O
-    def serialize(self, compact=False):
+    def serialize(self, compact=True):
         serial = {'__frame__': True}
         serial.update(self.__dict__)
 
         if compact:
-            sort_keys, indent, separators = False, None, (',', ':')
+            sort_keys, indent, separators = True, None, (',', ':')
         else:
             sort_keys, indent, separators = True, 4, (', ', ': ')
 
@@ -151,7 +152,7 @@ class Frame(object):
 
     def _encode(self, obj):
         if isinstance(obj, ionize.Ion):
-            ion = obj.serialize()
+            ion = obj.serialize(nested=True)
             ion.update({'__ion__': True})
             return ion
         elif isinstance(obj, np.ndarray):
@@ -162,7 +163,6 @@ class Frame(object):
         return json.JSONEncoder().default(obj)
 
 
-
 if __name__ == '__main__':
     my_solutions = [ionize.Solution(['hydrochloric acid', 'tris'], [.05, .1]),
                     ionize.Solution(['caproic acid', 'tris'], [.05, .1])
@@ -170,5 +170,5 @@ if __name__ == '__main__':
     system = Frame({'lengths': [0.01]*2,
                     'solutions': my_solutions})
     print system.concentrations
-    print Frame(system.serialize())
-    print Frame(system.serialize()).__dict__
+    print system
+    print system.serialize(compact=False)

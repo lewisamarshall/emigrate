@@ -20,12 +20,10 @@ constructor = {'n_nodes': 137,
 
 def _encode(obj):
     if isinstance(obj, ionize.Ion):
-        ion = obj.serialize()
-        ion.update({'__ion__': True})
+        ion = obj.serialize(nested=True)
         return ion
     elif isinstance(obj, ionize.Solution):
-        solution = obj.serialize()
-        solution.update({'__solution__': True})
+        solution = obj.serialize(nested=True)
         return solution
     elif isinstance(obj, np.ndarray):
         return {'__ndarray__': True, 'data': obj.tolist()}

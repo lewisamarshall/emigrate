@@ -2,8 +2,10 @@ import unittest
 import numpy as np
 from scipy.special import erf
 import ionize
+from click.testing import CliRunner
+import traceback
 
-
+from .__main__ import cli
 from .Solver import Solver
 from .Frame import Frame
 from .FrameSeries import FrameSeries
@@ -87,22 +89,22 @@ class TestFrame(unittest.TestCase):
 
     def test_serialize(self):
         frame = Frame(initialization_dict)
+        recreated = deserialize(frame.serialize(compact=False))
         self.assertEqual(frame.serialize(compact=True),
-                         deserialize(frame.serialize(compact=False)).serialize(compact=True))
+                         recreated.serialize(compact=True))
+
 
 class TestFrameSeries(unittest.TestCase):
     @classmethod
     def setUpClass(self):
         self.frame = Frame(initialization_dict)
         # TODO: make frameseries properly save ions.
-        self.fs = FrameSeries(ions=[ion.name for ion in self.frame.ions],
-                              filename='examples/test_frame_series.hdf5',
-                              mode='w')
-        self.fs.add_frame(0, self.frame)
+        self.fs = FrameSeries(path='examples/test_frame_series.hdf5', mode='w')
+        self.fs.append(self.frame)
 
     def test_add(self):
         for time in range(5):
-            self.fs.add_frame(time, self.frame)
+            self.fs.append(self.frame)
 
     def test_iterate(self):
         [None for frame in self.fs]
@@ -111,29 +113,28 @@ class TestFrameSeries(unittest.TestCase):
 class TestSolver(unittest.TestCase):
     def setUp(self):
         self.frame = Frame(initialization_dict)
-        self.tmax = 20
+        self.tmax = 2
         self.dt = 1
 
     def test_slip(self):
-        solver = Solver(self.frame, filename='examples/test_slip.hdf5',
+        solver = Solver(self.frame,
                         precondition=False, flux_mode='slip')
 
-        solver.solve(self.dt, self.tmax)
+        solver.solve('examples/test_slip.hdf5', self.dt, self.tmax)
 
     def test_precondition(self):
-        solver = Solver(self.frame, filename='examples/test_precondition.hdf5',
-                        precondition=True, flux_mode='slip')
+        solver = Solver(self.frame, precondition=True, flux_mode='slip')
 
     def test_fixed_pH(self):
         self.frame.pH = 7
-        solver = Solver(self.frame, filename='examples/test_fixed_pH.hdf5',
+        solver = Solver(self.frame,
                         precondition=False, equilibrium_mode='fixed')
-        solver.solve(self.dt, self.tmax)
+        solver.solve('examples/test_fixed_pH.hdf5', self.dt, self.tmax)
 
     def test_compact(self):
-        solver = Solver(self.frame, filename='examples/test_compact.hdf5',
+        solver = Solver(self.frame,
                         precondition=False, flux_mode='compact')
-        solver.solve(self.dt, self.tmax)
+        solver.solve('examples/test_compact.hdf5', self.dt, self.tmax)
 
     def test_reference_frame(self):
         solutions = [ionize.Solution(['acetic acid', 'b-alanine'],
@@ -151,11 +152,88 @@ class TestSolver(unittest.TestCase):
                             domain_mode='left',
                             ))
         solver = Solver(system,
-                        filename='examples/test_reference_frame.hdf5',
                         precondition=True,
                         flux_mode='slip')
         solver.set_reference_frame(ionize.load_ion('acetic acid'), 'right')
-        solver.solve(self.dt, self.tmax)
+        solver.solve('examples/test_reference_frame.hdf5', self.dt, self.tmax)
+
+
+class TestCLI(unittest.TestCase):
+
+    @classmethod
+    def setUpClass(self):
+        self.runner = runner = CliRunner()
+        self.runner.invoke(cli,
+                                    ['construct',
+                                     '-i', 'examples/constructor.json',
+                                     '-o', 'examples/initial_condition.json'],
+                                    obj={'frame_series': None, 'frame': None})
+        result = self.runner.invoke(cli,
+                                    ['load', 'examples/initial_condition.json',
+                                     'solve', '-t', '10.0', '-d', '1.0',
+                                     '--output', 'examples/cli_test.hdf5'],
+                                    obj={'frame_series': None, 'frame': None})
+
+    def setUp(self):
+        self.runner = runner = CliRunner()
+
+    def tearDown(self):
+        del self.runner
+
+    def test_construct(self):
+        result = self.runner.invoke(cli,
+                                    ['construct',
+                                     '-i', 'examples/constructor.json',
+                                     '-o', 'examples/initial_condition.json'],
+                                    obj={'frame_series': None, 'frame': None})
+        self.assertEqual(result.exit_code,
+                         0,
+                         ' '.join(traceback.format_tb(result.exc_info[2]))
+                         )
+
+    def test_solve(self):
+        result = self.runner.invoke(cli,
+                                    ['load', 'examples/initial_condition.json',
+                                     'solve', '-t', '3.0', '-d', '1.0',
+                                     '--output',
+                                     'examples/cli_test_solve.hdf5'],
+                                    obj={'frame_series': None, 'frame': None})
+        self.assertEqual(result.exit_code,
+                         0,
+                         ' '.join(traceback.format_tb(result.exc_info[2]))
+                         )
+
+    def test_load(self):
+        result = self.runner.invoke(cli,
+                                    ['load', 'examples/cli_test.hdf5'],
+                                    obj={'frame_series': None, 'frame': None})
+        self.assertEqual(result.exit_code,
+                         0,
+                         ' '.join(traceback.format_tb(result.exc_info[2]))
+                         )
+
+    def test_echo(self):
+        result = self.runner.invoke(cli,
+                                    ['echo', '-f', '5'],
+                                    obj={'frame_series':
+                                         FrameSeries(path='examples/cli_test.hdf5'),
+                                         'frame': None})
+        self.assertEqual(result.exit_code,
+                         0,
+                         ' '.join(traceback.format_tb(result.exc_info[2]))
+                         )
+
+    def test_plot(self):
+        result = self.runner.invoke(cli,
+                                    ['plot', '-f', '1',
+                                     'examples/test_plot.png'],
+                                    obj={'frame_series':
+                                         FrameSeries(path='examples/cli_test.hdf5'),
+                                         'frame': None})
+        self.assertEqual(result.exit_code,
+                         0,
+                         ' '.join(traceback.format_tb(result.exc_info[2]))
+                         )
 
 
 if __name__ == '__main__':
