@@ -5,6 +5,7 @@ from Equilibrator import Equilibrator
 from Multiroot import Multiroot
 # pylint: disable=W0232, E1101, W0201, E1103
 
+# TODO: Pull constants from ionize.
 # Physical Constants
 k_water = 1E-14
 lpm3 = 1000

@@ -29,8 +29,6 @@ initialization_dict = dict(n_nodes=137,
                            current=-500.,
                            )
 
-# #TODO:10 Add smaller unit tests.
-
 
 class TestMultiroot(unittest.TestCase):
     @classmethod
