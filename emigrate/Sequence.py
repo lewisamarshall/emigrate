@@ -9,7 +9,7 @@ from .deserialize import deserialize
 string_datatype = h5py.special_dtype(vlen=unicode)
 
 
-class FrameSeries(object):
+class Sequence(object):
 
     # Public Attribute
     path = None
@@ -107,7 +107,7 @@ class FrameSeries(object):
 if __name__ == '__main__':
     path = '/Users/lewis/Documents/github/emigrate/test.hdf5'
     ions = [str(i) for i in range(5)]
-    e = FrameSeries(path=path, mode='r')
+    e = Sequence(path=path, mode='r')
     # print e[1].concentrations.shape
     # print e[1].nodes.shape
     # print e[2].concentrations

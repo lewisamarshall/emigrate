@@ -8,7 +8,7 @@ import traceback
 from .__main__ import cli
 from .Solver import Solver
 from .Frame import Frame
-from .FrameSeries import FrameSeries
+from .Sequence import Sequence
 from .flux_schemes.Differentiate import Differentiate
 from .deserialize import deserialize
 from .equilibration_schemes.Multiroot import Multiroot
@@ -94,12 +94,11 @@ class TestFrame(unittest.TestCase):
                          recreated.serialize(compact=True))
 
 
-class TestFrameSeries(unittest.TestCase):
+class TestSequence(unittest.TestCase):
     @classmethod
     def setUpClass(self):
         self.frame = Frame(initialization_dict)
-        # TODO: make frameseries properly save ions.
-        self.fs = FrameSeries(path='examples/test_frame_series.hdf5', mode='w')
+        self.fs = Sequence(path='examples/test_sequence.hdf5', mode='w')
         self.fs.append(self.frame)
 
     def test_add(self):
@@ -167,12 +166,12 @@ class TestCLI(unittest.TestCase):
                                     ['construct',
                                      '-i', 'examples/constructor.json',
                                      '-o', 'examples/initial_condition.json'],
-                                    obj={'frame_series': None, 'frame': None})
+                                    obj={'sequence': None, 'frame': None})
         result = self.runner.invoke(cli,
                                     ['load', 'examples/initial_condition.json',
                                      'solve', '-t', '10.0', '-d', '1.0',
                                      '--output', 'examples/cli_test.hdf5'],
-                                    obj={'frame_series': None, 'frame': None})
+                                    obj={'sequence': None, 'frame': None})
 
     def setUp(self):
         self.runner = runner = CliRunner()
@@ -185,7 +184,7 @@ class TestCLI(unittest.TestCase):
                                     ['construct',
                                      '-i', 'examples/constructor.json',
                                      '-o', 'examples/initial_condition.json'],
-                                    obj={'frame_series': None, 'frame': None})
+                                    obj={'sequence': None, 'frame': None})
         self.assertEqual(result.exit_code,
                          0,
                          ' '.join(traceback.format_tb(result.exc_info[2]))
@@ -197,7 +196,7 @@ class TestCLI(unittest.TestCase):
                                      'solve', '-t', '3.0', '-d', '1.0',
                                      '--output',
                                      'examples/cli_test_solve.hdf5'],
-                                    obj={'frame_series': None, 'frame': None})
+                                    obj={'sequence': None, 'frame': None})
         self.assertEqual(result.exit_code,
                          0,
                          ' '.join(traceback.format_tb(result.exc_info[2]))
@@ -206,7 +205,7 @@ class TestCLI(unittest.TestCase):
     def test_load(self):
         result = self.runner.invoke(cli,
                                     ['load', 'examples/cli_test.hdf5'],
-                                    obj={'frame_series': None, 'frame': None})
+                                    obj={'sequence': None, 'frame': None})
         self.assertEqual(result.exit_code,
                          0,
                          ' '.join(traceback.format_tb(result.exc_info[2]))
@@ -215,8 +214,8 @@ class TestCLI(unittest.TestCase):
     def test_echo(self):
         result = self.runner.invoke(cli,
                                     ['echo', '-f', '5'],
-                                    obj={'frame_series':
-                                         FrameSeries(path='examples/cli_test.hdf5'),
+                                    obj={'sequence':
+                                         Sequence(path='examples/cli_test.hdf5'),
                                          'frame': None})
         self.assertEqual(result.exit_code,
                          0,
@@ -227,8 +226,8 @@ class TestCLI(unittest.TestCase):
         result = self.runner.invoke(cli,
                                     ['plot', '-f', '1',
                                      'examples/test_plot.png'],
-                                    obj={'frame_series':
-                                         FrameSeries(path='examples/cli_test.hdf5'),
+                                    obj={'sequence':
+                                         Sequence(path='examples/cli_test.hdf5'),
                                          'frame': None})
         self.assertEqual(result.exit_code,
                          0,

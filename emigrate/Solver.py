@@ -6,7 +6,7 @@ import copy
 # Emigrate imports
 from .flux_schemes import fluxers
 from .equilibration_schemes import equilibrators
-from .FrameSeries import FrameSeries
+from .Sequence import Sequence
 from .preconditioner import preconditioner
 
 
@@ -27,7 +27,6 @@ class Solver(object):
     # State Information
     initial_condition = None
     state = None
-    _frame_series = None
 
     # Solver Parameters
     _atol = 1e-12
@@ -102,18 +101,18 @@ class Solver(object):
 
         [frame for frame in self.iterate(path, interval, max_time)]
 
-        return FrameSeries(path, mode='r')
+        return Sequence(path, mode='r')
 
     def iterate(self, path='default.hdf5', interval=1., max_time=None):
-        with FrameSeries(path, mode='w') as frame_series:
-            frame_series.append(self.state)
+        with Sequence(path, mode='w') as sequence:
+            sequence.append(self.state)
             self._initialize_solver()
             while self.solver.successful():
                 if self.solver.t >= max_time and max_time is not None:
                     return
                 else:
                     self._solve_step(interval, max_time)
-                    frame_series.append(self.state)
+                    sequence.append(self.state)
                     yield copy.deepcopy(self.state)
             else:
                 message = 'Solver failed at time {}.'

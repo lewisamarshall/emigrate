@@ -141,17 +141,20 @@ class SLIP(Fluxer):
         """Calculate the electric field at each node."""
         if self.mode is 'voltage':
             self.set_current()
-            self.state.field = -(self.state.current_density +
-                                 self.diffusive_current())/self.conductivity()
+            self._set_field()
+
         elif self.mode is 'current':
             self.state.current_density = self.state.current/self._area
-            self.state.field = -(self.state.current_density +
-                                 self.diffusive_current())/self.conductivity()
+            self._set_field()
             self.state.voltage = np.sum((self.state.field[:-1] +
                                          self.state.field[1:]) /
                                         2 * np.diff(self.state.nodes))
         else:
             raise RuntimeError()
+
+    def _set_field(self):
+        self.state.field = -(self.state.current_density +
+                             self.diffusive_current())/self.conductivity()
 
     def conductivity(self):
         """Calculate the conductivty at each location."""
