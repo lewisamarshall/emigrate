@@ -1,4 +1,5 @@
 """Command line interface for emigrate."""
+from .__version__ import __version__
 from .Solver import Solver
 from .Frame import Frame
 from .Sequence import Sequence
@@ -38,9 +39,19 @@ def load(ctx, path, io):
         raise RuntimeError("Can't load {} files.".format(file_extension))
 
     if io:
-        for frame_num in iter(sys.stdin.readline, ''):
-            frame = ctx.obj['sequence'][int(frame_num)]
-            click.echo(frame.serialize(compact=True))
+        sequence = ctx.obj['sequence']
+        header = {'length': len(sequence),
+                  'version': sequence.version()}
+        click.echo(json.dumps(header))
+        for frame_index in iter(sys.stdin.readline, ''):
+            if 'exit' in frame_index:
+                break
+            try:
+                frame = sequence[int(frame_index)]
+                click.echo(frame.serialize(compact=True))
+            except (IndexError, ValueError) as e:
+                msg = {'error': repr(e)}
+                click.echo(json.dumps(msg))
 
 
 @cli.command()

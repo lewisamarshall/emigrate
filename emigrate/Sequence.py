@@ -2,6 +2,7 @@ import h5py
 import sys
 import ionize
 
+from .__version__ import __version__
 from .Frame import Frame
 from .deserialize import deserialize
 
@@ -22,6 +23,7 @@ class Sequence(object):
     def __init__(self, path='default.hdf5', mode=None):
         self.path = path
         self._hdf5 = h5py.File(self.path, mode=mode)
+        self.version()
         if 'ions' in self._hdf5.keys():
             self._ions = self._hdf5['ions']
 
@@ -32,11 +34,14 @@ class Sequence(object):
         self.close()
 
     def __getitem__(self, idx):
-        assert isinstance(idx, int), "Index must be an integer."
-        idx = str(idx)
-        assert idx in self._frames().keys(), ("Frame {} doesn't exist.").format(idx)
-        data = dict(self._frames()[idx])
-        data['ions'] = [deserialize(ion) for ion in self._ions[()].tolist()]
+        if not isinstance(idx, int):
+            raise IndexError('Sequence index must be an integer.')
+        if not str(idx) in self._frames().keys():
+            raise IndexError('Sequence index out of range.')
+
+        data = dict(self._frames()[str(idx)])
+        data['ions'] = [deserialize(ion)
+                        for ion in self._ions[()].tolist()]
         return Frame(data)
 
     def __iter__(self):
@@ -102,6 +107,11 @@ class Sequence(object):
             self._ions[idx] = serial
 
         self._flush()
+
+    def version(self):
+        if 'version' not in self._hdf5.attrs.keys():
+            self._hdf5.attrs['version'] = __version__
+        return self._hdf5.attrs['version']
 
 
 if __name__ == '__main__':
