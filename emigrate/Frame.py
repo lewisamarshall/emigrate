@@ -46,6 +46,18 @@ class Frame(object):
 
         self._resolve_current()
 
+    def __repr__(self):
+        return "Frame({})".format({key:repr(value) for key, value in self.__dict__.items()})
+
+    def __str__(self):
+        lines = []
+        lines.append('Frame')
+        lines.append('-----')
+        lines.append('Nodes:   {}'.format(len(self.nodes)))
+        lines.append('Length:  {} m'.format(max(self.nodes) - min(self.nodes)))
+        lines.append('Time:    {}'.format(self.time))
+        return '\n'.join(lines)
+
     def construct(self, constructor_input):
         """Construct electrophoretic system based on a set of solutions."""
 

@@ -1,5 +1,5 @@
 #!/usr/bin/python
-from emigrate import __version__
+from emigrate.__version__ import __version__
 from setuptools import setup, find_packages
 try:
     import pypandoc
@@ -25,7 +25,7 @@ setup(name='emigrate',
       description='A package for simulating electrophoresis.',
       packages=find_packages(),
       long_description=long_description,
-      requires=['numpy', 'scipy', 'ionize', 'h5py', 'ionize'],
+      requires=['numpy', 'scipy', 'ionize', 'h5py', 'ionize', 'click', 'matplotlib'],
       entry_points={'console_scripts': ['emigrate = emigrate.__main__:main']},
       test_suite="emigrate.tests",
       )

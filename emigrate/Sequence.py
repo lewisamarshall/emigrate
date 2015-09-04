@@ -54,7 +54,12 @@ class Sequence(object):
         return f()
 
     def __setitem__(self, idx, frame):
-        assert isinstance(idx, int), "Index must be an integer."
+        if not isinstance(idx, int):
+            raise IndexError('Sequence index must be an integer.')
+
+        if str(idx-1) not in self._frames().keys() and self._frames().keys():
+            raise IndexError('Sequence index out of range.')
+
         if len(self._frames().keys()) == 0:
             self._set_ions(frame.ions)
 
@@ -80,6 +85,19 @@ class Sequence(object):
 
     def __len__(self):
         return len(self._frames().keys())
+
+    def __repr__(self):
+        return "Sequence(path='{}', mode='{}')".format(self.path, self.mode())
+
+    def __str__(self):
+        lines = []
+        lines.append('Sequence')
+        lines.append('-----------------')
+        lines.append("Path:    '{}'".format(self.path))
+        lines.append("Mode:    '{}'".format(self.mode()))
+        lines.append('Length:  {}'.format(len(self)))
+        lines.append('Version: {}'.format(self.version()))
+        return '\n'.join(lines)
 
     def append(self, frame):
         idx = len(self)
@@ -112,6 +130,9 @@ class Sequence(object):
         if 'version' not in self._hdf5.attrs.keys():
             self._hdf5.attrs['version'] = __version__
         return self._hdf5.attrs['version']
+
+    def mode(self):
+        return self._hdf5.mode
 
 
 if __name__ == '__main__':
