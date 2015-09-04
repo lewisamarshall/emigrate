@@ -1,4 +1,5 @@
 #!/usr/bin/python
+from emigrate import __version__
 from setuptools import setup, find_packages
 try:
     import pypandoc
@@ -7,7 +8,7 @@ except:
     long_description = None
 
 setup(name='emigrate',
-      version='0.12.0',
+      version=__version__,
       author='Lewis A. Marshall',
       author_email='lewis.a.marshall@gmail.com',
       url="https://github.com/lewisamarshall/emigrate",
