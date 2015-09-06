@@ -1,5 +1,9 @@
 #!/usr/bin/python
-from emigrate.__version__ import __version__
+import sys
+if sys.version_info < (3,):
+    from emigrate.__version__ import __version__
+else:
+    __version__ = open('emigrate/__version__.py').read().strip().split("'")[-2]
 from setuptools import setup, find_packages
 try:
     import pypandoc
