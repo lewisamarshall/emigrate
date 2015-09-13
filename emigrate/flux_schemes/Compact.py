@@ -10,11 +10,6 @@ class Compact(Fluxer):
 
     boundary_mode = 'fixed'
     differentiation_method = '6th-Order'
-    j = 0
-    E = None
-    V = 0
-    x = None
-    concentrations = None
 
     def _update(self):
         """Calculate the flux of chemical species."""
@@ -23,13 +18,9 @@ class Compact(Fluxer):
             self.electromigration_flux() +\
             self.advection_flux()
 
-    def set_current(self):
-        """Calculate the current based on a fixed voltage drop."""
-        self.state.current_density = (self.state.voltage /
-                                      sum(self.dz / self.conductivity()))
-
     def set_E(self):
         """Calculate the electric field at each node."""
+        self.state.current_density = self.state.current/self._area
         self.state.field = -self.state.current_density/self.conductivity()
 
     def diffusive_flux(self):

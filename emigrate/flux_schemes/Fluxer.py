@@ -39,12 +39,11 @@ class Fluxer(object):
         self._prep_domain()
 
         # Prepare the voltage/current and bulk flow mode from the state.
-        self.current_density = self.state.current_density
         if self.state.voltage:
             self.mode = 'voltage'
-            if self.current_density:
+            if self.self.state.current:
                 warnings.warn(
-                    'state has both current and voltage. Using voltage.'
+                    'State has both current and voltage. Using voltage.'
                     )
         else:
             self.mode = 'current'
