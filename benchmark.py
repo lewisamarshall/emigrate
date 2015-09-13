@@ -21,11 +21,10 @@ system = emigrate.Frame(dict(
 
 
 solver = emigrate.Solver(system,
-                         filename='examples/benchmark.hdf5',
                          precondition=True,
                          flux_mode='slip')
 tmax = 200
 dt = 1
 ode_solver = 'dopri5'
 profile = True
-cProfile.run("solver.solve(dt, tmax)")
+cProfile.run("solver.solve('examples/benchmark.hdf5', dt, tmax)")
