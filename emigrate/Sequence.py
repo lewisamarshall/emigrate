@@ -39,9 +39,13 @@ class Sequence(object):
             raise IndexError('Sequence index out of range.')
 
         data = dict(self._frames()[str(idx)])
-        # TODO: Store info on what needs to be deserialized
-        data['ions'] = [deserialize(ion)
-                        for ion in data['ions'][()].tolist()]
+
+        # If a particular dataset was serialized before storing,
+        # deserialize it before using.
+        for key in data.keys():
+            if 'serialized' in data[key].attrs.keys():
+                data[key] = [deserialize(value)
+                             for value in data[key][()].tolist()]
         data.update(self._frames()[str(idx)].attrs)
         return Frame(data)
 
@@ -108,18 +112,17 @@ class Sequence(object):
 
     def _write_objects(self, key, value, group):
         try:
-            value = value.serialize()
-            group.attr[key] = value
+            value = [value.serialize()]
         except:
-            if sys.version_info < (3,):
-                value = [v.serialize() for v in value]
-            else:
-                value = [v.serialize().encode('ascii') for v in value]
+            value = [v.serialize() for v in value]
+        if sys.version_info > (3,):
+            value = [v.encode('ascii') for v in value]
 
-            data = group.create_dataset(key,
-                                        data=value,
-                                        shape=(len(value),),
-                                        dtype=string_datatype)
+        data = group.create_dataset(key,
+                                    data=value,
+                                    shape=(len(value),),
+                                    dtype=string_datatype)
+        data.attrs['serialized'] = True
 
     def version(self):
         if 'version' not in self._hdf5.attrs.keys():
