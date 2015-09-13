@@ -28,7 +28,6 @@ class Frame(object):
     # Default Properties
     voltage = 0
     field = None
-    current_density = 0
     current = 0.
     area = 1.
     pressure = 0
@@ -44,7 +43,17 @@ class Frame(object):
         else:
             self.__dict__ = constructor
 
-        self._resolve_current()
+    def __repr__(self):
+        return "Frame({})".format({key:repr(value) for key, value in self.__dict__.items()})
+
+    def __str__(self):
+        lines = []
+        lines.append('Frame')
+        lines.append('-----')
+        lines.append('Nodes:   {}'.format(len(self.nodes)))
+        lines.append('Length:  {} m'.format(max(self.nodes) - min(self.nodes)))
+        lines.append('Time:    {}'.format(self.time))
+        return '\n'.join(lines)
 
     def construct(self, constructor_input):
         """Construct electrophoretic system based on a set of solutions."""
@@ -55,7 +64,6 @@ class Frame(object):
                        'n_nodes': 100,
                        'interface_length': 1e-4,
                        'voltage': 0,
-                       'current_density': 0,
                        'current': 0,
                        'domain_mode': 'left',
                        'bulk_flow': 0.,
@@ -67,7 +75,7 @@ class Frame(object):
         self._create_ions(constructor)
         self._create_domain(constructor)
         self._create_concentrations(constructor)
-        for feature in ['current', 'current_density', 'voltage']:
+        for feature in ['current', 'voltage']:
             self.__dict__[feature] = constructor[feature]
 
     def _create_domain(self, constructor):
@@ -127,16 +135,6 @@ class Frame(object):
             self.concentrations.append(ion_concentration)
         self.concentrations = np.array(self.concentrations)
 
-    def _resolve_current(self):
-        if self.current:
-            cd = self.current/self.area
-            if self.current_density and not self.current_density == cd:
-                warnings.warn('Current and current density do not match. '
-                              'Correcting current density.')
-            self.current_density = cd
-        elif self.current_density:
-            self.current = self.area * self.current_density
-
     # I/O
     def serialize(self, compact=True):
         serial = {'__frame__': True}
@@ -161,14 +159,3 @@ class Frame(object):
             return {'__ndarray__': True, 'data': obj[()].tolist()}
         # Let the base class default method raise the TypeError
         return json.JSONEncoder().default(obj)
-
-
-if __name__ == '__main__':
-    my_solutions = [ionize.Solution(['hydrochloric acid', 'tris'], [.05, .1]),
-                    ionize.Solution(['caproic acid', 'tris'], [.05, .1])
-                    ]
-    system = Frame({'lengths': [0.01]*2,
-                    'solutions': my_solutions})
-    print system.concentrations
-    print system
-    print system.serialize(compact=False)

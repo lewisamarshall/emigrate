@@ -4,10 +4,12 @@ Class Frame constructs an electrophoresis system.
 
 Class Solver solves the system.
 
-Class FrameSeries creates an on-disk representation of the solution.
+Class Sequence creates an on-disk representation of the solution.
 
-CLI is a command line interface for the solver.
+Emigrate can be used from the command line.
 """
+
 from .Solver import Solver
 from .Frame import Frame
-from .FrameSeries import FrameSeries
+from .Sequence import Sequence
+from .__version__ import __version__

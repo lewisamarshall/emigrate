@@ -54,13 +54,11 @@ class Multiroot(object):
         objective = self._get_objective(polys, n)
         jac = self._get_jacobian(polys, n, offset)
 
-        roots = optimize.root(objective, guess,
-                              jac=jac, method=self.method,
-                              options=self.solver_options)
-
-        if not roots.success:
-            warnings.warn(roots.message)
-
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore")
+            roots = optimize.root(objective, guess,
+                                  jac=jac, method=self.method,
+                                  options=self.solver_options)
         return roots.x
 
     def _get_objective(self, polys, n):
@@ -97,15 +95,13 @@ class Multiroot(object):
                 warnings.warn("Multiple roots found.")
             return float(root[0].real)
         else:
-            raise RuntimeError("Failed to find pH.")
+            raise RuntimeError("Failed to find root.")
 
     def _ensure_positive(self, roots, polys):
         if self.enforce_positive:
-            negative_roots = roots < 0
-            if np.any(negative_roots):
-                for idx, value in enumerate(negative_roots):
-                    if value:
-                        roots[idx] = self._1d_analytical_solve(polys[:, idx])
+            for idx, value in enumerate(roots < 0):
+                if value:
+                    roots[idx] = self._1d_analytical_solve(polys[:, idx])
         return roots
 
 if __name__ == '__main__':

@@ -1,7 +1,8 @@
 """Command line interface for emigrate."""
+from .__version__ import __version__
 from .Solver import Solver
 from .Frame import Frame
-from .FrameSeries import FrameSeries
+from .Sequence import Sequence
 from .deserialize import deserialize
 
 import sys
@@ -30,7 +31,7 @@ def load(ctx, path, io):
     """Open an emgrate file and return a serialized frame."""
     _, file_extension = os.path.splitext(path)
     if file_extension == '.hdf5':
-        ctx.obj['frame_series'] = FrameSeries(path=path)
+        ctx.obj['sequence'] = Sequence(path=path)
     elif file_extension == '.json':
         with open(path) as f:
             ctx.obj['frame'] = deserialize(f.read())
@@ -38,9 +39,19 @@ def load(ctx, path, io):
         raise RuntimeError("Can't load {} files.".format(file_extension))
 
     if io:
-        for frame_num in iter(sys.stdin.readline, ''):
-            frame = ctx.obj['frame_series'][int(frame_num)]
-            click.echo(frame.serialize(compact=True))
+        sequence = ctx.obj['sequence']
+        header = {'length': len(sequence),
+                  'version': sequence.version()}
+        click.echo(json.dumps(header))
+        for frame_index in iter(sys.stdin.readline, ''):
+            if 'exit' in frame_index:
+                break
+            try:
+                frame = sequence[int(frame_index)]
+                click.echo(frame.serialize(compact=True))
+            except (IndexError, ValueError) as e:
+                msg = {'error': repr(e)}
+                click.echo(json.dumps(msg))
 
 
 @cli.command()
@@ -111,21 +122,21 @@ def solve(ctx, output, dt, time):
 
 
 def close(ctx):
-    if ctx.obj['frame_series']:
-        ctx.obj['frame_series'].close()
-        ctx.obj['frame_series'] = None
+    if ctx.obj['sequence']:
+        ctx.obj['sequence'].close()
+        ctx.obj['sequence'] = None
 
 
 def ensure_frame(ctx, frame):
     if frame:
-        ctx.obj['frame'] = ctx.obj['frame_series'][frame]
+        ctx.obj['frame'] = ctx.obj['sequence'][frame]
     if not ctx.obj['frame']:
         n = click.prompt('Frame', default=1, type=click.INT)
-        ctx.obj['frame'] = ctx.obj['frame_series'][n]
+        ctx.obj['frame'] = ctx.obj['sequence'][n]
 
 
 def main():
-    cli(obj={'frame_series': None, 'frame': None})
+    cli(obj={'sequence': None, 'frame': None})
 
 if __name__ == '__main__':
     main()

@@ -1,4 +1,9 @@
 #!/usr/bin/python
+import sys
+if sys.version_info < (3,):
+    from emigrate.__version__ import __version__
+else:
+    __version__ = open('emigrate/__version__.py').read().strip().split("'")[-2]
 from setuptools import setup, find_packages
 try:
     import pypandoc
@@ -7,7 +12,7 @@ except:
     long_description = None
 
 setup(name='emigrate',
-      version='0.12.0',
+      version=__version__,
       author='Lewis A. Marshall',
       author_email='lewis.a.marshall@gmail.com',
       url="https://github.com/lewisamarshall/emigrate",
@@ -24,7 +29,7 @@ setup(name='emigrate',
       description='A package for simulating electrophoresis.',
       packages=find_packages(),
       long_description=long_description,
-      requires=['numpy', 'scipy', 'ionize', 'h5py', 'ionize'],
+      requires=['numpy', 'scipy', 'ionize', 'h5py', 'ionize', 'click', 'matplotlib'],
       entry_points={'console_scripts': ['emigrate = emigrate.__main__:main']},
       test_suite="emigrate.tests",
       )
