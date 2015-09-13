@@ -131,15 +131,3 @@ class Sequence(object):
 
     def mode(self):
         return self._hdf5.mode
-
-
-if __name__ == '__main__':
-    path = '/Users/lewis/Documents/github/emigrate/test.hdf5'
-    ions = [str(i) for i in range(5)]
-    e = Sequence(path=path, mode='r')
-    # print e[1].concentrations.shape
-    # print e[1].nodes.shape
-    # print e[2].concentrations
-    # print e[3].serialize()
-    for idx, electrolyte in enumerate(e):
-        print electrolyte.pH

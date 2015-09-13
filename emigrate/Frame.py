@@ -159,14 +159,3 @@ class Frame(object):
             return {'__ndarray__': True, 'data': obj[()].tolist()}
         # Let the base class default method raise the TypeError
         return json.JSONEncoder().default(obj)
-
-
-if __name__ == '__main__':
-    my_solutions = [ionize.Solution(['hydrochloric acid', 'tris'], [.05, .1]),
-                    ionize.Solution(['caproic acid', 'tris'], [.05, .1])
-                    ]
-    system = Frame({'lengths': [0.01]*2,
-                    'solutions': my_solutions})
-    print system.concentrations
-    print system
-    print system.serialize(compact=False)
