@@ -1,6 +1,8 @@
 import h5py
+import numpy as np
 import sys
 import ionize
+from numbers import Number
 
 from .__version__ import __version__
 from .Frame import Frame
@@ -16,7 +18,6 @@ class Sequence(object):
     path = None
 
     # Private Attribute
-    _ions = None
     _hdf5 = None
     _compression = 'gzip'
 
@@ -24,8 +25,6 @@ class Sequence(object):
         self.path = path
         self._hdf5 = h5py.File(self.path, mode=mode)
         self.version()
-        if 'ions' in self._hdf5.keys():
-            self._ions = self._hdf5['ions']
 
     def __enter__(self):
         return self
@@ -40,17 +39,16 @@ class Sequence(object):
             raise IndexError('Sequence index out of range.')
 
         data = dict(self._frames()[str(idx)])
+        # TODO: Store info on what needs to be deserialized
         data['ions'] = [deserialize(ion)
-                        for ion in self._ions[()].tolist()]
+                        for ion in data['ions'][()].tolist()]
+        data.update(self._frames()[str(idx)].attrs)
         return Frame(data)
 
     def __iter__(self):
         def f():
-            idx = 0
             for idx in range(len(self._frames().keys())):
                 yield self[idx]
-            raise StopIteration
-
         return f()
 
     def __setitem__(self, idx, frame):
@@ -60,27 +58,23 @@ class Sequence(object):
         if str(idx-1) not in self._frames().keys() and self._frames().keys():
             raise IndexError('Sequence index out of range.')
 
-        if len(self._frames().keys()) == 0:
-            self._set_ions(frame.ions)
-
         # Create location information
         idx = str(idx)
         location = self._frames().create_group(idx)
 
         # Write dict items
         for key, value in frame.__dict__.items():
-            if key in ['concentrations', 'nodes', 'pH', 'field']:
-                try:
-                    location.create_dataset(key, data=value,
-                                            compression=self._compression,
-                                            dtype='f4')
-                except TypeError:
-                    pass
-            elif key is 'ions':
-                location['ions'] = self._ions
+            if isinstance(value, np.ndarray):
+                location.create_dataset(key, data=value, dtype='f4',
+                                        compression=self._compression)
+            elif isinstance(value, (Number, basestring)):
+                location.attrs[key] = value
             else:
-                pass
-
+                try:
+                    self._write_objects(key, value, location)
+                except:
+                    msg = "Couldn't write {}. Type: {}"
+                    warnings.warn(msg.format(key, type(value)))
         self._flush()
 
     def __len__(self):
@@ -112,19 +106,20 @@ class Sequence(object):
     def _frames(self):
         return self._hdf5.require_group('frames')
 
-    def _set_ions(self, ions):
-        self._ions = self._hdf5.create_dataset('ions',
-                                               shape=(len(ions),),
-                                               dtype=string_datatype)
-        for idx, ion in enumerate(ions):
+    def _write_objects(self, key, value, group):
+        try:
+            value = value.serialize()
+            group.attr[key] = value
+        except:
             if sys.version_info < (3,):
-                serial = ion.serialize()
+                value = [v.serialize() for v in value]
             else:
-                serial = ion.serialize().encode('ascii')
+                value = [v.serialize().encode('ascii') for v in value]
 
-            self._ions[idx] = serial
-
-        self._flush()
+            data = group.create_dataset(key,
+                                        data=value,
+                                        shape=(len(value),),
+                                        dtype=string_datatype)
 
     def version(self):
         if 'version' not in self._hdf5.attrs.keys():
