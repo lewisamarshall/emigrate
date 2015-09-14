@@ -119,7 +119,10 @@ class Solver(object):
                 raise RuntimeError(message.format(self.solver.t))
 
     def _solve_step(self, interval, max_time):
-        new_time = min(self.solver.t + interval, max_time)
+        if max_time:
+            new_time = min(self.solver.t + interval, max_time)
+        else:
+            new_time = self.solver.t + interval
         self.solver.integrate(new_time)
         self.state.time = self.solver.t
         self._fluxer.unpack(self.solver.y)
