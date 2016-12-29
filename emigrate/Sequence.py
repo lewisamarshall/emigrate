@@ -3,6 +3,7 @@ import numpy as np
 import sys
 import ionize
 from numbers import Number
+import warnings
 
 from .__version__ import __version__
 from .Frame import Frame

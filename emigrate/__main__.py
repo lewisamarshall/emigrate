@@ -93,7 +93,14 @@ def construct(ctx, infile, output, io):
     if io:
         for constructor in iter(sys.stdin.readline, ''):
             constructor = deserialize(constructor)
-            click.echo(Frame(constructor).serialize(compact=True))
+            save = False
+            if 'save' in constructor.keys():
+                save = constructor.pop('save')
+            ctx.obj['frame'] = Frame(constructor)
+            click.echo(ctx.obj['frame'].serialize(compact=True))
+            if save:
+                with open(save, 'w') as loc:
+                    loc.write(ctx.obj['frame'].serialize())
     else:
         infile = click.format_filename(infile)
         with open(infile, 'r') as inputfile:
@@ -108,17 +115,36 @@ def construct(ctx, infile, output, io):
 @cli.command()
 @click.pass_context
 @click.option('-o', '--output', type=click.Path(exists=False))
-@click.option('-t', '--time', type=float)
-@click.option('-d', '--dt', type=float)
-def solve(ctx, output, dt, time):
+@click.option('-t', '--time', type=float, default=None)
+@click.option('-d', '--dt', type=float, default=1)
+@click.option('--io', is_flag=True)
+def solve(ctx, output, dt, time, io):
     solver = Solver(ctx.obj['frame'])
 
-    with click.progressbar(solver.iterate(output, dt, time),
-                           length=int(ceil(time/dt)),
-                           label='Solving...',
-                           ) as bar:
-        for frame in bar:
-            pass
+    if io:
+        for frame in solver.iterate(output, dt, time):
+            click.echo(frame.serialize(compact=True))
+    else:
+        if time is not None:
+            with click.progressbar(solver.iterate(output, dt, time),
+                                   length=int(ceil(time/dt)),
+                                   label='Solving...',
+                                   ) as bar:
+                for frame in bar:
+                    pass
+        else:
+            with click.progressbar(length=10,
+                                   label='Solving (Ctrl-C to stop)...',
+                                   show_eta=False, show_percent=False,
+                                   ) as bar:
+                i = 0
+                for frame in solver.iterate(output, dt):
+                    i +=1
+                    if i == 10:
+                        i = 0
+                        bar.update(-10)
+                    bar.update(1)
+
 
 
 def close(ctx):
