@@ -2,12 +2,7 @@ import numpy as np
 import h5py
 from scipy.special import erf
 import ionize
-import warnings
-try:
-    import simplejson as json
-except:
-    import json
-import ionize
+import json
 
 
 class Frame(object):

@@ -113,7 +113,7 @@ class Fluxer(object):
             pH = self.state.pH[0]
         else:
             raise RuntimeError('Edge must be left or right.')
-        self._frame_velocity = E * self.frame.effective_mobility(pH)
+        self._frame_velocity = E * self.frame.mobility(pH)
 
     def _update(self):
         raise NotImplementedError
