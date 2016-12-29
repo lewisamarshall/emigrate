@@ -1,6 +1,9 @@
 """An equilibration class for fixed pH problems."""
+from __future__ import absolute_import
+
 import numpy as np
-from Equilibrator import Equilibrator
+
+from .Equilibrator import Equilibrator
 # pylint: disable = W0232, E1101, W0201
 
 

@@ -19,7 +19,9 @@ def preconditioner(state, fluxer):
 
     # get the new grid parameters
     state.nodes = _precondition_x(state, cost)
-    state.concentrations = concentration_interpolator(state.nodes)
+    # Only replace the interior points.
+    state.concentrations[:, 1:-1] = concentration_interpolator(state.nodes[1:-1])
+
     if np.size(state.area) > 1:
         area_interpolator = interp1d(state.nodes,
                                      state.area,

@@ -1,8 +1,10 @@
 """Defines an equlibration scheme with pH calculation."""
+from __future__ import absolute_import
 
 import numpy as np
-from Equilibrator import Equilibrator
-from Multiroot import Multiroot
+
+from .Equilibrator import Equilibrator
+from .Multiroot import Multiroot
 # pylint: disable=W0232, E1101, W0201, E1103
 
 # TODO: Pull constants from ionize.
@@ -76,7 +78,7 @@ class VariablepH(Equilibrator):
 
     def _align_zero(self, value, z0):
         """Align ion properties with the zero of the matrix."""
-        local_index = z0.index(0)
+        local_index = z0.tolist().index(0)
         local_len = len(z0)
         pre_pad = self._index_0 - local_index
         post_pad = len(self._z0) - local_len - pre_pad
@@ -88,7 +90,7 @@ class VariablepH(Equilibrator):
         """Build the absolute mobility matrix."""
         absolute_mobility = []
         for i in self.state.ions:
-            absolute_mobility.append(self._align_zero(i.absolute_mobility,
+            absolute_mobility.append(self._align_zero(i.absolute_mobility(),
                                                       i._valence_zero()))
         self.state.absolute_mobility = np.array(absolute_mobility)
 
@@ -145,8 +147,6 @@ class VariablepH(Equilibrator):
         self.state.pH = -np.log10(self.state.cH)
 
         if any(np.isnan(self.state.pH)):
-            print 'pH:', self.state.pH
-            print 'cH:', self.state.cH
             raise RuntimeError("Couldn't find correct pH.")
 
     def _calc_mobility(self):

@@ -96,8 +96,8 @@ class Differentiate(object):
                                   [99./80., -3., 93./40., -3./5., 3./80]]
             # note typo in paper saying -3/80
         elif self.method == 'dissipative':
-            internal_function = [1, -2, 1]
-            boundary_functions = [[1, -2, 1]]
+            internal_function = [1., -2., 1.]
+            boundary_functions = [[1., -2., 1.]]
 
         self.B2 = self.construct_matrix(boundary_functions,
                                         internal_function,

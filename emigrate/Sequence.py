@@ -14,6 +14,7 @@ if sys.version_info < (3,):
     string_datatype = h5py.special_dtype(vlen=unicode)
 else:
     string_datatype = h5py.special_dtype(vlen=str)
+    basestring = str
 
 
 
