@@ -1,6 +1,9 @@
-from Differentiate import Differentiate
+from __future__ import absolute_import
+
 import numpy as np
 import warnings
+
+from .Differentiate import Differentiate
 
 # #TODO:40 Fix boundary characteristics
 # from boundary_characteristic import (boundary_characteristic,

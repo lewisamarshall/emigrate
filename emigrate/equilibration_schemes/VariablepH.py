@@ -65,7 +65,7 @@ class VariablepH(Equilibrator):
         """Set the valence indices."""
         all_z = []
         for i in self.state.ions:
-            all_z.extend(i.z0)
+            all_z.extend(i._valence_zero())
         self._z0 = range(min(all_z), max(all_z)+1)
         self._index_0 = self._z0.index(0)
 
@@ -89,7 +89,7 @@ class VariablepH(Equilibrator):
         absolute_mobility = []
         for i in self.state.ions:
             absolute_mobility.append(self._align_zero(i.absolute_mobility,
-                                                      i.z0))
+                                                      i._valence_zero()))
         self.state.absolute_mobility = np.array(absolute_mobility)
 
     def _set_l_matrix(self):
@@ -98,7 +98,7 @@ class VariablepH(Equilibrator):
         # of acidity coefficients for each ion.
         self._l_matrix = []
         for i in self.state.ions:
-            self._l_matrix.append(self._align_zero(i.L(I=0), i.z0))
+            self._l_matrix.append(self._align_zero(i.acidity_product(ionic_strength=0), i._valence_zero()))
         self._l_matrix = np.array(self._l_matrix)
 
     def _set_Q(self):

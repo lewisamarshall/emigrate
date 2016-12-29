@@ -118,7 +118,7 @@ class Differentiate(object):
         l = len(internal_function)
         construct = [[0]*i + internal_function +
                      [0] * (N-i+1) for i in range(N)]
-        construct = np.array(construct)[:, (l-1.)/2.:-(l+3.)/2.]
+        construct = np.array(construct)[:, int((l-1.)/2.):int(-(l+3.)/2.)]
 
         for idx, func in enumerate(boundary_functions):
             construct[idx, :] = func + [0] * (N - len(func))

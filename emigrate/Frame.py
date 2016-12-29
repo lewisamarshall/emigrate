@@ -114,7 +114,7 @@ class Frame(object):
 
         for ion in self.ions:
             ion_concentration = np.zeros(self.nodes.shape)
-            cs = [solution.get_concentration(ion)
+            cs = [solution.concentration(ion)
                   for solution in constructor['solutions']]
 
             for idx in range(len(cs)):

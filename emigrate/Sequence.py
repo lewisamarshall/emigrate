@@ -9,7 +9,11 @@ from .Frame import Frame
 from .deserialize import deserialize
 
 # Create a string data type
-string_datatype = h5py.special_dtype(vlen=unicode)
+if sys.version_info < (3,):
+    string_datatype = h5py.special_dtype(vlen=unicode)
+else:
+    string_datatype = h5py.special_dtype(vlen=str)
+
 
 
 class Sequence(object):

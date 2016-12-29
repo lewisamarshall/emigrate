@@ -29,8 +29,8 @@ class Fixed(Equilibrator):
                                           for ion in self.state.ions])
 
     def _calc_mobility(self):
-        """Calculate the effective mobility."""
-        self.state.mobility = np.array([[ion.effective_mobility(self.state.pH)]
+        """Calculate the mobility."""
+        self.state.mobility = np.array([[ion.mobility(self.state.pH)]
                                        for ion in self.state.ions])
 
     def _calc_molar_conductivity(self):

@@ -6,6 +6,3 @@ fluxers = {None: Fluxer,
            'compact': Compact,
            'slip': SLIP,
            }
-
-if __name__ == '__main__':
-    print fluxers
