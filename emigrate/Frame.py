@@ -146,7 +146,6 @@ class Frame(object):
     def _encode(self, obj):
         if isinstance(obj, ionize.Ion):
             ion = obj.serialize(nested=True)
-            ion.update({'__ion__': True})
             return ion
         elif isinstance(obj, np.ndarray):
             return {'__ndarray__': True, 'data': obj.tolist()}

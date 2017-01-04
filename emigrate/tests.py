@@ -31,13 +31,12 @@ initialization_dict = dict(n_nodes=137,
 
 
 class TestMultiroot(unittest.TestCase):
-    @classmethod
-    def setUpClass(self):
-        self.array = np.array([[1, 1, 3, -10],
-                               [1, 8, 4, -12]]
-                              ).transpose()
-        self.array = np.concatenate([self.array]*1000, axis=1)
-        self.multiroot = Multiroot()
+
+    array = np.array([[1, 1, 3, -10],
+                      [1, 8, 4, -12]]
+                     ).transpose()
+    array = np.concatenate([array]*1000, axis=1)
+    multiroot = Multiroot()
 
     def test_multiroot_noguess(self):
         self.multiroot(self.array)
@@ -48,16 +47,14 @@ class TestMultiroot(unittest.TestCase):
 
 
 class TestDifferentiate(unittest.TestCase):
-    @classmethod
-    def setUpClass(self):
-        self.Nt = 50
-        z = np.linspace(-1, 1, self.Nt)
-        self.test_functions = np.array([19*erf(z*3),
-                                        25*erf(z*2),
-                                        (15 * (erf(z*2) +
-                                         .3 * np.random.random(z.shape)) /
-                                         (10*z**2+1))
-                                        ])
+    Nt = 50
+    z = np.linspace(-1, 1, Nt)
+    test_functions = np.array([19*erf(z*3),
+                               25*erf(z*2),
+                               (15 * (erf(z*2) +
+                                .3 * np.random.random(z.shape)) /
+                                (10*z**2+1))
+                               ])
 
     def test_6thOrder(self):
         differ = Differentiate(self.Nt, 1, method='6th-Order')
@@ -83,7 +80,7 @@ class TestDifferentiate(unittest.TestCase):
 
 class TestFrame(unittest.TestCase):
     def test_initialize(self):
-        frame = Frame(initialization_dict)
+        Frame(initialization_dict)
 
     def test_serialize(self):
         frame = Frame(initialization_dict)
@@ -93,11 +90,9 @@ class TestFrame(unittest.TestCase):
 
 
 class TestSequence(unittest.TestCase):
-    @classmethod
-    def setUpClass(self):
-        self.frame = Frame(initialization_dict)
-        self.fs = Sequence(path='examples/test_sequence.hdf5', mode='w')
-        self.fs.append(self.frame)
+    frame = Frame(initialization_dict)
+    fs = Sequence(path='examples/test_sequence.hdf5', mode='w')
+    fs.append(frame)
 
     def test_add(self):
         for time in range(5):
@@ -120,7 +115,7 @@ class TestSolver(unittest.TestCase):
         solver.solve('examples/test_slip.hdf5', self.dt, self.tmax)
 
     def test_precondition(self):
-        solver = Solver(self.frame, precondition=True, flux_mode='slip')
+        Solver(self.frame, precondition=True, flux_mode='slip')
 
     def test_fixed_pH(self):
         self.frame.pH = 7
@@ -151,28 +146,27 @@ class TestSolver(unittest.TestCase):
         solver = Solver(system,
                         precondition=True,
                         flux_mode='slip')
-        solver.set_reference_frame(ionize.load_ion('acetic acid'), 'right')
+        db = ionize.Database()
+        solver.set_reference_frame(db['acetic acid'], 'right')
         solver.solve('examples/test_reference_frame.hdf5', self.dt, self.tmax)
 
 
 class TestCLI(unittest.TestCase):
 
-    @classmethod
-    def setUpClass(self):
-        self.runner = runner = CliRunner()
-        self.runner.invoke(cli,
-                                    ['construct',
-                                     '-i', 'examples/constructor.json',
-                                     '-o', 'examples/initial_condition.json'],
-                                    obj={'sequence': None, 'frame': None})
-        result = self.runner.invoke(cli,
-                                    ['load', 'examples/initial_condition.json',
-                                     'solve', '-t', '10.0', '-d', '1.0',
-                                     '--output', 'examples/cli_test.hdf5'],
-                                    obj={'sequence': None, 'frame': None})
+    runner = CliRunner()
+    runner.invoke(cli,
+                  ['construct',
+                  '-i', 'examples/constructor.json',
+                  '-o', 'examples/initial_condition.json'],
+                  obj={'sequence': None, 'frame': None})
+    result = runner.invoke(cli,
+                           ['load', 'examples/initial_condition.json',
+                            'solve', '-t', '10.0', '-d', '1.0',
+                            '--output', 'examples/cli_test.hdf5'],
+                           obj={'sequence': None, 'frame': None})
 
     def setUp(self):
-        self.runner = runner = CliRunner()
+        self.runner = CliRunner()
 
     def tearDown(self):
         del self.runner
