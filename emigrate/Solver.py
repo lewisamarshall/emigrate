@@ -114,7 +114,6 @@ class Solver(object):
                     self._solve_step(interval, max_time)
                     sequence.append(self.state)
                     yield self.state
-                    # yield copy.deepcopy(self.state)
             else:
                 message = 'Solver failed at time {}.'
                 raise RuntimeError(message.format(self.solver.t))
