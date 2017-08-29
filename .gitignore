@@ -59,6 +59,7 @@ target/
 *.json
 .ipynb_checkpoints
 *.png
+*.mp4
 
 # Ignore pycharm
 .idea

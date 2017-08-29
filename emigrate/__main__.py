@@ -10,6 +10,8 @@ import os
 from math import ceil
 import click
 from matplotlib import pyplot
+import matplotlib.animation as manimation
+FFMpegWriter = manimation.writers['ffmpeg']
 
 try:
     import simplejson as json
@@ -74,6 +76,33 @@ def plot(ctx, output, frame):
     pyplot.savefig(output, bbox_inches='tight')
     close(ctx)
 
+
+@cli.command()
+@click.pass_context
+def movie(ctx):
+    metadata = dict(title='Movie Test', artist='Matplotlib',
+                comment='Movie support!')
+    writer = FFMpegWriter(fps=15, metadata=metadata)
+
+    sequence = ctx.obj['sequence']
+
+    fig = pyplot.figure()
+    lines = dict()
+    frame = sequence[0]
+    for ion, ion_concentration in zip(frame.ions, frame.concentrations):
+        lines[ion.name], = pyplot.plot([], [], '-', label=ion.name)
+
+    pyplot.xlabel('x (mm)')
+    pyplot.ylabel('concentration (M)')
+    pyplot.ylim(ymin=0)
+    pyplot.xlim(xmax=frame.nodes[-1])
+    pyplot.legend()
+
+    with writer.saving(fig, "writer_test.mp4", 100):
+        for frame in sequence:
+            for ion, ion_concentration in zip(frame.ions, frame.concentrations):
+                lines[ion.name].set_data(frame.nodes, ion_concentration)
+            writer.grab_frame()
 
 @cli.command()
 @click.pass_context
