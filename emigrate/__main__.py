@@ -9,6 +9,7 @@ import sys
 import os
 from math import ceil
 import click
+import numpy as np
 from matplotlib import pyplot
 import matplotlib.animation as manimation
 FFMpegWriter = manimation.writers['ffmpeg']
@@ -31,6 +32,7 @@ def cli(ctx):
 @click.option('--io', is_flag=True)
 def load(ctx, path, io):
     """Open an emgrate file and return a serialized frame."""
+    ctx.obj['path'] = path
     _, file_extension = os.path.splitext(path)
     if file_extension == '.hdf5':
         ctx.obj['sequence'] = Sequence(path=path)
@@ -98,11 +100,34 @@ def movie(ctx):
     pyplot.xlim(xmax=frame.nodes[-1])
     pyplot.legend()
 
-    with writer.saving(fig, "writer_test.mp4", 100):
+    savename = os.path.splitext(ctx.obj['path'])[0]+'.mp4'
+    with writer.saving(fig, savename, 100):
         for frame in sequence:
             for ion, ion_concentration in zip(frame.ions, frame.concentrations):
                 lines[ion.name].set_data(frame.nodes, ion_concentration)
             writer.grab_frame()
+
+@cli.command()
+@click.pass_context
+def spacetemp(ctx):
+    n = 1000
+    sequence = ctx.obj['sequence']
+    frame0 = sequence[0]
+    nodes = np.linspace(frame0.nodes[0], frame0.nodes[-1], n)
+
+    slices = dict()
+    for ion in frame0.ions:
+        slices[ion.name] = np.zeros((len(sequence), n))
+
+    for idx, frame in enumerate(sequence):
+        for ion, concentration in zip(frame.ions, frame.concentrations):
+            new_data = np.interp(nodes, frame.nodes, concentration)
+            slices[ion.name][idx, :] += new_data
+
+    for name, data in slices.items():
+        pyplot.imshow(data, origin='lower')
+        pyplot.title(name)
+        pyplot.savefig(ctx.obj['path']+'_{}_.png'.format(name))
 
 @cli.command()
 @click.pass_context
@@ -191,7 +216,7 @@ def ensure_frame(ctx, frame):
 
 
 def main():
-    cli(obj={'sequence': None, 'frame': None})
+    cli(obj={'sequence': None, 'frame': None, 'filename': None})
 
 if __name__ == '__main__':
     main()

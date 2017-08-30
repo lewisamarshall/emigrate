@@ -69,3 +69,6 @@ target/
 
 # Include constructor
 !examples/constructor.json
+
+# Ignore Mac
+.DS_Store
