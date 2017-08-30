@@ -1,5 +1,6 @@
 import ionize
-import simplejson as json
+import json
+import numpy as np
 
 solutions = [ionize.Solution(['hepes', 'tris'],
                              [.05, .105]),
