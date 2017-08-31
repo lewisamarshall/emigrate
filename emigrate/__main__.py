@@ -131,6 +131,31 @@ def spacetemp(ctx):
 
 @cli.command()
 @click.pass_context
+# @click.option('--ion', '-i', type=str, default=None)
+@click.option('--location', '-l', type=float, default=None)
+def gram(ctx, location):
+    sequence = ctx.obj['sequence']
+    frame0 = sequence[0]
+    # nodes = np.linspace(frame0.nodes[0], frame0.nodes[-1], n)
+    if location is None: location = frame0.nodes[-1]
+
+    slices = dict()
+    for ion in frame0.ions:
+        slices[ion.name] = np.zeros((len(sequence), ))
+
+    for idx, frame in enumerate(sequence):
+        for ion, concentration in zip(frame.ions, frame.concentrations):
+            new_data = np.interp(location, frame.nodes, concentration)
+            slices[ion.name][idx] += new_data
+
+    for name, data in slices.items():
+        pyplot.plot(data)
+        pyplot.title(name)
+        pyplot.savefig(ctx.obj['path']+'_{}_electropherogram.png'.format(name))
+        pyplot.clf()
+
+@cli.command()
+@click.pass_context
 @click.option('-f', '--frame', type=click.INT, default=None)
 def echo(ctx, frame):
     ensure_frame(ctx, frame)
