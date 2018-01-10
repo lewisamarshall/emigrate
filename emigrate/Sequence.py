@@ -41,8 +41,12 @@ class Sequence(object):
     def __getitem__(self, idx):
         if not isinstance(idx, int):
             raise IndexError('Sequence index must be an integer.')
+
+        if idx < 0: idx = len(self) + idx
+
         if not str(idx) in self._frames().keys():
             raise IndexError('Sequence index out of range.')
+
 
         data = dict(self._frames()[str(idx)])
 

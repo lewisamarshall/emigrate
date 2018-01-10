@@ -81,7 +81,8 @@ def plot(ctx, output, frame):
 
 @cli.command()
 @click.pass_context
-def movie(ctx):
+@click.option('--field', '-f', is_flag=True)
+def movie(ctx, field):
     metadata = dict(title='Movie Test', artist='Matplotlib',
                 comment='Movie support!')
     writer = FFMpegWriter(fps=15, metadata=metadata)
@@ -91,6 +92,19 @@ def movie(ctx):
     fig = pyplot.figure()
     lines = dict()
     frame = sequence[0]
+    if field:
+        line, = pyplot.plot(frame.nodes, frame.field, '-')
+        pyplot.xlabel('x (mm)')
+        pyplot.ylabel('electric field (V/m)')
+        pyplot.xlim(xmax=frame.nodes[-1])
+        pyplot.ylim([0, 10000])
+        savename = os.path.splitext(ctx.obj['path'])[0]+'_field.mp4'
+        with writer.saving(fig, savename, 100):
+            for frame in sequence:
+                line.set_data(frame.nodes, frame.field)
+                writer.grab_frame()
+        return
+
     for ion, ion_concentration in zip(frame.ions, frame.concentrations):
         lines[ion.name], = pyplot.plot([], [], '-', label=ion.name)
 
@@ -109,11 +123,15 @@ def movie(ctx):
 
 @cli.command()
 @click.pass_context
-def spacetemp(ctx):
+@click.option('--red', '-r', type=str, default=None)
+@click.option('--green', '-g', type=str, default=None)
+@click.option('--blue', '-b', type=str, default=None)
+def spacetemp(ctx, red, green, blue):
     n = 1000
     sequence = ctx.obj['sequence']
     frame0 = sequence[0]
     nodes = np.linspace(frame0.nodes[0], frame0.nodes[-1], n)
+    extent = [0, nodes[-1], 0, sequence[-1].time]
 
     slices = dict()
     for ion in frame0.ions:
@@ -124,10 +142,29 @@ def spacetemp(ctx):
             new_data = np.interp(nodes, frame.nodes, concentration)
             slices[ion.name][idx, :] += new_data
 
-    for name, data in slices.items():
-        pyplot.imshow(data, origin='lower')
-        pyplot.title(name)
-        pyplot.savefig(ctx.obj['path']+'_{}_.png'.format(name))
+    # for name, data in slices.items():
+    #     pyplot.imshow(data, origin='lower', extent=extent, aspect='auto')
+    #     pyplot.xlabel('distance (m)')
+    #     pyplot.ylabel('time (s)')
+    #     pyplot.title(name)
+    #     pyplot.savefig(ctx.obj['path']+'_{}_.png'.format(name))
+    #     pyplot.clf()
+
+    if all([red, green, blue]):
+        print(slices.keys())
+        red_slice = slices[red]
+        green_slice = slices[green]
+        blue_slice = slices[blue]
+        color = np.zeros(red_slice.shape + (3,))
+        color[:, :, 0] = red_slice
+        color[:, :, 1] = green_slice
+        color[:, :, 2] = blue_slice
+        color /= color.max()/5
+        pyplot.imshow(color, origin='lower', extent=extent, aspect='auto')
+        pyplot.xlabel('distance (m)')
+        pyplot.ylabel('time (s)')
+        pyplot.savefig(ctx.obj['path']+'_rgb.png')
+        pyplot.clf()
 
 @cli.command()
 @click.pass_context
@@ -136,6 +173,7 @@ def spacetemp(ctx):
 def gram(ctx, location):
     sequence = ctx.obj['sequence']
     frame0 = sequence[0]
+    times = [f.time for f in sequence]
     # nodes = np.linspace(frame0.nodes[0], frame0.nodes[-1], n)
     if location is None: location = frame0.nodes[-1]
 
@@ -149,7 +187,9 @@ def gram(ctx, location):
             slices[ion.name][idx] += new_data
 
     for name, data in slices.items():
-        pyplot.plot(data)
+        pyplot.plot(times, data)
+        pyplot.xlabel('time (s)')
+        pyplot.ylabel('concentration (M)')
         pyplot.title(name)
         pyplot.savefig(ctx.obj['path']+'_{}_electropherogram.png'.format(name))
         pyplot.clf()
