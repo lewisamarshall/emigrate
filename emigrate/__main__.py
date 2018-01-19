@@ -78,6 +78,21 @@ def plot(ctx, output, frame):
     pyplot.savefig(output, bbox_inches='tight')
     close(ctx)
 
+@cli.command()
+@click.pass_context
+@click.argument('output', type=click.Path(exists=False))
+@click.option('--dpi', '-d', type=click.INT, default=400)
+def nodes(ctx, output, dpi):
+    sequence = ctx.obj['sequence']
+
+    node_locations = np.array([frame.nodes for frame in sequence])
+    frame_numbers = np.arange(len(sequence))
+
+    pyplot.plot(frame_numbers, node_locations, linewidth=0.5)
+    pyplot.xlabel('frame number')
+    pyplot.ylabel('node location (m)')
+    pyplot.savefig(output, dpi=dpi)
+
 
 @cli.command()
 @click.pass_context
