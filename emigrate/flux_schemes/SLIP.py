@@ -45,6 +45,14 @@ class SLIP(Fluxer):
         flux = self.differ.smooth(flux)
         flux *= self.pointwave
         flux[0, ] = flux[-1, ] = 0.
+
+        # Impose a non-negative constraint on differences between points
+        difference = np.diff(self.state.nodes)
+        difference = np.append([0], difference)
+        flux = np.where(np.greater(difference, 0),
+                        flux,
+                        np.maximum(0, flux))
+
         self.node_flux = flux
 
     # Components of dcdt
