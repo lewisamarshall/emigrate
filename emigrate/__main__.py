@@ -93,6 +93,15 @@ def nodes(ctx, output, dpi):
     pyplot.ylabel('node location (m)')
     pyplot.savefig(output, dpi=dpi)
 
+@cli.command()
+@click.pass_context
+def check_nodes(ctx):
+    sequence = ctx.obj['sequence']
+
+    for idx, frame in enumerate(sequence):
+        if np.any(np.diff(frame.nodes)<0):
+            print('Node inversion in frame {}. Inverted by {} m.'.format(idx, min(np.diff(frame.nodes))))
+
 
 @cli.command()
 @click.pass_context
