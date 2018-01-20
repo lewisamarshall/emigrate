@@ -48,10 +48,16 @@ class SLIP(Fluxer):
 
         # Impose a non-negative constraint on differences between points
         difference = np.diff(self.state.nodes)
-        difference = np.append([0], difference)
-        flux = np.where(np.greater(difference, 0),
+        difference_left = np.append([0], difference)
+        difference_right = np.append(difference, [0])
+
+        flux = np.where(np.greater(difference_left, 0),
                         flux,
-                        np.maximum(0, flux))
+                        np.maximum(np.append([0], flux[:-1]), flux))
+
+        flux = np.where(np.greater(difference_right, 0),
+                        flux,
+                        np.maximum(np.append(flux[1:], [0]), flux))
 
         self.node_flux = flux
 
