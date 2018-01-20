@@ -31,6 +31,7 @@ class Solver(object):
     # Solver Parameters
     _atol = 1e-12
     _rtol = 1e-6
+    _nsteps = 500
     _method = 'dopri5'
 
     # Modules
@@ -108,15 +109,15 @@ class Solver(object):
             sequence.append(self.state)
             self._initialize_solver()
             while self.solver.successful():
-                if self.solver.t >= max_time and max_time is not None:
+                if max_time is not None and self.solver.t >= max_time:
                     return
                 else:
                     self._solve_step(interval, max_time)
                     sequence.append(self.state)
                     yield self.state
             else:
-                message = 'Solver failed at time {}.'
-                raise RuntimeError(message.format(self.solver.t))
+                message = 'Solver failed at time {}. Return code: {}'
+                raise RuntimeError(message.format(self.solver.t, self.solver.get_return_code()))
 
     def _solve_step(self, interval, max_time):
         if max_time:
@@ -131,7 +132,7 @@ class Solver(object):
         self._equilibrator.equilibrate()
         self.solver = solver = ode(self._objective)
 
-        solver.set_integrator(self._method, atol=self._atol, rtol=self._rtol)
+        solver.set_integrator(self._method, atol=self._atol, rtol=self._rtol, nsteps=self._nsteps)
 
         if solver._integrator.supports_solout:
             solver.set_solout(self._solout)
