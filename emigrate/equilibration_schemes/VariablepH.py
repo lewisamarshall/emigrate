@@ -137,7 +137,7 @@ class VariablepH(Equilibrator):
 
         # Construct polynomial. Change the shapes, then reverse  order
         if P.shape[0] < self._Q.shape[0]:
-            P.resize((self._Q.shape[0], P.shape[1]))
+            P = np.resize(P, (self._Q.shape[0], P.shape[1]))
         elif P.shape[0] > self._Q.shape[0]:
             self._Q.resize(P.shape[0])
         poly = (P + self._Q[:, np.newaxis])[::-1]

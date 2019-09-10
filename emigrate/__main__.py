@@ -106,7 +106,8 @@ def check_nodes(ctx):
 @cli.command()
 @click.pass_context
 @click.option('--field', '-f', is_flag=True)
-def movie(ctx, field):
+@click.option('--ymax', '-y', type=float, default=None)
+def movie(ctx, field, ymax):
     metadata = dict(title='Movie Test', artist='Matplotlib',
                 comment='Movie support!')
     writer = FFMpegWriter(fps=15, metadata=metadata)
@@ -120,8 +121,8 @@ def movie(ctx, field):
         line, = pyplot.plot(frame.nodes, frame.field, '-')
         pyplot.xlabel('x (mm)')
         pyplot.ylabel('electric field (V/m)')
-        pyplot.xlim(xmax=frame.nodes[-1])
-        pyplot.ylim([0, 10000])
+        pyplot.xlim([0, frame.nodes[-1]])
+        pyplot.ylim([0, ymax])
         savename = os.path.splitext(ctx.obj['path'])[0]+'_field.mp4'
         with writer.saving(fig, savename, 100):
             for frame in sequence:
@@ -134,8 +135,8 @@ def movie(ctx, field):
 
     pyplot.xlabel('x (mm)')
     pyplot.ylabel('concentration (M)')
-    pyplot.ylim(ymin=0)
-    pyplot.xlim(xmax=frame.nodes[-1])
+    pyplot.ylim([0, ymax])
+    pyplot.xlim([0, frame.nodes[-1]])
     pyplot.legend()
 
     savename = os.path.splitext(ctx.obj['path'])[0]+'.mp4'
@@ -144,6 +145,54 @@ def movie(ctx, field):
             for ion, ion_concentration in zip(frame.ions, frame.concentrations):
                 lines[ion.name].set_data(frame.nodes, ion_concentration)
             writer.grab_frame()
+
+@cli.command()
+@click.pass_context
+@click.option('--green', '-g', type=str, default=None)
+@click.option('--red', '-r', type=str, default=None)
+@click.option('--blue', '-b', type=str, default=None)
+def band(ctx, red, green, blue):
+    metadata = dict(title='Movie Test', artist='Matplotlib',
+                comment='Movie support!')
+    writer = FFMpegWriter(fps=15, metadata=metadata)
+
+    sequence = ctx.obj['sequence']
+
+    fig = pyplot.figure(figsize=[11, 1])
+    lines = dict()
+    frame = sequence[0]
+
+    n = 1000
+    h = 30
+    frame0 = sequence[0]
+    nodes = np.linspace(frame0.nodes[0], frame0.nodes[-1], n)
+    extent = [0, nodes[-1], 0, sequence[-1].time]
+
+    pyplot.xlabel('x (mm)')
+    pyplot.xlim([0, frame.nodes[-1]])
+
+    slices = dict()
+
+    savename = os.path.splitext(ctx.obj['path'])[0]+'_band.mp4'
+    with writer.saving(fig, savename, 100):
+        for frame in sequence:
+            for ion, concentration in zip(frame.ions, frame.concentrations):
+                new_data = np.interp(nodes, frame.nodes, concentration)
+                slices[ion.name] = new_data[np.newaxis, :] * np.ones([h, 1])
+
+            red_slice = slices[red]
+            green_slice = slices[green]
+            blue_slice = slices[blue]
+            color = np.zeros(red_slice.shape + (3,))
+            color[:, :, 0] = red_slice
+            color[:, :, 1] = green_slice
+            color[:, :, 2] = blue_slice
+            color = (color/color.max()*255).astype(np.uint8)
+            pyplot.imshow(color, origin='lower', extent=extent, aspect='auto')
+            pyplot.axis('off')
+            writer.grab_frame()
+            pyplot.clf()
+
 
 @cli.command()
 @click.pass_context
