@@ -19,7 +19,6 @@ system = emigrate.Frame(dict(
                          current=-500.,
                          ))
 
-
 solver = emigrate.Solver(system,
                          precondition=True,
                          flux_mode='slip')

@@ -1,6 +1,8 @@
 """Define the Compact flux solver."""
+from __future__ import absolute_import
 import numpy as np
-from Fluxer import Fluxer
+
+from .Fluxer import Fluxer
 # pylint: disable = W0232, E1101
 
 

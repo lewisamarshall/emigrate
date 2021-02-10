@@ -2,12 +2,7 @@ import numpy as np
 import h5py
 from scipy.special import erf
 import ionize
-import warnings
-try:
-    import simplejson as json
-except:
-    import json
-import ionize
+import json
 
 
 class Frame(object):
@@ -114,7 +109,7 @@ class Frame(object):
 
         for ion in self.ions:
             ion_concentration = np.zeros(self.nodes.shape)
-            cs = [solution.get_concentration(ion)
+            cs = [solution.concentration(ion)
                   for solution in constructor['solutions']]
 
             for idx in range(len(cs)):
@@ -151,7 +146,6 @@ class Frame(object):
     def _encode(self, obj):
         if isinstance(obj, ionize.Ion):
             ion = obj.serialize(nested=True)
-            ion.update({'__ion__': True})
             return ion
         elif isinstance(obj, np.ndarray):
             return {'__ndarray__': True, 'data': obj.tolist()}

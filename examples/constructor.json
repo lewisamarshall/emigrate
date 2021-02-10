@@ -9,243 +9,411 @@
     "n_nodes": 137,
     "solutions": [
         {
-            "T": 25.0,
             "__solution__": true,
-            "concentrations": [
-                0.05,
-                0.105
-            ],
+            "concentrations": {
+                "__ndarray__": true,
+                "data": [
+                    0.05,
+                    0.105
+                ]
+            },
             "ions": [
                 {
-                    "__ion__": true,
-                    "absolute_mobility_ref": [
-                        -2.3500000000000002e-08
-                    ],
-                    "dCp": [
-                        47.0
-                    ],
-                    "dH": [
-                        20400.0
-                    ],
+                    "__ion__": "Ion",
+                    "alias": null,
+                    "enthalpy": {
+                        "__ndarray__": true,
+                        "data": [
+                            20400.0
+                        ]
+                    },
+                    "heat_capacity": {
+                        "__ndarray__": true,
+                        "data": [
+                            47.0
+                        ]
+                    },
+                    "molecular_weight": 238.3012,
                     "name": "hepes",
                     "nightingale_data": null,
-                    "pKa_ref": [
-                        7.5
-                    ],
-                    "z": [
-                        -1
-                    ]
+                    "reference_mobility": {
+                        "__ndarray__": true,
+                        "data": [
+                            -2.3500000000000002e-08
+                        ]
+                    },
+                    "reference_pKa": {
+                        "__ndarray__": true,
+                        "data": [
+                            7.5
+                        ]
+                    },
+                    "reference_temperature": 25.0,
+                    "valence": {
+                        "__ndarray__": true,
+                        "data": [
+                            -1
+                        ]
+                    }
                 },
                 {
-                    "__ion__": true,
-                    "absolute_mobility_ref": [
-                        2.9500000000000003e-08
-                    ],
-                    "dCp": [
-                        -59.0
-                    ],
-                    "dH": [
-                        47450.0
-                    ],
+                    "__ion__": "Ion",
+                    "alias": null,
+                    "enthalpy": {
+                        "__ndarray__": true,
+                        "data": [
+                            47450.0
+                        ]
+                    },
+                    "heat_capacity": {
+                        "__ndarray__": true,
+                        "data": [
+                            -59.0
+                        ]
+                    },
+                    "molecular_weight": 121.14,
                     "name": "tris",
                     "nightingale_data": null,
-                    "pKa_ref": [
-                        8.076
-                    ],
-                    "z": [
-                        1
-                    ]
+                    "reference_mobility": {
+                        "__ndarray__": true,
+                        "data": [
+                            2.9500000000000003e-08
+                        ]
+                    },
+                    "reference_pKa": {
+                        "__ndarray__": true,
+                        "data": [
+                            8.076
+                        ]
+                    },
+                    "reference_temperature": 25.0,
+                    "valence": {
+                        "__ndarray__": true,
+                        "data": [
+                            1
+                        ]
+                    }
                 }
             ]
         },
         {
-            "T": 25.0,
             "__solution__": true,
-            "concentrations": [
-                0.01,
-                0.1,
-                0.01,
-                0.01,
-                0.01,
-                0.01
-            ],
+            "concentrations": {
+                "__ndarray__": true,
+                "data": [
+                    0.01,
+                    0.1,
+                    0.01,
+                    0.01,
+                    0.01,
+                    0.01
+                ]
+            },
             "ions": [
                 {
-                    "__ion__": true,
-                    "absolute_mobility_ref": [
-                        -3.02e-08
-                    ],
-                    "dCp": null,
-                    "dH": [
-                        -2391.0
-                    ],
+                    "__ion__": "Ion",
+                    "alias": null,
+                    "enthalpy": {
+                        "__ndarray__": true,
+                        "data": [
+                            -2391.0
+                        ]
+                    },
+                    "heat_capacity": null,
+                    "molecular_weight": 116.1,
                     "name": "caproic acid",
                     "nightingale_data": null,
-                    "pKa_ref": [
-                        4.857
-                    ],
-                    "z": [
-                        -1
-                    ]
+                    "reference_mobility": {
+                        "__ndarray__": true,
+                        "data": [
+                            -3.02e-08
+                        ]
+                    },
+                    "reference_pKa": {
+                        "__ndarray__": true,
+                        "data": [
+                            4.857
+                        ]
+                    },
+                    "reference_temperature": 25.0,
+                    "valence": {
+                        "__ndarray__": true,
+                        "data": [
+                            -1
+                        ]
+                    }
                 },
                 {
-                    "__ion__": true,
-                    "absolute_mobility_ref": [
-                        2.9500000000000003e-08
-                    ],
-                    "dCp": [
-                        -59.0
-                    ],
-                    "dH": [
-                        47450.0
-                    ],
+                    "__ion__": "Ion",
+                    "alias": null,
+                    "enthalpy": {
+                        "__ndarray__": true,
+                        "data": [
+                            47450.0
+                        ]
+                    },
+                    "heat_capacity": {
+                        "__ndarray__": true,
+                        "data": [
+                            -59.0
+                        ]
+                    },
+                    "molecular_weight": 121.14,
                     "name": "tris",
                     "nightingale_data": null,
-                    "pKa_ref": [
-                        8.076
-                    ],
-                    "z": [
-                        1
-                    ]
+                    "reference_mobility": {
+                        "__ndarray__": true,
+                        "data": [
+                            2.9500000000000003e-08
+                        ]
+                    },
+                    "reference_pKa": {
+                        "__ndarray__": true,
+                        "data": [
+                            8.076
+                        ]
+                    },
+                    "reference_temperature": 25.0,
+                    "valence": {
+                        "__ndarray__": true,
+                        "data": [
+                            1
+                        ]
+                    }
                 },
                 {
-                    "__ion__": true,
-                    "absolute_mobility_ref": [
-                        -3.3000000000000004e-08,
-                        -1.9e-08
-                    ],
-                    "dCp": null,
-                    "dH": null,
+                    "__ion__": "Ion",
+                    "alias": null,
+                    "enthalpy": null,
+                    "heat_capacity": null,
+                    "molecular_weight": null,
                     "name": "fluorescein",
                     "nightingale_data": null,
-                    "pKa_ref": [
-                        6.8,
-                        4.4
-                    ],
-                    "z": [
-                        -2,
-                        -1
-                    ]
+                    "reference_mobility": {
+                        "__ndarray__": true,
+                        "data": [
+                            -3.3000000000000004e-08,
+                            -1.9e-08
+                        ]
+                    },
+                    "reference_pKa": {
+                        "__ndarray__": true,
+                        "data": [
+                            6.8,
+                            4.4
+                        ]
+                    },
+                    "reference_temperature": 25.0,
+                    "valence": {
+                        "__ndarray__": true,
+                        "data": [
+                            -2,
+                            -1
+                        ]
+                    }
                 },
                 {
-                    "__ion__": true,
-                    "absolute_mobility_ref": [
-                        -3.6000000000000005e-08
-                    ],
-                    "dCp": null,
-                    "dH": null,
+                    "__ion__": "Ion",
+                    "alias": null,
+                    "enthalpy": null,
+                    "heat_capacity": null,
+                    "molecular_weight": null,
                     "name": "alexa fluor 488",
                     "nightingale_data": null,
-                    "pKa_ref": [
-                        2.0
-                    ],
-                    "z": [
-                        -1
-                    ]
+                    "reference_mobility": {
+                        "__ndarray__": true,
+                        "data": [
+                            -3.6000000000000005e-08
+                        ]
+                    },
+                    "reference_pKa": {
+                        "__ndarray__": true,
+                        "data": [
+                            2.0
+                        ]
+                    },
+                    "reference_temperature": 25.0,
+                    "valence": {
+                        "__ndarray__": true,
+                        "data": [
+                            -1
+                        ]
+                    }
                 },
                 {
-                    "__ion__": true,
-                    "absolute_mobility_ref": [
-                        -2.69e-08
-                    ],
-                    "dCp": [
-                        25.0
-                    ],
-                    "dH": [
-                        21100.0
-                    ],
+                    "__ion__": "Ion",
+                    "alias": null,
+                    "enthalpy": {
+                        "__ndarray__": true,
+                        "data": [
+                            21100.0
+                        ]
+                    },
+                    "heat_capacity": {
+                        "__ndarray__": true,
+                        "data": [
+                            25.0
+                        ]
+                    },
+                    "molecular_weight": 209.2633,
                     "name": "mops",
                     "nightingale_data": null,
-                    "pKa_ref": [
-                        7.2
-                    ],
-                    "z": [
-                        -1
-                    ]
+                    "reference_mobility": {
+                        "__ndarray__": true,
+                        "data": [
+                            -2.69e-08
+                        ]
+                    },
+                    "reference_pKa": {
+                        "__ndarray__": true,
+                        "data": [
+                            7.2
+                        ]
+                    },
+                    "reference_temperature": 25.0,
+                    "valence": {
+                        "__ndarray__": true,
+                        "data": [
+                            -1
+                        ]
+                    }
                 },
                 {
-                    "__ion__": true,
-                    "absolute_mobility_ref": [
-                        -4.24e-08
-                    ],
-                    "dCp": [
-                        -142.0,
-                        0,
-                        0
-                    ],
-                    "dH": [
-                        -410.0
-                    ],
+                    "__ion__": "Ion",
+                    "alias": null,
+                    "enthalpy": {
+                        "__ndarray__": true,
+                        "data": [
+                            -410.0
+                        ]
+                    },
+                    "heat_capacity": {
+                        "__ndarray__": true,
+                        "data": [
+                            -142.0
+                        ]
+                    },
+                    "molecular_weight": 60.05,
                     "name": "acetic acid",
                     "nightingale_data": null,
-                    "pKa_ref": [
-                        4.756
-                    ],
-                    "z": [
-                        -1
-                    ]
+                    "reference_mobility": {
+                        "__ndarray__": true,
+                        "data": [
+                            -4.24e-08
+                        ]
+                    },
+                    "reference_pKa": {
+                        "__ndarray__": true,
+                        "data": [
+                            4.756
+                        ]
+                    },
+                    "reference_temperature": 25.0,
+                    "valence": {
+                        "__ndarray__": true,
+                        "data": [
+                            -1
+                        ]
+                    }
                 }
             ]
         },
         {
-            "T": 25.0,
             "__solution__": true,
-            "concentrations": [
-                0.04,
-                0.08
-            ],
+            "concentrations": {
+                "__ndarray__": true,
+                "data": [
+                    0.04,
+                    0.08
+                ]
+            },
             "ions": [
                 {
-                    "__ion__": true,
-                    "absolute_mobility_ref": [
-                        -7.91e-08
+                    "__ion__": "Ion",
+                    "alias": [
+                        "chloride"
                     ],
-                    "dCp": null,
-                    "dH": [
-                        55815.0
-                    ],
+                    "enthalpy": {
+                        "__ndarray__": true,
+                        "data": [
+                            55815.0
+                        ]
+                    },
+                    "heat_capacity": null,
+                    "molecular_weight": 36.46,
                     "name": "hydrochloric acid",
                     "nightingale_data": {
                         "fit": [
-                            -2.2137142181092216e-16,
-                            8.863674452711559e-14,
-                            -1.4332969510605232e-11,
-                            1.1888046230826376e-09,
-                            -5.1453760569433504e-08,
-                            7.923801398900076e-07,
-                            3.3530212793146824e-05,
-                            -0.0032209848253301337,
-                            0.7381662817975981
+                            -2.21371e-16,
+                            8.86367e-14,
+                            -1.4333e-11,
+                            1.1888e-09,
+                            -5.14538e-08,
+                            7.9238e-07,
+                            3.35302e-05,
+                            -0.00322098,
+                            0.738166
                         ],
                         "max": 99.0894,
                         "min": 0.3302
                     },
-                    "pKa_ref": [
-                        -2.0
-                    ],
-                    "z": [
-                        -1
-                    ]
+                    "reference_mobility": {
+                        "__ndarray__": true,
+                        "data": [
+                            -7.91e-08
+                        ]
+                    },
+                    "reference_pKa": {
+                        "__ndarray__": true,
+                        "data": [
+                            -2.0
+                        ]
+                    },
+                    "reference_temperature": 25.0,
+                    "valence": {
+                        "__ndarray__": true,
+                        "data": [
+                            -1
+                        ]
+                    }
                 },
                 {
-                    "__ion__": true,
-                    "absolute_mobility_ref": [
-                        2.9500000000000003e-08
-                    ],
-                    "dCp": [
-                        -59.0
-                    ],
-                    "dH": [
-                        47450.0
-                    ],
+                    "__ion__": "Ion",
+                    "alias": null,
+                    "enthalpy": {
+                        "__ndarray__": true,
+                        "data": [
+                            47450.0
+                        ]
+                    },
+                    "heat_capacity": {
+                        "__ndarray__": true,
+                        "data": [
+                            -59.0
+                        ]
+                    },
+                    "molecular_weight": 121.14,
                     "name": "tris",
                     "nightingale_data": null,
-                    "pKa_ref": [
-                        8.076
-                    ],
-                    "z": [
-                        1
-                    ]
+                    "reference_mobility": {
+                        "__ndarray__": true,
+                        "data": [
+                            2.9500000000000003e-08
+                        ]
+                    },
+                    "reference_pKa": {
+                        "__ndarray__": true,
+                        "data": [
+                            8.076
+                        ]
+                    },
+                    "reference_temperature": 25.0,
+                    "valence": {
+                        "__ndarray__": true,
+                        "data": [
+                            1
+                        ]
+                    }
                 }
             ]
         }

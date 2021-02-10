@@ -1,8 +1,10 @@
 """Defines an equlibration scheme with pH calculation."""
+from __future__ import absolute_import
 
 import numpy as np
-from Equilibrator import Equilibrator
-from Multiroot import Multiroot
+
+from .Equilibrator import Equilibrator
+from .Multiroot import Multiroot
 # pylint: disable=W0232, E1101, W0201, E1103
 
 # TODO: Pull constants from ionize.
@@ -65,7 +67,7 @@ class VariablepH(Equilibrator):
         """Set the valence indices."""
         all_z = []
         for i in self.state.ions:
-            all_z.extend(i.z0)
+            all_z.extend(i._valence_zero())
         self._z0 = range(min(all_z), max(all_z)+1)
         self._index_0 = self._z0.index(0)
 
@@ -76,7 +78,7 @@ class VariablepH(Equilibrator):
 
     def _align_zero(self, value, z0):
         """Align ion properties with the zero of the matrix."""
-        local_index = z0.index(0)
+        local_index = z0.tolist().index(0)
         local_len = len(z0)
         pre_pad = self._index_0 - local_index
         post_pad = len(self._z0) - local_len - pre_pad
@@ -88,8 +90,8 @@ class VariablepH(Equilibrator):
         """Build the absolute mobility matrix."""
         absolute_mobility = []
         for i in self.state.ions:
-            absolute_mobility.append(self._align_zero(i.absolute_mobility,
-                                                      i.z0))
+            absolute_mobility.append(self._align_zero(i.absolute_mobility(),
+                                                      i._valence_zero()))
         self.state.absolute_mobility = np.array(absolute_mobility)
 
     def _set_l_matrix(self):
@@ -98,7 +100,7 @@ class VariablepH(Equilibrator):
         # of acidity coefficients for each ion.
         self._l_matrix = []
         for i in self.state.ions:
-            self._l_matrix.append(self._align_zero(i.L(I=0), i.z0))
+            self._l_matrix.append(self._align_zero(i.acidity_product(ionic_strength=0), i._valence_zero()))
         self._l_matrix = np.array(self._l_matrix)
 
     def _set_Q(self):
@@ -135,7 +137,7 @@ class VariablepH(Equilibrator):
 
         # Construct polynomial. Change the shapes, then reverse  order
         if P.shape[0] < self._Q.shape[0]:
-            P.resize((self._Q.shape[0], P.shape[1]))
+            P = np.resize(P, (self._Q.shape[0], P.shape[1]))
         elif P.shape[0] > self._Q.shape[0]:
             self._Q.resize(P.shape[0])
         poly = (P + self._Q[:, np.newaxis])[::-1]
@@ -145,8 +147,6 @@ class VariablepH(Equilibrator):
         self.state.pH = -np.log10(self.state.cH)
 
         if any(np.isnan(self.state.pH)):
-            print 'pH:', self.state.pH
-            print 'cH:', self.state.cH
             raise RuntimeError("Couldn't find correct pH.")
 
     def _calc_mobility(self):

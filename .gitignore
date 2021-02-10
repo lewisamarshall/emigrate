@@ -39,6 +39,7 @@ htmlcov/
 .cache
 nosetests.xml
 coverage.xml
+*.profile
 
 # Translations
 *.mo
@@ -58,6 +59,7 @@ target/
 *.json
 .ipynb_checkpoints
 *.png
+*.mp4
 
 # Ignore pycharm
 .idea
@@ -67,3 +69,6 @@ target/
 
 # Include constructor
 !examples/constructor.json
+
+# Ignore Mac
+.DS_Store

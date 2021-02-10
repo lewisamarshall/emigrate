@@ -1,6 +1,9 @@
 """An equilibration class for fixed pH problems."""
+from __future__ import absolute_import
+
 import numpy as np
-from Equilibrator import Equilibrator
+
+from .Equilibrator import Equilibrator
 # pylint: disable = W0232, E1101, W0201
 
 
@@ -29,8 +32,8 @@ class Fixed(Equilibrator):
                                           for ion in self.state.ions])
 
     def _calc_mobility(self):
-        """Calculate the effective mobility."""
-        self.state.mobility = np.array([[ion.effective_mobility(self.state.pH)]
+        """Calculate the mobility."""
+        self.state.mobility = np.array([[ion.mobility(self.state.pH)]
                                        for ion in self.state.ions])
 
     def _calc_molar_conductivity(self):

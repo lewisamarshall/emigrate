@@ -9,7 +9,10 @@ import sys
 import os
 from math import ceil
 import click
+import numpy as np
 from matplotlib import pyplot
+import matplotlib.animation as manimation
+FFMpegWriter = manimation.writers['ffmpeg']
 
 try:
     import simplejson as json
@@ -29,6 +32,7 @@ def cli(ctx):
 @click.option('--io', is_flag=True)
 def load(ctx, path, io):
     """Open an emgrate file and return a serialized frame."""
+    ctx.obj['path'] = path
     _, file_extension = os.path.splitext(path)
     if file_extension == '.hdf5':
         ctx.obj['sequence'] = Sequence(path=path)
@@ -74,6 +78,194 @@ def plot(ctx, output, frame):
     pyplot.savefig(output, bbox_inches='tight')
     close(ctx)
 
+@cli.command()
+@click.pass_context
+@click.argument('output', type=click.Path(exists=False))
+@click.option('--dpi', '-d', type=click.INT, default=400)
+def nodes(ctx, output, dpi):
+    sequence = ctx.obj['sequence']
+
+    node_locations = np.array([frame.nodes for frame in sequence])
+    frame_numbers = np.arange(len(sequence))
+
+    pyplot.plot(frame_numbers, node_locations, linewidth=0.5)
+    pyplot.xlabel('frame number')
+    pyplot.ylabel('node location (m)')
+    pyplot.savefig(output, dpi=dpi)
+
+@cli.command()
+@click.pass_context
+def check_nodes(ctx):
+    sequence = ctx.obj['sequence']
+
+    for idx, frame in enumerate(sequence):
+        if np.any(np.diff(frame.nodes)<0):
+            print('Node inversion in frame {}. Inverted by {} m.'.format(idx, min(np.diff(frame.nodes))))
+
+
+@cli.command()
+@click.pass_context
+@click.option('--field', '-f', is_flag=True)
+@click.option('--ymax', '-y', type=float, default=None)
+def movie(ctx, field, ymax):
+    metadata = dict(title='Movie Test', artist='Matplotlib',
+                comment='Movie support!')
+    writer = FFMpegWriter(fps=15, metadata=metadata)
+
+    sequence = ctx.obj['sequence']
+
+    fig = pyplot.figure()
+    lines = dict()
+    frame = sequence[0]
+    if field:
+        line, = pyplot.plot(frame.nodes, frame.field, '-')
+        pyplot.xlabel('x (mm)')
+        pyplot.ylabel('electric field (V/m)')
+        pyplot.xlim([0, frame.nodes[-1]])
+        pyplot.ylim([0, ymax])
+        savename = os.path.splitext(ctx.obj['path'])[0]+'_field.mp4'
+        with writer.saving(fig, savename, 100):
+            for frame in sequence:
+                line.set_data(frame.nodes, frame.field)
+                writer.grab_frame()
+        return
+
+    for ion, ion_concentration in zip(frame.ions, frame.concentrations):
+        lines[ion.name], = pyplot.plot([], [], '-', label=ion.name)
+
+    pyplot.xlabel('x (mm)')
+    pyplot.ylabel('concentration (M)')
+    pyplot.ylim([0, ymax])
+    pyplot.xlim([0, frame.nodes[-1]])
+    pyplot.legend()
+
+    savename = os.path.splitext(ctx.obj['path'])[0]+'.mp4'
+    with writer.saving(fig, savename, 100):
+        for frame in sequence:
+            for ion, ion_concentration in zip(frame.ions, frame.concentrations):
+                lines[ion.name].set_data(frame.nodes, ion_concentration)
+            writer.grab_frame()
+
+@cli.command()
+@click.pass_context
+@click.option('--green', '-g', type=str, default=None)
+@click.option('--red', '-r', type=str, default=None)
+@click.option('--blue', '-b', type=str, default=None)
+def band(ctx, red, green, blue):
+    metadata = dict(title='Movie Test', artist='Matplotlib',
+                comment='Movie support!')
+    writer = FFMpegWriter(fps=15, metadata=metadata)
+
+    sequence = ctx.obj['sequence']
+
+    fig = pyplot.figure(figsize=[11, 1])
+    lines = dict()
+    frame = sequence[0]
+
+    n = 1000
+    h = 30
+    frame0 = sequence[0]
+    nodes = np.linspace(frame0.nodes[0], frame0.nodes[-1], n)
+    extent = [0, nodes[-1], 0, sequence[-1].time]
+
+    pyplot.xlabel('x (mm)')
+    pyplot.xlim([0, frame.nodes[-1]])
+
+    slices = dict()
+
+    savename = os.path.splitext(ctx.obj['path'])[0]+'_band.mp4'
+    with writer.saving(fig, savename, 100):
+        for frame in sequence:
+            for ion, concentration in zip(frame.ions, frame.concentrations):
+                new_data = np.interp(nodes, frame.nodes, concentration)
+                slices[ion.name] = new_data[np.newaxis, :] * np.ones([h, 1])
+
+            red_slice = slices[red]
+            green_slice = slices[green]
+            blue_slice = slices[blue]
+            color = np.zeros(red_slice.shape + (3,))
+            color[:, :, 0] = red_slice
+            color[:, :, 1] = green_slice
+            color[:, :, 2] = blue_slice
+            color = (color/color.max()*255).astype(np.uint8)
+            pyplot.imshow(color, origin='lower', extent=extent, aspect='auto')
+            pyplot.axis('off')
+            writer.grab_frame()
+            pyplot.clf()
+
+
+@cli.command()
+@click.pass_context
+@click.option('--red', '-r', type=str, default=None)
+@click.option('--green', '-g', type=str, default=None)
+@click.option('--blue', '-b', type=str, default=None)
+def spacetemp(ctx, red, green, blue):
+    n = 1000
+    sequence = ctx.obj['sequence']
+    frame0 = sequence[0]
+    nodes = np.linspace(frame0.nodes[0], frame0.nodes[-1], n)
+    extent = [0, nodes[-1], 0, sequence[-1].time]
+
+    slices = dict()
+    for ion in frame0.ions:
+        slices[ion.name] = np.zeros((len(sequence), n))
+
+    for idx, frame in enumerate(sequence):
+        for ion, concentration in zip(frame.ions, frame.concentrations):
+            new_data = np.interp(nodes, frame.nodes, concentration)
+            slices[ion.name][idx, :] += new_data
+
+    # for name, data in slices.items():
+    #     pyplot.imshow(data, origin='lower', extent=extent, aspect='auto')
+    #     pyplot.xlabel('distance (m)')
+    #     pyplot.ylabel('time (s)')
+    #     pyplot.title(name)
+    #     pyplot.savefig(ctx.obj['path']+'_{}_.png'.format(name))
+    #     pyplot.clf()
+
+    if all([red, green, blue]):
+        print(slices.keys())
+        red_slice = slices[red]
+        green_slice = slices[green]
+        blue_slice = slices[blue]
+        color = np.zeros(red_slice.shape + (3,))
+        color[:, :, 0] = red_slice
+        color[:, :, 1] = green_slice
+        color[:, :, 2] = blue_slice
+        color /= color.max()/5
+        pyplot.imshow(color, origin='lower', extent=extent, aspect='auto')
+        pyplot.xlabel('distance (m)')
+        pyplot.ylabel('time (s)')
+        pyplot.savefig(ctx.obj['path']+'_rgb.png')
+        pyplot.clf()
+
+@cli.command()
+@click.pass_context
+# @click.option('--ion', '-i', type=str, default=None)
+@click.option('--location', '-l', type=float, default=None)
+def gram(ctx, location):
+    sequence = ctx.obj['sequence']
+    frame0 = sequence[0]
+    times = [f.time for f in sequence]
+    # nodes = np.linspace(frame0.nodes[0], frame0.nodes[-1], n)
+    if location is None: location = frame0.nodes[-1]
+
+    slices = dict()
+    for ion in frame0.ions:
+        slices[ion.name] = np.zeros((len(sequence), ))
+
+    for idx, frame in enumerate(sequence):
+        for ion, concentration in zip(frame.ions, frame.concentrations):
+            new_data = np.interp(location, frame.nodes, concentration)
+            slices[ion.name][idx] += new_data
+
+    for name, data in slices.items():
+        pyplot.plot(times, data)
+        pyplot.xlabel('time (s)')
+        pyplot.ylabel('concentration (M)')
+        pyplot.title(name)
+        pyplot.savefig(ctx.obj['path']+'_{}_electropherogram.png'.format(name))
+        pyplot.clf()
 
 @cli.command()
 @click.pass_context
@@ -162,7 +354,7 @@ def ensure_frame(ctx, frame):
 
 
 def main():
-    cli(obj={'sequence': None, 'frame': None})
+    cli(obj={'sequence': None, 'frame': None, 'filename': None})
 
 if __name__ == '__main__':
     main()

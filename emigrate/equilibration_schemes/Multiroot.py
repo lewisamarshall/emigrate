@@ -112,4 +112,4 @@ if __name__ == '__main__':
     array = np.concatenate([array]*1000, axis=1)
     multiroot = Multiroot()
     guess = multiroot(array)
-    print multiroot(array, guess-1)
+    print(multiroot(array, guess-1))

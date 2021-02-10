@@ -1,6 +1,9 @@
-from Differentiate import Differentiate
+from __future__ import absolute_import
+
 import numpy as np
 import warnings
+
+from .Differentiate import Differentiate
 
 # #TODO:40 Fix boundary characteristics
 # from boundary_characteristic import (boundary_characteristic,
@@ -110,7 +113,7 @@ class Fluxer(object):
             pH = self.state.pH[0]
         else:
             raise RuntimeError('Edge must be left or right.')
-        self._frame_velocity = E * self.frame.effective_mobility(pH)
+        self._frame_velocity = E * self.frame.mobility(pH)
 
     def _update(self):
         raise NotImplementedError
