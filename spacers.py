@@ -2,11 +2,15 @@ import emigrate
 import ionize
 import cProfile
 
-solutions = [ionize.Solution(['hepes', 'tris', 'caproic acid'],
-                             [.2, .505, .055]),
-             ionize.Solution(['hepes', 'tris', 'fluorescein',
-                              'chloride',],
-                             [.005, .06, .001, .03, ]),
+solutions = [ionize.Solution(['hepes', 'tris',],
+                             [.2, .505]),
+             ionize.Solution(['tris',
+                              'mops',
+                              'caproic acid',
+                              'ascorbic acid',
+                              'carbonic acid',
+                              ],
+                             [.08, .01, .01, .01, .01]),
              ionize.Solution(['hydrochloric acid', 'tris'],
                              [.04, .08]),
              ]
@@ -26,4 +30,4 @@ tmax = 200
 dt = 1
 ode_solver = 'dopri5'
 profile = True
-cProfile.run("solver.solve('examples/benchmark.hdf5', dt, tmax)")
+solver.solve('examples/spacers.hdf5', dt, tmax)

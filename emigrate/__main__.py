@@ -106,8 +106,9 @@ def check_nodes(ctx):
 @cli.command()
 @click.pass_context
 @click.option('--field', '-f', is_flag=True)
+@click.option('--ph', is_flag=True)
 @click.option('--ymax', '-y', type=float, default=None)
-def movie(ctx, field, ymax):
+def movie(ctx, field, ymax, ph):
     metadata = dict(title='Movie Test', artist='Matplotlib',
                 comment='Movie support!')
     writer = FFMpegWriter(fps=15, metadata=metadata)
@@ -129,6 +130,19 @@ def movie(ctx, field, ymax):
                 line.set_data(frame.nodes, frame.field)
                 writer.grab_frame()
         return
+    elif ph:
+        line, = pyplot.plot(frame.nodes, frame.pH, '-')
+        pyplot.xlabel('x (mm)')
+        pyplot.ylabel('pH')
+        pyplot.xlim([0, frame.nodes[-1]])
+        pyplot.ylim([0, 14])
+        savename = os.path.splitext(ctx.obj['path'])[0]+'_pH.mp4'
+        with writer.saving(fig, savename, 100):
+            for frame in sequence:
+                line.set_data(frame.nodes, frame.pH)
+                writer.grab_frame()
+        return
+
 
     for ion, ion_concentration in zip(frame.ions, frame.concentrations):
         lines[ion.name], = pyplot.plot([], [], '-', label=ion.name)
